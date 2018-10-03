@@ -1,0 +1,41 @@
+os: linux
+
+language: go
+
+env:
+  global:
+    - RELEASE_NUMBER=v1.0.0
+    - ARTIFACT_NAME=gokube-$RELEASE_NUMBER+build.$TRAVIS_BUILD_NUMBER.windows.amd64.exe
+
+go:
+- 1.10.x
+
+go_import_path: github.com/gemalto/gokube
+
+# Don't email me the results of the test runs.
+notifications:
+  email: true
+
+before_install:
+
+install:
+
+script:
+- cd cmd/gokube
+- GOOS=windows GOARCH=amd64 go get -t -v ./...
+- GOOS=windows GOARCH=amd64 go build -o bin/$ARTIFACT_NAME
+- ls -al bin
+
+before_deploy:
+- git config --local user.name "Travis CI"
+- git config --local user.email "travis@travis-ci.org"
+- git tag $RELEASE_NUMBER
+
+deploy:
+  provider: releases
+  skip_cleanup: true # Important, otherwise the build output would be purged.
+  api_key: $GITHUB_API_KEY
+  file: bin/$ARTIFACT_NAME
+  on:
+    repo: gemalto/gokube
+    tags: true # The deployment happens only if the commit has a tag.
