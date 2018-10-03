@@ -26,7 +26,7 @@ import (
 
 const (
 	URL     = "https://storage.googleapis.com/kubernetes-helm/helm-v%s-windows-amd64.tar.gz"
-	VERSION = "2.9.1"
+	VERSION = "2.11.0"
 )
 
 // Upgrade ...
