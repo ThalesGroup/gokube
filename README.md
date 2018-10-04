@@ -26,16 +26,14 @@ GoKube is configured with a dedicated helm repository named [miniapps](https://g
 
 These charts are optimized in term of memory and cpu for minikube and very useful for developers.
 
-# Requirements
-* Windows
-    * [VirtualBox](https://www.virtualbox.org/wiki/Downloads) or [Hyper-V](https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#hyperV-driver)
-* VT-x/AMD-v virtualization must be enabled in BIOS
-* Internet connection on first run
-
 # How to install GoKube?
 
 ## Windows
 
+### Requirements
+* [VirtualBox](https://www.virtualbox.org/wiki/Downloads) or [Hyper-V](https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#hyperV-driver)
+* VT-x/AMD-v virtualization must be enabled in BIOS
+* Internet connection on first run
 
 ### Assumptions 
 
