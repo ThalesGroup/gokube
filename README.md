@@ -4,7 +4,7 @@
 
 ## What is GoKube?
 
-![gokube](https://github.com/gemalto/gokube/blob/master/logo/gokube_150x150.png)
+![gokube](https://gemalto.github.io/gokube/logo/gokube_150x150.png)
 
 GoKube is a tool that makes it easy developping day-to-day with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
 
