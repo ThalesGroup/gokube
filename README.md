@@ -1,5 +1,3 @@
-[![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
-
 # What is GoKube?
 
 ![gokube](https://gemalto.github.io/gokube/logo/gokube_150x150.png)
@@ -25,6 +23,12 @@ GoKube is configured with a dedicated helm repository named [miniapps](https://g
 * [Livedoc](https://github.com/gemalto/miniapps/tree/master/charts/livedoc)
 
 These charts are optimized in term of memory and cpu for minikube and very useful for developers.
+
+# Continuous Integration & Delivery
+
+GoKube is building and delivering under Travis.
+
+[![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
 
 # How to install GoKube?
 
