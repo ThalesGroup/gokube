@@ -172,23 +172,23 @@ We can see that pods are now running and we will now be able to access to gokube
 
 ```shell
 $ kubectl get pod --all-namespaces
-NAMESPACE     NAME                                                 READY   STATUS    RESTARTS  AGE
-kube-system   etcd-minikube                                        1/1     Running   0         5m
-kube-system   gokube-mongodb-7c86445c7-zx6cv                       1/1     Running   0         6m
-kube-system   gokube-monocular-api-5798749fdb-6xwsn                1/1     Running   4         6m
-kube-system   gokube-monocular-prerender-c9f57f6c8-nbjl7           1/1     Running   0         6m
-kube-system   gokube-monocular-ui-7d79f486-w98px                   1/1     Running   0         6m
-kube-system   kube-addon-manager-minikube                          1/1     Running   0         5m
-kube-system   kube-apiserver-minikube                              1/1     Running   0         5m
-kube-system   kube-controller-manager-minikube                     1/1     Running   0         5m
-kube-system   kube-dns-86f4d74b45-4swsw                            3/3     Running   0         6m
-kube-system   kube-proxy-dltxx                                     1/1     Running   0         6m
-kube-system   kube-scheduler-minikube                              1/1     Running   0         5m
-kube-system   kubernetes-dashboard-5498ccf677-5p82h                1/1     Running   0         6m
-kube-system   nginx-nginx-ingress-controller-859558948c-5rr2c      1/1     Running   0         6m
-kube-system   nginx-nginx-ingress-default-backend-7bb66746b9-tfmm2 1/1     Running   0         6m
-kube-system   storage-provisioner                                  1/1     Running   0         6m
-kube-system   tiller-deploy-f9b8476d-rk5ps                         1/1     Running   0         6m
+NAMESPACE     NAME                                                 READY  STATUS   RESTARTS  AGE
+kube-system   etcd-minikube                                        1/1    Running  0         5m
+kube-system   gokube-mongodb-7c86445c7-zx6cv                       1/1    Running  0         6m
+kube-system   gokube-monocular-api-5798749fdb-6xwsn                1/1    Running  4         6m
+kube-system   gokube-monocular-prerender-c9f57f6c8-nbjl7           1/1    Running  0         6m
+kube-system   gokube-monocular-ui-7d79f486-w98px                   1/1    Running  0         6m
+kube-system   kube-addon-manager-minikube                          1/1    Running  0         5m
+kube-system   kube-apiserver-minikube                              1/1    Running  0         5m
+kube-system   kube-controller-manager-minikube                     1/1    Running  0         5m
+kube-system   kube-dns-86f4d74b45-4swsw                            3/3    Running  0         6m
+kube-system   kube-proxy-dltxx                                     1/1    Running  0         6m
+kube-system   kube-scheduler-minikube                              1/1    Running  0         5m
+kube-system   kubernetes-dashboard-5498ccf677-5p82h                1/1    Running  0         6m
+kube-system   nginx-nginx-ingress-controller-859558948c-5rr2c      1/1    Running  0         6m
+kube-system   nginx-nginx-ingress-default-backend-7bb66746b9-tfmm2 1/1    Running  0         6m
+kube-system   storage-provisioner                                  1/1    Running  0         6m
+kube-system   tiller-deploy-f9b8476d-rk5ps                         1/1    Running  0         6m
 ```
 
 We can stop gokube running the following command:
