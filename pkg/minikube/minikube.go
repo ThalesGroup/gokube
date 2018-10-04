@@ -29,12 +29,16 @@ import (
 
 const (
 	URL     = "https://storage.googleapis.com/minikube/releases/v%s/minikube-windows-amd64.exe"
-	VERSION = "0.28.0"
+	VERSION = "0.29.0"
+)
+
+const (
+	K8S_VERSION = "v1.10.8"
 )
 
 // Start ...
 func Start(memory int16, nCPUs int16, diskSize string, httpProxy string, httpsProxy string, npProxy string, insecureRegistry string) {
-	cmd := exec.Command("minikube", "start", "--insecure-registry", insecureRegistry, "--cache-images", "--docker-env", "HTTP_PROXY="+httpProxy, "--docker-env", "HTTPS_PROXY="+httpsProxy, "--docker-env", "NO_PROXY="+npProxy, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(nCPUs), 10), "--disk-size", diskSize, "--network-plugin=cni", "--extra-config=kubelet.network-plugin=cni")
+	cmd := exec.Command("minikube", "start", "--kubernetes-version", K8S_VERSION, "--insecure-registry", insecureRegistry, "--cache-images", "--docker-env", "HTTP_PROXY="+httpProxy, "--docker-env", "HTTPS_PROXY="+httpsProxy, "--docker-env", "NO_PROXY="+npProxy, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(nCPUs), 10), "--disk-size", diskSize, "--network-plugin=cni", "--extra-config=kubelet.network-plugin=cni")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()

@@ -26,7 +26,7 @@ import (
 
 const (
 	URL     = "https://storage.googleapis.com/kubernetes-release/release/v%s/bin/windows/amd64/kubectl.exe"
-	VERSION = "1.10.0"
+	VERSION = "1.10.8"
 )
 
 // ConfigUseContext ...
