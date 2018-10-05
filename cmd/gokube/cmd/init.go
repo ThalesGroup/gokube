@@ -90,20 +90,21 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	// Add Helm repository
 	helm.RepoAdd("monocular", "https://helm.github.io/monocular")
-	helm.RepoAdd("miniapps", "https://gokube.github.io/miniapps")
+	helm.RepoAdd("miniapps", "https://gemalto.github.io/miniapps")
 	helm.RepoUpdate()
 
 	// Deploy Monocular
 	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", "0.25.1")
-	helm.UpgradeWithConfiguration("gokube", "kube-system", "api.config.repos[0].name=miniapps,api.config.repos[0].url=https://gokube.github.io/miniapps,api.config.repos[0].source=https://github.com/gokube/miniapps/tree/master/charts,api.replicaCount=1,api.image.pullPolicy=IfNotPresent,api.config.cacheRefreshInterval=60,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=goKube,prerender.replicaCount=1,prerender.image.pullPolicy=IfNotPresent", "monocular/monocular", "0.6.3")
+	helm.UpgradeWithConfiguration("gokube", "kube-system", "api.config.repos[0].name=miniapps,api.config.repos[0].url=https://gemalto.github.io/miniapps,api.config.repos[0].source=https://github.com/gemalto/miniapps/tree/master/charts,api.replicaCount=1,api.image.pullPolicy=IfNotPresent,api.config.cacheRefreshInterval=60,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=GoKube,prerender.replicaCount=1,prerender.image.pullPolicy=IfNotPresent", "monocular/monocular", "0.6.3")
 
-	//kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"env\":[{\"name\":\"HTTP_PROXY\",\"value\":\""+httpProxy+"\"},{\"name\":\"HTTPS_PROXY\",\"value\":\""+httpsProxy+"\"},{\"name\":\"NO_PROXY\",\"value\":\""+noProxy+"\"}] }] }}}}")
+	// Configure proxy for Monocular
 	kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"HTTP_PROXY\",\"value\":\""+httpsProxy+"\"}]}]}}}}")
 	kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"HTTPS_PROXY\",\"value\":\""+httpProxy+"\"}]}]}}}}")
 	kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"NO_PROXY\",\"value\":\""+noProxy+"\"}]}]}}}}")
 
 	fmt.Println("\ngoKube has been installed.")
-	fmt.Println("\nTo verify that goKube! has started, run:")
+	fmt.Println("Now, you need more or less 10 minutes for running pods...")
+	fmt.Println("\nTo verify that pods are running, execute:")
 	fmt.Println("> kubectl get pods --all-namespaces")
 	fmt.Println("")
 
