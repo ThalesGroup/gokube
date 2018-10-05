@@ -20,7 +20,6 @@ GoKube is configured with a dedicated helm repository named [miniapps](https://g
 * [Pact](https://github.com/gemalto/miniapps/tree/master/charts/pact)
 * [Kibana](https://github.com/gemalto/miniapps/tree/master/charts/kibana)
 * [Grafana](https://github.com/gemalto/miniapps/tree/master/charts/grafana)
-* [Livedoc](https://github.com/gemalto/miniapps/tree/master/charts/livedoc)
 
 These charts are optimized in term of memory and cpu for minikube and very useful for developers.
 
