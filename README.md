@@ -16,7 +16,7 @@ GoKube downloads and installs many dependencies such as:
 GoKube deploys and configures Monocular for a better user experience!
 You will be able to deploy in one click useful helm charts for developing in your kubernetes cluster.
 
-GoKube is configured with a dedicated helm repository named [miniapps](https://github.com/gokube/miniapps) which contains the following charts:
+GoKube is configured with a dedicated helm repository named [miniapps](https://gemalto.github.io/miniapps) which contains the following charts:
 * [Cassandra](https://github.com/gemalto/miniapps/tree/master/charts/cassandra)
 * [Heapster](https://github.com/gemalto/miniapps/tree/master/charts/heapster)
 * [Pact](https://github.com/gemalto/miniapps/tree/master/charts/pact)
