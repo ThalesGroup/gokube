@@ -1,3 +1,5 @@
+[![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
+
 # What is GoKube?
 
 ![gokube](https://gemalto.github.io/gokube/logo/gokube_150x150.png)
