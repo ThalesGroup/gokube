@@ -31,6 +31,21 @@ GoKube is building and delivering under Travis.
 
 [![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
 
+# How to upgrade GoKube?
+
+## Windows
+
+### Download binary
+
+* The latest release for gokube can be download on the [Releases page](https://github.com/gemalto/gokube/releases/latest).
+* Copy executable file to: C:\gokube\bin and replace the previous one.
+
+### Upgrade GoKube
+
+```shell
+$ gokube init --upgrade
+```
+
 # How to install GoKube?
 
 ## Windows
@@ -84,8 +99,7 @@ If you do, then the installation is complete.
 
 If you don’t, double-check the path that you placed the gokube.exe file in and that you typed that path correctly when you added it to your PATH variable.
 
-# Quickstart
-Here's a brief demo of GoKube usage.
+### Install GoKube
 
 ```shell
 $ gokube init
