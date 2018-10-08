@@ -29,11 +29,11 @@ import (
 
 const (
 	URL     = "https://storage.googleapis.com/minikube/releases/v%s/minikube-windows-amd64.exe"
-	VERSION = "0.29.0"
+	VERSION = "0.30.0"
 )
 
 const (
-	K8S_VERSION = "v1.10.8"
+	K8S_VERSION = "v1.12.0"
 )
 
 // Start ...
