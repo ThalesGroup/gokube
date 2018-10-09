@@ -101,7 +101,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"HTTPS_PROXY\",\"value\":\""+httpProxy+"\"}]}]}}}}")
 	kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"NO_PROXY\",\"value\":\""+noProxy+"\"}]}]}}}}")
 
-	fmt.Println("\ngoKube has been installed.")
+	fmt.Println("\nGoKube has been installed.")
 	fmt.Println("Now, you need more or less 10 minutes for running pods...")
 	fmt.Println("\nTo verify that pods are running, execute:")
 	fmt.Println("> kubectl get pods --all-namespaces")
