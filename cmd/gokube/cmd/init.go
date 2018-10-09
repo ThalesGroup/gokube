@@ -78,7 +78,6 @@ func initRun(cmd *cobra.Command, args []string) {
 	kubectl.Download(gokube.GetBinDir())
 
 	// Create virtual machine (minikube)
-	fmt.Println("\nInstalling goKube...")
 	minikube.ConfigSet("WantUpdateNotification", "false")
 	minikube.Start(memory, nCPUs, diskSize, httpProxy, httpsProxy, noProxy, insecureRegistry)
 
