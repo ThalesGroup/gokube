@@ -229,7 +229,8 @@ Kubectl is now configured to use the cluster.
 Loading cached images from config file.
 ```
 
-## Developer Guide
+## Additional Links
 
-If you want to contribute to this project you are encouraged to send issue request, or provide pull-requests. 
-Please read the [developer guide](./docs/developer-guide.md) to learn more on how you can contribute. 
+* [**Contributing**](./CONTRIBUTING.md)
+* [**Development Guide**](./docs/developer-guide.md)
+
