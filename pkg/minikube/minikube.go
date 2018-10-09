@@ -33,7 +33,7 @@ const (
 )
 
 const (
-	K8S_VERSION = "v1.10.8"
+	K8S_VERSION = "v1.12.0"
 )
 
 // Start ...
