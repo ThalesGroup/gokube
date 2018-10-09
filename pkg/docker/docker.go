@@ -109,4 +109,5 @@ func RemoveImage(image string, envVars []utils.EnvVar) {
 // Purge ...
 func Purge() {
 	utils.RemoveFile(gokube.GetBinDir() + "/docker.exe")
+	utils.RemoveDir(utils.GetUserHome() + "/.docker")
 }
