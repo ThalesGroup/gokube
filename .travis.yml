@@ -4,7 +4,7 @@ language: go
 
 env:
   global:
-    - RELEASE_NUMBER=v1.2.0
+    - RELEASE_NUMBER=v1.3.0
     - ARTIFACT_NAME=gokube-$RELEASE_NUMBER+build.$TRAVIS_BUILD_NUMBER.windows.amd64.exe
 
 go:

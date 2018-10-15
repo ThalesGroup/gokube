@@ -28,17 +28,12 @@ import (
 )
 
 const (
-	URL     = "https://storage.googleapis.com/minikube/releases/v%s/minikube-windows-amd64.exe"
-	VERSION = "0.30.0"
-)
-
-const (
-	K8S_VERSION = "v1.12.0"
+	URL = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
 )
 
 // Start ...
-func Start(memory int16, nCPUs int16, diskSize string, httpProxy string, httpsProxy string, npProxy string, insecureRegistry string) {
-	cmd := exec.Command("minikube", "start", "--kubernetes-version", K8S_VERSION, "--insecure-registry", insecureRegistry, "--docker-env", "HTTP_PROXY="+httpProxy, "--docker-env", "HTTPS_PROXY="+httpsProxy, "--docker-env", "NO_PROXY="+npProxy, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(nCPUs), 10), "--disk-size", diskSize, "--network-plugin=cni", "--extra-config=kubelet.network-plugin=cni")
+func Start(memory int16, nCPUs int16, diskSize string, httpProxy string, httpsProxy string, npProxy string, insecureRegistry string, kubernetesVersion string) {
+	cmd := exec.Command("minikube", "start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--docker-env", "HTTP_PROXY="+httpProxy, "--docker-env", "HTTPS_PROXY="+httpsProxy, "--docker-env", "NO_PROXY="+npProxy, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(nCPUs), 10), "--disk-size", diskSize, "--network-plugin=cni", "--extra-config=kubelet.network-plugin=cni")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
@@ -138,9 +133,13 @@ func DockerEnv() []utils.EnvVar {
 }
 
 // Download ...
-func Download(dst string) {
+func Download(dst string, minikubeFork string, minikubeVersion string) {
 	if _, err := os.Stat(dst + "/minikube.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("minikube v"+VERSION, URL, VERSION)
+		if strings.EqualFold(minikubeFork, "minikube") {
+			download.DownloadFromUrl("minikube "+minikubeVersion, URL, minikubeVersion)
+		} else {
+			download.DownloadFromUrl("minikube forked", minikubeFork, minikubeVersion)
+		}
 		utils.MoveFile(gokube.GetTempDir()+"/minikube-windows-amd64.exe", dst+"/minikube.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
