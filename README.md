@@ -5,7 +5,7 @@
 
 ## What is GoKube?
 
-GoKube is a tool that makes it easy developping day-to-day with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
+GoKube is a tool that makes it easy developing day-to-day with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
 
 GoKube downloads and installs many dependencies such as:
 * [Minikube](https://github.com/kubernetes/minikube)
