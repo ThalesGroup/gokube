@@ -25,8 +25,7 @@ import (
 )
 
 const (
-	URL     = "https://storage.googleapis.com/kubernetes-helm/helm-v%s-windows-amd64.tar.gz"
-	VERSION = "2.11.0"
+	URL = "https://storage.googleapis.com/kubernetes-helm/helm-%s-windows-amd64.tar.gz"
 )
 
 // Upgrade ...
@@ -127,9 +126,9 @@ func Version() {
 }
 
 // Download ...
-func Download(dst string) {
+func Download(dst string, helmVersion string) {
 	if _, err := os.Stat(gokube.GetBinDir() + "/helm.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("helm v"+VERSION, URL, VERSION)
+		download.DownloadFromUrl("helm "+helmVersion, URL, helmVersion)
 		utils.MoveFile(gokube.GetTempDir()+"/windows-amd64/helm.exe", dst+"/helm.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}

@@ -1,10 +1,11 @@
+# GoKube
 [![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
-
-# What is GoKube?
 
 ![gokube](https://gemalto.github.io/gokube/logo/gokube_150x150.png)
 
-GoKube is a tool that makes it easy developping day-to-day with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
+## What is GoKube?
+
+GoKube is a tool that makes it easy developing day-to-day with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
 
 GoKube downloads and installs many dependencies such as:
 * [Minikube](https://github.com/kubernetes/minikube)
@@ -25,39 +26,54 @@ GoKube is configured with a dedicated helm repository named [miniapps](https://g
 
 These charts are optimized in term of memory and cpu for minikube and very useful for developers.
 
-# Continuous Integration & Delivery
+## Continuous Integration & Delivery
 
 GoKube is building and delivering under Travis.
 
 [![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
 
-# How to install GoKube?
+## How to upgrade GoKube?
 
-## Windows
+### Windows
 
-### Requirements
+#### Download binary
+
+* The latest release for gokube can be download on the [Releases page](https://github.com/gemalto/gokube/releases/latest).
+* Copy executable file to: C:\gokube\bin and replace the previous one.
+
+#### Upgrade GoKube
+
+```shell
+$ gokube init --upgrade
+```
+
+## How to install GoKube?
+
+### Windows
+
+#### Requirements
 * [VirtualBox](https://www.virtualbox.org/wiki/Downloads) or [Hyper-V](https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#hyperV-driver)
 * VT-x/AMD-v virtualization must be enabled in BIOS
 * Internet connection on first run
 
-### Assumptions 
+#### Assumptions 
 
 You will use C:\gokube\bin to store executable files.
 
-### Set up Your Directory
+#### Set up Your Directory
 
 You’ll need a place to store the gokube executable:
 * Open Windows Explorer.
 * Create a new folder: C:\gokube, assuming you want gokube on your C drive, although this can go anywhere.
 * Create a subfolder in the gokube folder: C:\gokube\bin
 
-### Download binary
+#### Download binary
 
 * The latest release for gokube can be download on the [Releases page](https://github.com/gemalto/gokube/releases/latest).
 * Copy executable file to: C:\gokube\bin
 * The gokube executable will be named as gokube-version-type+platform.arch.exe. Rename the executable to gokube.exe for ease of use.
 
-### Verify the Executable
+#### Verify the Executable
 
 In your preferred CLI, at the prompt, type gokube and press the Enter key. You should see output that starts with:
 
@@ -84,8 +100,7 @@ If you do, then the installation is complete.
 
 If you don’t, double-check the path that you placed the gokube.exe file in and that you typed that path correctly when you added it to your PATH variable.
 
-# Quickstart
-Here's a brief demo of GoKube usage.
+#### Install GoKube
 
 ```shell
 $ gokube init
@@ -214,7 +229,8 @@ Kubectl is now configured to use the cluster.
 Loading cached images from config file.
 ```
 
-# Developer Guide
+## Additional Links
 
-If you want to contribute to this project you are encouraged to send issue request, or provide pull-requests. 
-Please read the [developer guide](./docs/developer-guide.md) to learn more on how you can contribute. 
+* [**Contributing**](./CONTRIBUTING.md)
+* [**Development Guide**](./docs/developer-guide.md)
+

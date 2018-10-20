@@ -26,7 +26,7 @@ import (
 
 const (
 	URL     = "https://storage.googleapis.com/kubernetes-release/release/v%s/bin/windows/amd64/kubectl.exe"
-	VERSION = "1.10.8"
+	VERSION = "1.12.0"
 )
 
 // ConfigUseContext ...
@@ -99,4 +99,5 @@ func DeleteSecret(name string) {
 // Purge ...
 func Purge() {
 	utils.RemoveFile(gokube.GetBinDir() + "/kubectl.exe")
+	utils.RemoveDir(utils.GetUserHome() + "/.kube")
 }

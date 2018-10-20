@@ -27,11 +27,15 @@ import (
 	"gopkg.in/cheggaaa/pb.v2"
 )
 
-// DownloadFromUrl...
+// DownloadFromUrl ...
 func DownloadFromUrl(name string, tpl string, version string) int64 {
 
-	url := fmt.Sprintf(tpl, version)
+	url := tpl
 
+	if strings.Contains(tpl, "%s") {
+		url = fmt.Sprintf(tpl, version)
+	}
+	
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]
 

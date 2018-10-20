@@ -35,6 +35,10 @@ var httpsProxy string
 var noProxy string
 var upgrade bool
 var insecureRegistry string
+var minikubeFork string
+var minikubeVersion string
+var helmVersion string
+var kubernetesVersion string
 
 // initCmd represents the start command
 var initCmd = &cobra.Command{
@@ -45,6 +49,10 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
+	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", "v0.30.0", "The minikube version (ex: v0.28.0)")
+	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.11.0", "The helm version (ex: v2.10.0)")
+	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.8", "The kubernetes version (ex: v1.10.8)")
+	initCmd.Flags().StringVarP(&minikubeFork, "minikube-fork", "", "minikube", "The minikube fork which will be used instead of the official one")
 	initCmd.Flags().Int16VarP(&memory, "memory", "m", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&nCPUs, "nCPUs", "c", int16(4), "Number of CPUs allocated to the minikube VM")
 	initCmd.Flags().StringVarP(&diskSize, "disk-size", "d", "20g", "Disk size allocated to the minikube VM. Format: <number>[<unit>], where unit = b, k, m or g")
@@ -72,15 +80,16 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	// Download dependencies
-	minikube.Download(gokube.GetBinDir())
-	helm.Download(gokube.GetBinDir())
+	minikube.Download(gokube.GetBinDir(), minikubeFork, minikubeVersion)
+	helm.Download(gokube.GetBinDir(), helmVersion)
 	docker.Download(gokube.GetBinDir())
 	kubectl.Download(gokube.GetBinDir())
 
 	// Create virtual machine (minikube)
-	fmt.Println("\nInstalling goKube...")
+	minikube.Start(memory, nCPUs, diskSize, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion)
+
+	// Disbale notification for updates
 	minikube.ConfigSet("WantUpdateNotification", "false")
-	minikube.Start(memory, nCPUs, diskSize, httpProxy, httpsProxy, noProxy, insecureRegistry)
 
 	// Switch context to minikube for kubectl and helm
 	kubectl.ConfigUseContext("minikube")
@@ -108,7 +117,7 @@ func initRun(cmd *cobra.Command, args []string) {
 		kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"NO_PROXY\",\"value\":\""+noProxy+"\"}]}]}}}}")
 	}
 
-	fmt.Println("\ngoKube has been installed.")
+	fmt.Println("\nGoKube has been installed.")
 	fmt.Println("Now, you need more or less 10 minutes for running pods...")
 	fmt.Println("\nTo verify that pods are running, execute:")
 	fmt.Println("> kubectl get pods --all-namespaces")
