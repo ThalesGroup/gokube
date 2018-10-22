@@ -117,6 +117,9 @@ func initRun(cmd *cobra.Command, args []string) {
 		kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"NO_PROXY\",\"value\":\""+noProxy+"\"}]}]}}}}")
 	}
 
+	// Patch kubernetes-dashboard to expose it on nodePort 30000
+	kubectl.Patch("kube-system", "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
+
 	fmt.Println("\nGoKube has been installed.")
 	fmt.Println("Now, you need more or less 10 minutes for running pods...")
 	fmt.Println("\nTo verify that pods are running, execute:")
