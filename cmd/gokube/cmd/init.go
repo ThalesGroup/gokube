@@ -51,7 +51,7 @@ var initCmd = &cobra.Command{
 func init() {
 	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", "v0.30.0", "The minikube version (ex: v0.28.0)")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.11.0", "The helm version (ex: v2.10.0)")
-	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.8", "The kubernetes version (ex: v1.10.8)")
+	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.9", "The kubernetes version (ex: v1.10.9)")
 	initCmd.Flags().StringVarP(&minikubeFork, "minikube-fork", "", "minikube", "The minikube fork which will be used instead of the official one")
 	initCmd.Flags().Int16VarP(&memory, "memory", "m", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&nCPUs, "nCPUs", "c", int16(4), "Number of CPUs allocated to the minikube VM")
