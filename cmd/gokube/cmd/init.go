@@ -51,7 +51,7 @@ var initCmd = &cobra.Command{
 func init() {
 	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", "v0.30.0", "The minikube version (ex: v0.28.0)")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.11.0", "The helm version (ex: v2.10.0)")
-	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.8", "The kubernetes version (ex: v1.10.8)")
+	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.9", "The kubernetes version (ex: v1.10.9)")
 	initCmd.Flags().StringVarP(&minikubeFork, "minikube-fork", "", "minikube", "The minikube fork which will be used instead of the official one")
 	initCmd.Flags().Int16VarP(&memory, "memory", "m", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&nCPUs, "nCPUs", "c", int16(4), "Number of CPUs allocated to the minikube VM")
@@ -107,9 +107,18 @@ func initRun(cmd *cobra.Command, args []string) {
 	helm.UpgradeWithConfiguration("gokube", "kube-system", "api.config.repos[0].name=miniapps,api.config.repos[0].url=https://gemalto.github.io/miniapps,api.config.repos[0].source=https://github.com/gemalto/miniapps/tree/master/charts,api.replicaCount=1,api.image.pullPolicy=IfNotPresent,api.config.cacheRefreshInterval=60,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=GoKube,prerender.replicaCount=1,prerender.image.pullPolicy=IfNotPresent", "monocular/monocular", "0.6.3")
 
 	// Configure proxy for Monocular
-	kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"HTTP_PROXY\",\"value\":\""+httpsProxy+"\"}]}]}}}}")
-	kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"HTTPS_PROXY\",\"value\":\""+httpProxy+"\"}]}]}}}}")
-	kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"NO_PROXY\",\"value\":\""+noProxy+"\"}]}]}}}}")
+	if httpsProxy != "" {
+		kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"HTTP_PROXY\",\"value\":\""+httpsProxy+"\"}]}]}}}}")
+	}
+	if httpProxy != "" {
+		kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"HTTPS_PROXY\",\"value\":\""+httpProxy+"\"}]}]}}}}")
+	}
+	if noProxy != "" {
+		kubectl.Patch("kube-system", "deployment", "gokube-monocular-api", "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"monocular\",\"env\":[{\"name\":\"NO_PROXY\",\"value\":\""+noProxy+"\"}]}]}}}}")
+	}
+
+	// Patch kubernetes-dashboard to expose it on nodePort 30000
+	kubectl.Patch("kube-system", "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
 
 	fmt.Println("\nGoKube has been installed.")
 	fmt.Println("Now, you need more or less 10 minutes for running pods...")
