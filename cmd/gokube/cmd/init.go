@@ -145,7 +145,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	helm.UpgradeWithConfiguration("gokube", "kube-system", "sync.repos[0].name=miniapps,sync.repos[0].url=https://gemalto.github.io/miniapps,chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=GoKube,prerender.image.pullPolicy=IfNotPresent", "monocular/monocular", "1.1.0")
 
 	// Deploy transparent proxy (if requested)
-	if tproxy {
+	if tproxy && httpProxy != "" && httpsProxy != "" {
 		helm.UpgradeWithConfiguration("any-proxy", "kube-system", "global.httpProxy="+httpProxy+",global.httpsProxy="+httpsProxy, "miniapps/any-proxy", "1.0.0")
 	}
 
