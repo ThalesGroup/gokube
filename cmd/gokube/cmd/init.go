@@ -123,6 +123,10 @@ func initRun(cmd *cobra.Command, args []string) {
 		cacheAndTag(dockerCacheRepository, "chartsvc:v1.0.0", "quay.io/helmpack", dockerEnv)
 		cacheAndTag(dockerCacheRepository, "monocular-ui:v1.0.0", "quay.io/helmpack", dockerEnv)
 		minikube.Cache("migmartri/prerender:latest")
+
+		// Put needed images in cache (any-proxy)
+		minikube.Cache("alpine:3.8")
+		minikube.Cache(dockerCacheRepository + "/any-proxy:1.0.1")
 	}
 
 	// Switch context to minikube for kubectl and helm
@@ -142,7 +146,7 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	// Deploy transparent proxy (if requested)
 	if tproxy {
-		helm.UpgradeWithConfiguration("any-proxy", "kube-system", "global.httpProxy="+httpProxy+",global.httpsProxy="+httpsProxy, "miniapps/any-proxy", "1.0")
+		helm.UpgradeWithConfiguration("any-proxy", "kube-system", "global.httpProxy="+httpProxy+",global.httpsProxy="+httpsProxy, "miniapps/any-proxy", "1.0.0")
 	}
 
 	// Patch kubernetes-dashboard to expose it on nodePort 30000
