@@ -31,6 +31,7 @@ import (
 var memory int16
 var cpus int16
 var diskSize string
+var tproxy bool
 var httpProxy string
 var httpsProxy string
 var noProxy string
@@ -59,6 +60,7 @@ func init() {
 	initCmd.Flags().Int16VarP(&memory, "memory", "m", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&cpus, "cpus", "c", int16(4), "Number of CPUs allocated to the minikube VM")
 	initCmd.Flags().StringVarP(&diskSize, "disk-size", "d", "20g", "Disk size allocated to the minikube VM. Format: <number>[<unit>], where unit = b, k, m or g")
+	initCmd.Flags().BoolVarP(&tproxy, "transparent-proxy", "", false, "Manage HTTP proxy connections with transparent proxy")
 	initCmd.Flags().StringVarP(&httpProxy, "http-proxy", "", "", "HTTP proxy for minikube VM")
 	initCmd.Flags().StringVarP(&httpsProxy, "https-proxy", "", "", "HTTPS proxy for minikube VM")
 	initCmd.Flags().StringVarP(&noProxy, "no-proxy", "", "", "No proxy for minikube VM")
@@ -101,7 +103,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	kubectl.Download(gokube.GetBinDir())
 
 	// Create virtual machine (minikube)
-	minikube.Start(memory, cpus, diskSize, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, dockerCacheRepository != "")
+	minikube.Start(memory, cpus, diskSize, tproxy, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, dockerCacheRepository != "")
 
 	// Disbale notification for updates
 	minikube.ConfigSet("WantUpdateNotification", "false")
@@ -137,6 +139,11 @@ func initRun(cmd *cobra.Command, args []string) {
 	// Deploy Monocular
 	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", "0.29.2")
 	helm.UpgradeWithConfiguration("gokube", "kube-system", "sync.repos[0].name=miniapps,sync.repos[0].url=https://gemalto.github.io/miniapps,chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=GoKube,prerender.image.pullPolicy=IfNotPresent", "monocular/monocular", "1.1.0")
+
+	// Deploy transparent proxy (if requested)
+	if tproxy {
+		helm.UpgradeWithConfiguration("any-proxy", "kube-system", "global.httpProxy="+httpProxy+",global.httpsProxy="+httpsProxy, "miniapps/any-proxy", "1.0")
+	}
 
 	// Patch kubernetes-dashboard to expose it on nodePort 30000
 	kubectl.Patch("kube-system", "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
