@@ -99,5 +99,5 @@ func DeleteSecret(name string) {
 // Purge ...
 func Purge() {
 	utils.RemoveFile(gokube.GetBinDir() + "/kubectl.exe")
-	utils.RemoveDir(utils.GetUserHome() + "/.kube")
+	utils.CleanDir(utils.GetUserHome() + "/.kube")
 }
