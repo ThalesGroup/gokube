@@ -148,7 +148,7 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	// Deploy Monocular
 	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", "0.29.2")
-	helm.UpgradeWithConfiguration("gokube", "kube-system", "sync.repos[0].name=miniapps,sync.repos[0].url=https://gemalto.github.io/miniapps,chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=GoKube,prerender.image.pullPolicy=IfNotPresent", "monocular/monocular", "1.1.0")
+	helm.UpgradeWithConfiguration("gokube", "kube-system", "sync.repos[0].name=miniapps,sync.repos[0].url="+miniappsHelmRepository+",sync.httpProxy="+httpProxy+",sync.httpsProxy="+httpsProxy+",chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=GoKube,prerender.image.pullPolicy=IfNotPresent", "monocular/monocular", "1.1.0")
 
 	// Deploy transparent proxy (if requested)
 	if tproxy && httpProxy != "" && httpsProxy != "" {
