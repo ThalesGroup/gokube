@@ -130,7 +130,7 @@ func initRun(cmd *cobra.Command, args []string) {
 		cacheAndTag(alternateCacheImagePath, "monocular-ui:v1.0.0", "quay.io/helmpack", dockerEnv)
 		minikube.Cache("migmartri/prerender:latest")
 
-		if tproxy {
+		if tproxy && httpProxy != "" && httpsProxy != "" {
 			// Put needed images in cache (any-proxy)
 			minikube.Cache("alpine:3.8")
 			minikube.Cache(alternateCacheImagePath + "/any-proxy:1.0.1")
