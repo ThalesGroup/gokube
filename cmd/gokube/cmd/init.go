@@ -41,7 +41,8 @@ var minikubeURI string
 var minikubeVersion string
 var helmVersion string
 var kubernetesVersion string
-var dockerCacheRepository string
+var cache bool
+var alternateCacheImagePath string
 var miniappsHelmRepository string
 
 // initCmd represents the start command
@@ -60,13 +61,14 @@ func init() {
 	initCmd.Flags().Int16VarP(&memory, "memory", "m", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&cpus, "cpus", "c", int16(4), "Number of CPUs allocated to the minikube VM")
 	initCmd.Flags().StringVarP(&diskSize, "disk-size", "d", "20g", "Disk size allocated to the minikube VM. Format: <number>[<unit>], where unit = b, k, m or g")
-	initCmd.Flags().BoolVarP(&tproxy, "transparent-proxy", "", false, "Manage HTTP proxy connections with transparent proxy")
+	initCmd.Flags().BoolVarP(&tproxy, "transparent-proxy", "", false, "Manage HTTP proxy connections with transparent proxy, implies --cache")
 	initCmd.Flags().StringVarP(&httpProxy, "http-proxy", "", "", "HTTP proxy for minikube VM")
 	initCmd.Flags().StringVarP(&httpsProxy, "https-proxy", "", "", "HTTPS proxy for minikube VM")
 	initCmd.Flags().StringVarP(&noProxy, "no-proxy", "", "", "No proxy for minikube VM")
 	initCmd.Flags().BoolVarP(&upgrade, "upgrade", "u", false, "Upgrade if Go Kube! is already installed")
 	initCmd.Flags().StringVarP(&insecureRegistry, "insecure-registry", "", "", "Insecure Docker registries to pass to the Docker daemon. The default service CIDR range will automatically be added.")
-	initCmd.Flags().StringVarP(&dockerCacheRepository, "cache-docker-repository", "", "", "Docker repository used to download cache images that will be pulled by minikube")
+	initCmd.Flags().BoolVarP(&cache, "cache", "", false, "Download images in cache before pulling them in minikube")
+	initCmd.Flags().StringVarP(&alternateCacheImagePath, "alternate-cache-image-path", "", "", "Alternate docker image path used to download images in cache")
 	initCmd.Flags().StringVarP(&miniappsHelmRepository, "miniapps-helm-repository", "", "https://gemalto.github.io/miniapps", "Helm repository for miniapps")
 	RootCmd.AddCommand(initCmd)
 }
@@ -102,31 +104,35 @@ func initRun(cmd *cobra.Command, args []string) {
 	docker.Download(gokube.GetBinDir())
 	kubectl.Download(gokube.GetBinDir())
 
+	if tproxy {
+		cache = true
+	}
+
 	// Create virtual machine (minikube)
-	minikube.Start(memory, cpus, diskSize, tproxy, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, dockerCacheRepository != "")
+	minikube.Start(memory, cpus, diskSize, tproxy, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, cache)
 
 	// Disbale notification for updates
 	minikube.ConfigSet("WantUpdateNotification", "false")
 
-	if dockerCacheRepository != "" {
+	if cache {
 		dockerEnv := minikube.DockerEnv()
 
 		// Put needed images in cache (Helm)
 		minikube.Cache("gcr.io/kubernetes-helm/tiller:v2.11.0")
 
 		// Put needed images in cache (Nginx ingress controller)
-		cacheAndTag(dockerCacheRepository, "nginx-ingress-controller:0.20.0", "quay.io/kubernetes-ingress-controller", dockerEnv)
+		cacheAndTag(alternateCacheImagePath, "nginx-ingress-controller:0.20.0", "quay.io/kubernetes-ingress-controller", dockerEnv)
 		minikube.Cache("k8s.gcr.io/defaultbackend:1.4")
 
 		// Put needed images in cache (Monocular)
-		cacheAndTag(dockerCacheRepository, "chart-repo:v1.0.0", "quay.io/helmpack", dockerEnv)
-		cacheAndTag(dockerCacheRepository, "chartsvc:v1.0.0", "quay.io/helmpack", dockerEnv)
-		cacheAndTag(dockerCacheRepository, "monocular-ui:v1.0.0", "quay.io/helmpack", dockerEnv)
+		cacheAndTag(alternateCacheImagePath, "chart-repo:v1.0.0", "quay.io/helmpack", dockerEnv)
+		cacheAndTag(alternateCacheImagePath, "chartsvc:v1.0.0", "quay.io/helmpack", dockerEnv)
+		cacheAndTag(alternateCacheImagePath, "monocular-ui:v1.0.0", "quay.io/helmpack", dockerEnv)
 		minikube.Cache("migmartri/prerender:latest")
 
 		// Put needed images in cache (any-proxy)
 		minikube.Cache("alpine:3.8")
-		minikube.Cache(dockerCacheRepository + "/any-proxy:1.0.1")
+		minikube.Cache(alternateCacheImagePath + "/any-proxy:1.0.1")
 	}
 
 	// Switch context to minikube for kubectl and helm
