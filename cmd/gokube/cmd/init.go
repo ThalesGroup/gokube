@@ -128,6 +128,7 @@ func initRun(cmd *cobra.Command, args []string) {
 		cacheAndTag(alternateCacheImagePath, "chart-repo:v1.0.0", "quay.io/helmpack", dockerEnv)
 		cacheAndTag(alternateCacheImagePath, "chartsvc:v1.0.0", "quay.io/helmpack", dockerEnv)
 		cacheAndTag(alternateCacheImagePath, "monocular-ui:v1.0.0", "quay.io/helmpack", dockerEnv)
+		minikube.Cache("bitnami/mongodb:4.0.3")
 		minikube.Cache("migmartri/prerender:latest")
 
 		if tproxy && httpProxy != "" && httpsProxy != "" {
