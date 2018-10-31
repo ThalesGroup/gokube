@@ -155,7 +155,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	if !tproxy && httpProxy != "" && httpsProxy != "" {
 		goKubeConfiguration = goKubeConfiguration + ",sync.httpProxy=" + httpProxy + ",sync.httpsProxy=" + httpsProxy
 	}
-	helm.UpgradeWithConfiguration("gokube", "kube-system", goKubeConfiguration, "monocular/monocular", "1.1.0")
+	helm.UpgradeWithConfiguration("gokube", "kube-system", goKubeConfiguration, "monocular/monocular", "1.2.0")
 
 	// Deploy transparent proxy (if requested)
 	if tproxy && httpProxy != "" && httpsProxy != "" {
