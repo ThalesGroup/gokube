@@ -26,8 +26,10 @@ import (
 )
 
 const (
-	URL     = "https://download.docker.com/win/static/edge/x86_64/docker-%s-ce.zip"
-	VERSION = "17.10.0"
+	//	URL     = "https://download.docker.com/win/static/edge/x86_64/docker-%s-ce.zip"
+	//	VERSION = "17.10.0"
+	URL     = "https://github.com/StefanScherer/docker-cli-builder/releases/download/%s-ce/docker.exe"
+	VERSION = "18.06.1"
 )
 
 // LoadImages ...
@@ -89,7 +91,7 @@ func Version() {
 func Download(dst string) {
 	if _, err := os.Stat(gokube.GetBinDir() + "/docker.exe"); os.IsNotExist(err) {
 		download.DownloadFromUrl("docker v"+VERSION, URL, VERSION)
-		utils.MoveFile(gokube.GetTempDir()+"/docker/docker.exe", dst+"/docker.exe")
+		utils.MoveFile(gokube.GetTempDir()+"/docker.exe", dst+"/docker.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
 }
@@ -109,5 +111,21 @@ func RemoveImage(image string, envVars []utils.EnvVar) {
 // Purge ...
 func Purge() {
 	utils.RemoveFile(gokube.GetBinDir() + "/docker.exe")
-	utils.RemoveDir(utils.GetUserHome() + "/.docker")
+	utils.CleanDir(utils.GetUserHome() + "/.docker")
+}
+
+// Init ...
+func Init() {
+	var configJsonPath = utils.GetUserHome() + "/.docker/config.json"
+	_, err := os.Stat(configJsonPath)
+	if err == nil {
+		return
+	}
+	newFile, err := os.Create(configJsonPath)
+	if err != nil {
+		fmt.Printf("Error while creating %s\n", configJsonPath)
+	}
+	newFile.WriteString("{}")
+	newFile.Sync()
+	newFile.Close()
 }

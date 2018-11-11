@@ -27,13 +27,24 @@ import (
 	"github.com/gemalto/gokube/pkg/utils"
 )
 
-const (
-	URL = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
-)
-
 // Start ...
-func Start(memory int16, nCPUs int16, diskSize string, httpProxy string, httpsProxy string, npProxy string, insecureRegistry string, kubernetesVersion string) {
-	cmd := exec.Command("minikube", "start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--docker-env", "HTTP_PROXY="+httpProxy, "--docker-env", "HTTPS_PROXY="+httpsProxy, "--docker-env", "NO_PROXY="+npProxy, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(nCPUs), 10), "--disk-size", diskSize, "--network-plugin=cni", "--extra-config=kubelet.network-plugin=cni")
+func Start(memory int16, cpus int16, diskSize string, tproxy bool, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool) {
+	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--extra-config=kubelet.network-plugin=cni"}
+	if !tproxy {
+		args = append(args, "--docker-env", "HTTP_PROXY="+httpProxy, "--docker-env", "HTTPS_PROXY="+httpsProxy, "--docker-env", "NO_PROXY="+noProxy)
+	}
+	if cache {
+		args = append(args, "--cache-images")
+	}
+	cmd := exec.Command("minikube", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+}
+
+// Cache ...
+func Cache(image string) {
+	cmd := exec.Command("minikube", "cache", "add", image)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
@@ -74,8 +85,8 @@ func Status() {
 // Delete ...
 func Delete() {
 	cmd := exec.Command("minikube", "delete")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	//	cmd.Stdout = os.Stdout
+	//	cmd.Stderr = os.Stderr
 	cmd.Run()
 }
 
@@ -133,13 +144,9 @@ func DockerEnv() []utils.EnvVar {
 }
 
 // Download ...
-func Download(dst string, minikubeFork string, minikubeVersion string) {
+func Download(dst string, minikubeURI string, minikubeVersion string) {
 	if _, err := os.Stat(dst + "/minikube.exe"); os.IsNotExist(err) {
-		if strings.EqualFold(minikubeFork, "minikube") {
-			download.DownloadFromUrl("minikube "+minikubeVersion, URL, minikubeVersion)
-		} else {
-			download.DownloadFromUrl("minikube forked", minikubeFork, minikubeVersion)
-		}
+		download.DownloadFromUrl("minikube "+minikubeVersion, minikubeURI, minikubeVersion)
 		utils.MoveFile(gokube.GetTempDir()+"/minikube-windows-amd64.exe", dst+"/minikube.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
@@ -148,7 +155,7 @@ func Download(dst string, minikubeFork string, minikubeVersion string) {
 // Purge ...
 func Purge() {
 	utils.RemoveFile(gokube.GetBinDir() + "/minikube.exe")
-	utils.RemoveDir(utils.GetUserHome() + "/.minikube")
+	utils.CleanDir(utils.GetUserHome() + "/.minikube")
 }
 
 func toLinuxPath(path string) string {
