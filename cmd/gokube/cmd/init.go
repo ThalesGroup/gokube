@@ -16,8 +16,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/gemalto/gokube/pkg/utils"
 	"os"
+
+	"github.com/gemalto/gokube/pkg/utils"
 
 	"github.com/gemalto/gokube/pkg/docker"
 	"github.com/gemalto/gokube/pkg/gokube"
@@ -37,7 +38,7 @@ var httpsProxy string
 var noProxy string
 var upgrade bool
 var insecureRegistry string
-var minikubeURI string
+var minikubeURL string
 var minikubeVersion string
 var helmVersion string
 var kubernetesVersion string
@@ -55,7 +56,7 @@ var initCmd = &cobra.Command{
 
 func init() {
 	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", "v0.30.0", "The minikube version (ex: v0.30.0)")
-	initCmd.Flags().StringVarP(&minikubeURI, "minikube-uri", "", "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe", "The URI to download minikube")
+	initCmd.Flags().StringVarP(&minikubeURL, "minikube-url", "", "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe", "The URL to download minikube")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.11.0", "The helm version (ex: v2.10.0)")
 	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.9", "The kubernetes version (ex: v1.10.9)")
 	initCmd.Flags().Int16VarP(&memory, "memory", "m", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
@@ -98,8 +99,8 @@ func initRun(cmd *cobra.Command, args []string) {
 		docker.Init()
 	}
 
-	// Download dependencies
-	minikube.Download(gokube.GetBinDir(), minikubeURI, minikubeVersion)
+	// Download dependencies...
+	minikube.Download(gokube.GetBinDir(), minikubeURL, minikubeVersion)
 	helm.Download(gokube.GetBinDir(), helmVersion)
 	docker.Download(gokube.GetBinDir())
 	kubectl.Download(gokube.GetBinDir())
