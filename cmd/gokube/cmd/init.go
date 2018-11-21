@@ -152,7 +152,7 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	// Deploy Monocular
 	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", "0.29.2")
-	var goKubeConfiguration = "sync.repos[0].name=miniapps,sync.repos[0].url=" + miniappsHelmRepository + ",chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=GoKube,prerender.image.pullPolicy=IfNotPresent"
+	var goKubeConfiguration = "sync.repos[0].name=miniapps,sync.repos[0].url=" + miniappsHelmRepository + ",chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=gokube,prerender.image.pullPolicy=IfNotPresent"
 	if !tproxy && httpProxy != "" && httpsProxy != "" {
 		goKubeConfiguration = goKubeConfiguration + ",sync.httpProxy=" + httpProxy + ",sync.httpsProxy=" + httpsProxy
 	}
@@ -166,7 +166,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	// Patch kubernetes-dashboard to expose it on nodePort 30000
 	kubectl.Patch("kube-system", "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
 
-	fmt.Println("\nGoKube has been installed.")
+	fmt.Println("\ngokube has been installed.")
 	fmt.Println("Now, you need more or less 10 minutes for running pods...")
 	fmt.Println("\nTo verify that pods are running, execute:")
 	fmt.Println("> kubectl get pods --all-namespaces")
