@@ -56,7 +56,7 @@ var initCmd = &cobra.Command{
 
 func init() {
 	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", "v0.30.0", "The minikube version (ex: v0.30.0)")
-	initCmd.Flags().StringVarP(&minikubeURL, "minikube-url", "", "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe", "The URL to download minikube")
+	initCmd.Flags().StringVarP(&minikubeURL, "minikube-url", "", "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe", "The URL for downloading minikube binary")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.11.0", "The helm version (ex: v2.10.0)")
 	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.9", "The kubernetes version (ex: v1.10.9)")
 	initCmd.Flags().Int16VarP(&memory, "memory", "m", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
@@ -66,11 +66,11 @@ func init() {
 	initCmd.Flags().StringVarP(&httpProxy, "http-proxy", "", "", "HTTP proxy for minikube VM")
 	initCmd.Flags().StringVarP(&httpsProxy, "https-proxy", "", "", "HTTPS proxy for minikube VM")
 	initCmd.Flags().StringVarP(&noProxy, "no-proxy", "", "", "No proxy for minikube VM")
-	initCmd.Flags().BoolVarP(&upgrade, "upgrade", "u", false, "Upgrade if Go Kube! is already installed")
+	initCmd.Flags().BoolVarP(&upgrade, "upgrade", "u", false, "Upgrade if gokube has already been installed")
 	initCmd.Flags().StringVarP(&insecureRegistry, "insecure-registry", "", "", "Insecure Docker registries to pass to the Docker daemon. The default service CIDR range will automatically be added.")
-	initCmd.Flags().BoolVarP(&cache, "cache", "", false, "Download images in cache before pulling them in minikube")
-	initCmd.Flags().StringVarP(&alternateCacheImagePath, "alternate-cache-image-path", "", "", "Alternate docker image path used to download images in cache")
-	initCmd.Flags().StringVarP(&miniappsHelmRepository, "miniapps-helm-repository", "", "https://gemalto.github.io/miniapps", "Helm repository for miniapps")
+	initCmd.Flags().BoolVarP(&cache, "cache", "", true, "Download docker images in local docker registry before pulling them from kubernetes")
+	initCmd.Flags().StringVarP(&alternateCacheImagePath, "alternate-cache-image-path", "", "", "Alternate docker image path used for downloading docker images in cache")
+	initCmd.Flags().StringVarP(&miniappsHelmRepository, "miniapps-helm-repository", "", "https://gemalto.github.io/miniapps", "Helm repository for miniapps charts")
 	RootCmd.AddCommand(initCmd)
 }
 
@@ -167,7 +167,6 @@ func initRun(cmd *cobra.Command, args []string) {
 	kubectl.Patch("kube-system", "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
 
 	fmt.Println("\ngokube has been installed.")
-	fmt.Println("Now, you need more or less 10 minutes for running pods...")
 	fmt.Println("\nTo verify that pods are running, execute:")
 	fmt.Println("> kubectl get pods --all-namespaces")
 	fmt.Println("")
