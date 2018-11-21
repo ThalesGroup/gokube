@@ -68,7 +68,7 @@ func init() {
 	initCmd.Flags().StringVarP(&noProxy, "no-proxy", "", "", "No proxy for minikube VM")
 	initCmd.Flags().BoolVarP(&upgrade, "upgrade", "u", false, "Upgrade if gokube has already been installed")
 	initCmd.Flags().StringVarP(&insecureRegistry, "insecure-registry", "", "", "Insecure Docker registries to pass to the Docker daemon. The default service CIDR range will automatically be added.")
-	initCmd.Flags().BoolVarP(&cache, "cache", "", true, "Download docker images in local docker registry before pulling them from kubernetes")
+	initCmd.Flags().BoolVarP(&cache, "cache", "", false, "Download docker images in local docker registry before pulling them from kubernetes")
 	initCmd.Flags().StringVarP(&alternateCacheImagePath, "alternate-cache-image-path", "", "", "Alternate docker image path used for downloading docker images in cache")
 	initCmd.Flags().StringVarP(&miniappsHelmRepository, "miniapps-helm-repository", "", "https://gemalto.github.io/miniapps", "Helm repository for miniapps charts")
 	RootCmd.AddCommand(initCmd)
