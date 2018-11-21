@@ -137,5 +137,5 @@ func Download(dst string, helmVersion string) {
 // Purge ...
 func Purge() {
 	utils.RemoveFile(gokube.GetBinDir() + "/helm.exe")
-	utils.RemoveDir(utils.GetUserHome() + "/.helm")
+	utils.CleanDir(utils.GetUserHome() + "/.helm")
 }
