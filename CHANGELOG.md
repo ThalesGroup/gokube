@@ -1,5 +1,14 @@
 # GoKube Release Notes
 
+## Version 1.4.0 - 11/21/2018
+* Bump to monocular v1.2.0 (that support http proxy)
+* Bump to docker v18.06
+* Bump to k8s v1.10.9
+* Add docker image 'mongodb' in cache for monocular
+* Add support of any-proxy (for transparent proxy)
+* Add support of --cache-images
+* Patch kubernetes-dashboard service to expose it on nodePort: 30000
+
 ## Version 1.3.0 - 10/15/2018
 * Add option for using a specific version for Minikube
 * Add option for using a specific version for Helm
