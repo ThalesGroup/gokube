@@ -35,7 +35,7 @@ var versionCmd = &cobra.Command{
 			fmt.Fprintln(os.Stderr, "usage: gokube version")
 			os.Exit(1)
 		}
-		fmt.Println("gokube version: v1.3.0")
+		fmt.Println("gokube version: v1.4.0")
 		minikube.Version()
 		helm.Version()
 		docker.Version()
