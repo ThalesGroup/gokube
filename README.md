@@ -26,9 +26,10 @@ gokube is configured with a dedicated helm repository named [miniapps](https://g
 
 These charts are optimized in term of memory and cpu for minikube and very useful for developers.
 
-## Continuous Integration & Delivery
+## Continuous Integration & Delivery 
+[![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
 
-gokube is building and delivering under Travis. [![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
+gokube is building and delivering under Travis. 
 
 ## How to upgrade gokube?
 
