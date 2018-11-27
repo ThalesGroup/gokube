@@ -28,9 +28,7 @@ These charts are optimized in term of memory and cpu for minikube and very usefu
 
 ## Continuous Integration & Delivery
 
-gokube is building and delivering under Travis.
-
-[![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
+gokube is building and delivering under Travis. [![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
 
 ## How to upgrade gokube?
 
