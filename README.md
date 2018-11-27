@@ -8,21 +8,21 @@
 gokube is a tool that makes it easy developing day-to-day with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
 
 gokube downloads and installs many dependencies such as:
-* [Minikube](https://github.com/kubernetes/minikube)
-* [Docker](https://www.docker.com)
-* [Helm](https://github.com/helm/helm)
-* [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl)
-* [Monocular](https://github.com/helm/monocular)
+* [minikube](https://github.com/kubernetes/minikube)
+* [docker](https://www.docker.com)
+* [helm](https://github.com/helm/helm)
+* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl)
+* [monocular](https://github.com/helm/monocular)
 
 gokube deploys and configures Monocular for a better user experience!
 You will be able to deploy in one click useful helm charts for developing in your kubernetes cluster.
 
 gokube is configured with a dedicated helm repository named [miniapps](https://gemalto.github.io/miniapps) which contains the following charts:
-* [Cassandra](https://github.com/gemalto/miniapps/tree/master/charts/cassandra)
-* [Heapster](https://github.com/gemalto/miniapps/tree/master/charts/heapster)
-* [Pact](https://github.com/gemalto/miniapps/tree/master/charts/pact)
-* [Kibana](https://github.com/gemalto/miniapps/tree/master/charts/kibana)
-* [Grafana](https://github.com/gemalto/miniapps/tree/master/charts/grafana)
+* [cassandra](https://github.com/gemalto/miniapps/tree/master/charts/cassandra)
+* [heapster](https://github.com/gemalto/miniapps/tree/master/charts/heapster)
+* [pact](https://github.com/gemalto/miniapps/tree/master/charts/pact)
+* [kibana](https://github.com/gemalto/miniapps/tree/master/charts/kibana)
+* [grafana](https://github.com/gemalto/miniapps/tree/master/charts/grafana)
 
 These charts are optimized in term of memory and cpu for minikube and very useful for developers.
 
