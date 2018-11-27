@@ -1,23 +1,23 @@
-# GoKube
+# gokube
 [![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
 
 ![gokube](https://gemalto.github.io/gokube/logo/gokube_150x150.png)
 
-## What is GoKube?
+## What is gokube?
 
-GoKube is a tool that makes it easy developing day-to-day with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
+gokube is a tool that makes it easy developing day-to-day with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
 
-GoKube downloads and installs many dependencies such as:
+gokube downloads and installs many dependencies such as:
 * [Minikube](https://github.com/kubernetes/minikube)
 * [Docker](https://www.docker.com)
 * [Helm](https://github.com/helm/helm)
 * [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl)
 * [Monocular](https://github.com/helm/monocular)
 
-GoKube deploys and configures Monocular for a better user experience!
+gokube deploys and configures Monocular for a better user experience!
 You will be able to deploy in one click useful helm charts for developing in your kubernetes cluster.
 
-GoKube is configured with a dedicated helm repository named [miniapps](https://gemalto.github.io/miniapps) which contains the following charts:
+gokube is configured with a dedicated helm repository named [miniapps](https://gemalto.github.io/miniapps) which contains the following charts:
 * [Cassandra](https://github.com/gemalto/miniapps/tree/master/charts/cassandra)
 * [Heapster](https://github.com/gemalto/miniapps/tree/master/charts/heapster)
 * [Pact](https://github.com/gemalto/miniapps/tree/master/charts/pact)
@@ -28,11 +28,11 @@ These charts are optimized in term of memory and cpu for minikube and very usefu
 
 ## Continuous Integration & Delivery
 
-GoKube is building and delivering under Travis.
+gokube is building and delivering under Travis.
 
 [![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
 
-## How to upgrade GoKube?
+## How to upgrade gokube?
 
 ### Windows
 
@@ -41,13 +41,13 @@ GoKube is building and delivering under Travis.
 * The latest release for gokube can be download on the [Releases page](https://github.com/gemalto/gokube/releases/latest).
 * Copy executable file to: C:\gokube\bin and replace the previous one.
 
-#### Upgrade GoKube
+#### Upgrade gokube
 
 ```shell
 $ gokube init --upgrade
 ```
 
-## How to install GoKube?
+## How to install gokube?
 
 ### Windows
 
@@ -100,7 +100,7 @@ If you do, then the installation is complete.
 
 If you don’t, double-check the path that you placed the gokube.exe file in and that you typed that path correctly when you added it to your PATH variable.
 
-#### Install GoKube
+#### Install gokube
 
 ```shell
 $ gokube init
