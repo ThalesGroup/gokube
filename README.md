@@ -19,6 +19,7 @@ You will be able to deploy in one click useful helm charts for developing in you
 
 gokube is configured with a dedicated helm repository named [miniapps](https://gemalto.github.io/miniapps) which contains the following charts:
 * [cassandra](https://github.com/gemalto/miniapps/tree/master/charts/cassandra)
+* [mysql](https://github.com/gemalto/miniapps/tree/master/charts/mysql)
 * [heapster](https://github.com/gemalto/miniapps/tree/master/charts/heapster)
 * [pact](https://github.com/gemalto/miniapps/tree/master/charts/pact)
 * [kibana](https://github.com/gemalto/miniapps/tree/master/charts/kibana)
