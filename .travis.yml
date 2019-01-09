@@ -38,4 +38,4 @@ deploy:
   file: bin/$ARTIFACT_NAME
   on:
     repo: gemalto/gokube
-    tags: true # The deployment happens only if the commit has a tag.
+    tags: false # The deployment happens only if the commit has a tag.
