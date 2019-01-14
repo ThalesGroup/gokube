@@ -15,34 +15,22 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/gemalto/gokube/pkg/docker"
-	"github.com/gemalto/gokube/pkg/helm"
-	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
 )
 
-// versionCmd represents the version command
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Shows version for gokube",
-	Long:  `Shows version for gokube`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) > 0 {
-			fmt.Fprintln(os.Stderr, "usage: gokube version")
-			os.Exit(1)
-		}
-		fmt.Println("gokube version: v1.5.0")
-		minikube.Version()
-		helm.Version()
-		docker.Version()
-		kubectl.Version()
-	},
+// stopCmd represents the stop command
+var stopCmd = &cobra.Command{
+	Use:   "stop",
+	Short: "Stops minikube. This command stops minikube",
+	Long:  "Stops minikube. This command stops minikube",
+	Run:   stopRun,
 }
 
 func init() {
-	RootCmd.AddCommand(versionCmd)
+	RootCmd.AddCommand(stopCmd)
+}
+
+func stopRun(cmd *cobra.Command, args []string) {
+	minikube.Stop()
 }

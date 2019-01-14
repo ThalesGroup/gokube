@@ -46,7 +46,7 @@ var cache bool
 var alternateCacheImagePath string
 var miniappsHelmRepository string
 
-// initCmd represents the start command
+// initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + monocular and creates the virtual machine (minikube)",
@@ -55,10 +55,10 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
-	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", "v0.30.0", "The minikube version (ex: v0.30.0)")
+	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", "v0.32.0", "The minikube version (ex: v0.32.0)")
 	initCmd.Flags().StringVarP(&minikubeURL, "minikube-url", "", "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe", "The URL to download minikube")
-	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.11.0", "The helm version (ex: v2.10.0)")
-	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.9", "The kubernetes version (ex: v1.10.9)")
+	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.12.1", "The helm version (ex: v2.12.1)")
+	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.12", "The kubernetes version (ex: v1.10.12)")
 	initCmd.Flags().Int16VarP(&memory, "memory", "m", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&cpus, "cpus", "c", int16(4), "Number of CPUs allocated to the minikube VM")
 	initCmd.Flags().StringVarP(&diskSize, "disk-size", "d", "20g", "Disk size allocated to the minikube VM. Format: <number>[<unit>], where unit = b, k, m or g")
@@ -114,6 +114,9 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	// Disbale notification for updates
 	minikube.ConfigSet("WantUpdateNotification", "false")
+
+	// Displays minikube IP
+	minikube.Ip()
 
 	if cache {
 		dockerEnv := minikube.DockerEnv()

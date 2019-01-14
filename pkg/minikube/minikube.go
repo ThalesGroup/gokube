@@ -42,6 +42,15 @@ func Start(memory int16, cpus int16, diskSize string, tproxy bool, httpProxy str
 	cmd.Run()
 }
 
+// Restart ...
+func Restart(kubernetesVersion string) {
+	var args = []string{"--kubernetes-version", kubernetesVersion}
+	cmd := exec.Command("minikube", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+}
+
 // Cache ...
 func Cache(image string) {
 	cmd := exec.Command("minikube", "cache", "add", image)
@@ -141,6 +150,14 @@ func DockerEnv() []utils.EnvVar {
 		}
 	}
 	return envVar
+}
+
+// IP...
+func Ip() {
+	cmd := exec.Command("minikube", "ip")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
 }
 
 // Download ...
