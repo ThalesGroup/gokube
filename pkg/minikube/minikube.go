@@ -44,7 +44,7 @@ func Start(memory int16, cpus int16, diskSize string, tproxy bool, httpProxy str
 
 // Restart ...
 func Restart(kubernetesVersion string) {
-	var args = []string{"--kubernetes-version", kubernetesVersion}
+	var args = []string{"start", "--kubernetes-version", kubernetesVersion}
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

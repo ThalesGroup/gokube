@@ -16,13 +16,13 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/virtualbox"
 	"os"
 
 	"github.com/gemalto/gokube/pkg/utils"
 
 	"github.com/gemalto/gokube/pkg/docker"
-	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/helm"
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
@@ -46,6 +46,9 @@ var kubernetesVersion string
 var cache bool
 var alternateCacheImagePath string
 var miniappsHelmRepository string
+var monocularVersion = "1.2.8"
+var nginxIngressVersion = "1.1.4"
+var tproxyVersion = "1.0.0"
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -91,10 +94,11 @@ func initRun(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	virtualbox.DeleteHostOnlyNetwork()
+	fmt.Println("Deleting previous minikube VM...")
+	minikube.Delete()
+
 	if !noUpgrade {
-		virtualbox.DeleteHostOnlyNetwork()
-		fmt.Println("Deleting previous minikube VM...")
-		minikube.Delete()
 		fmt.Println("Deleting minikube working directory...")
 		minikube.Purge()
 		fmt.Println("Deleting helm working directory...")
@@ -104,14 +108,12 @@ func initRun(cmd *cobra.Command, args []string) {
 		fmt.Println("Resetting docker working directory...")
 		docker.Purge()
 		docker.Init()
+		fmt.Println("Downloading gokube dependencies...")
+		minikube.Download(gokube.GetBinDir(), minikubeURL, minikubeVersion)
+		helm.Download(gokube.GetBinDir(), helmVersion)
+		docker.Download(gokube.GetBinDir())
+		kubectl.Download(gokube.GetBinDir())
 	}
-
-	// Download dependencies...
-	fmt.Println("Downloading gokube dependencies...")
-	minikube.Download(gokube.GetBinDir(), minikubeURL, minikubeVersion)
-	helm.Download(gokube.GetBinDir(), helmVersion)
-	docker.Download(gokube.GetBinDir())
-	kubectl.Download(gokube.GetBinDir())
 
 	if tproxy {
 		cache = true
@@ -166,17 +168,18 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	// Deploy Monocular
 	fmt.Println("Installing monocular...")
-	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", "0.29.2")
-	var goKubeConfiguration = "sync.repos[0].name=miniapps,sync.repos[0].url=" + miniappsHelmRepository + ",chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=gokube,prerender.image.pullPolicy=IfNotPresent"
+	//	minikube.AddonsEnable("ingress")
+	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", nginxIngressVersion)
+	var goKubeConfiguration = "sync.repos[0].name=miniapps,sync.repos[0].url=" + miniappsHelmRepository + ",chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=gokube,prerender.image.pullPolicy=IfNotPresent,ingress.hosts[0]="
 	if !tproxy && httpProxy != "" && httpsProxy != "" {
 		goKubeConfiguration = goKubeConfiguration + ",sync.httpProxy=" + httpProxy + ",sync.httpsProxy=" + httpsProxy
 	}
-	helm.UpgradeWithConfiguration("gokube", "kube-system", goKubeConfiguration, "monocular/monocular", "1.2.0")
+	helm.UpgradeWithConfiguration("gokube", "kube-system", goKubeConfiguration, "monocular/monocular", monocularVersion)
 
 	// Deploy transparent proxy (if requested)
 	if tproxy && httpProxy != "" && httpsProxy != "" {
 		fmt.Println("Installing transparent proxy...")
-		helm.UpgradeWithConfiguration("any-proxy", "kube-system", "global.httpProxy="+httpProxy+",global.httpsProxy="+httpsProxy, "miniapps/any-proxy", "1.0.0")
+		helm.UpgradeWithConfiguration("any-proxy", "kube-system", "global.httpProxy="+httpProxy+",global.httpsProxy="+httpsProxy, "miniapps/any-proxy", tproxyVersion)
 	}
 
 	// Patch kubernetes-dashboard to expose it on nodePort 30000
