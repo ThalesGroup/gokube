@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/gemalto/gokube/pkg/virtualbox"
 	"os"
 
 	"github.com/gemalto/gokube/pkg/utils"
@@ -36,7 +37,7 @@ var tproxy bool
 var httpProxy string
 var httpsProxy string
 var noProxy string
-var upgrade bool
+var noUpgrade bool
 var insecureRegistry string
 var minikubeURL string
 var minikubeVersion string
@@ -66,7 +67,7 @@ func init() {
 	initCmd.Flags().StringVarP(&httpProxy, "http-proxy", "", "", "HTTP proxy for minikube VM")
 	initCmd.Flags().StringVarP(&httpsProxy, "https-proxy", "", "", "HTTPS proxy for minikube VM")
 	initCmd.Flags().StringVarP(&noProxy, "no-proxy", "", "", "No proxy for minikube VM")
-	initCmd.Flags().BoolVarP(&upgrade, "upgrade", "u", false, "Upgrade if Go Kube! is already installed")
+	initCmd.Flags().BoolVarP(&noUpgrade, "no-upgrade", "", false, "Upgrade if Go Kube! is already installed")
 	initCmd.Flags().StringVarP(&insecureRegistry, "insecure-registry", "", "", "Insecure Docker registries to pass to the Docker daemon. The default service CIDR range will automatically be added.")
 	initCmd.Flags().BoolVarP(&cache, "cache", "", false, "Download images in cache before pulling them in minikube")
 	initCmd.Flags().StringVarP(&alternateCacheImagePath, "alternate-cache-image-path", "", "", "Alternate docker image path used to download images in cache")
@@ -90,16 +91,23 @@ func initRun(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	if upgrade {
+	if !noUpgrade {
+		virtualbox.DeleteHostOnlyNetwork()
+		fmt.Println("Deleting previous minikube VM...")
 		minikube.Delete()
+		fmt.Println("Deleting minikube working directory...")
 		minikube.Purge()
+		fmt.Println("Deleting helm working directory...")
 		helm.Purge()
+		fmt.Println("Deleting kubectl working directory...")
 		kubectl.Purge()
+		fmt.Println("Resetting docker working directory...")
 		docker.Purge()
 		docker.Init()
 	}
 
 	// Download dependencies...
+	fmt.Println("Downloading gokube dependencies...")
 	minikube.Download(gokube.GetBinDir(), minikubeURL, minikubeVersion)
 	helm.Download(gokube.GetBinDir(), helmVersion)
 	docker.Download(gokube.GetBinDir())
@@ -116,13 +124,15 @@ func initRun(cmd *cobra.Command, args []string) {
 	minikube.ConfigSet("WantUpdateNotification", "false")
 
 	// Displays minikube IP
+	fmt.Print("Minikube IP: ")
 	minikube.Ip()
 
 	if cache {
+		fmt.Println("Putting docker images in cache...")
 		dockerEnv := minikube.DockerEnv()
 
 		// Put needed images in cache (Helm)
-		minikube.Cache("gcr.io/kubernetes-helm/tiller:v2.11.0")
+		minikube.Cache("gcr.io/kubernetes-helm/tiller:" + helmVersion)
 
 		// Put needed images in cache (Nginx ingress controller)
 		cacheAndTag(alternateCacheImagePath, "nginx-ingress-controller:0.20.0", "quay.io/kubernetes-ingress-controller", dockerEnv)
@@ -146,6 +156,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	kubectl.ConfigUseContext("minikube")
 
 	// Install helm
+	fmt.Println("Initializing helm...")
 	helm.Init()
 
 	// Add Helm repository
@@ -154,6 +165,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	helm.RepoUpdate()
 
 	// Deploy Monocular
+	fmt.Println("Installing monocular...")
 	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", "0.29.2")
 	var goKubeConfiguration = "sync.repos[0].name=miniapps,sync.repos[0].url=" + miniappsHelmRepository + ",chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=gokube,prerender.image.pullPolicy=IfNotPresent"
 	if !tproxy && httpProxy != "" && httpsProxy != "" {
@@ -163,6 +175,7 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	// Deploy transparent proxy (if requested)
 	if tproxy && httpProxy != "" && httpsProxy != "" {
+		fmt.Println("Installing transparent proxy...")
 		helm.UpgradeWithConfiguration("any-proxy", "kube-system", "global.httpProxy="+httpProxy+",global.httpsProxy="+httpsProxy, "miniapps/any-proxy", "1.0.0")
 	}
 
