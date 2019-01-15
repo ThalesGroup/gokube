@@ -22,10 +22,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 const (
 	buggyNetmask = "0f000000"
+	dhcpPrefix   = "HostInterfaceNetworking-"
 )
 
 // Host-only network.
@@ -40,30 +42,52 @@ type hostOnlyNetwork struct {
 	NetworkName string // referenced in DHCP.NetworkName
 }
 
+// DHCP server info.
+type dhcpServer struct {
+	NetworkName string
+	IPv4        net.IPNet
+	LowerIP     net.IP
+	UpperIP     net.IP
+	Enabled     bool
+}
+
 var ErrNetworkAddrCidr = errors.New("host-only cidr must be specified with a host address, not a network address")
 var vboxManager = NewVBoxManager()
 
-// DeleteHostOnlyNetwork ...
-func DeleteHostOnlyNetwork() {
+// PurgeHostOnlyNetwork ...
+func PurgeHostOnlyNetwork() {
 	nets, err := listHostOnlyAdapters(vboxManager)
 	if err != nil {
-		fmt.Println("DeleteHostOnlyNetwork: Not able to list host-only network interfaces")
+		fmt.Println("PurgeHostOnlyNetwork: Not able to list host-only network interfaces")
 		return
 	}
 	ip, network, err := parseAndValidateCIDR("192.168.99.1/24")
 	if err != nil {
-		fmt.Println("DeleteHostOnlyNetwork: Not able to parse CIDR to find host-only network interface")
+		fmt.Println("PurgeHostOnlyNetwork: Not able to parse CIDR to find host-only network interface")
 		return
 	}
 	hostOnlyNet := getHostOnlyAdapter(nets, ip, network.Mask)
 	if hostOnlyNet != nil {
 		fmt.Println("Deleting previous minikube host-only network interface...")
-		cleanHostOnlyAdapter(vboxManager, hostOnlyNet)
+		vboxManager.vbm("hostonlyif", "remove", hostOnlyNet.Name)
 	}
-}
-
-func cleanHostOnlyAdapter(vbox VBoxManager, hostOnlyNet *hostOnlyNetwork) error {
-	return vbox.vbm("hostonlyif", "remove", hostOnlyNet.Name)
+	dhcps, err := listDHCPServers(vboxManager)
+	if err != nil {
+		fmt.Println("PurgeHostOnlyNetwork")
+		return
+	}
+	if len(dhcps) == 0 {
+		return
+	}
+	for name := range dhcps {
+		if strings.HasPrefix(name, dhcpPrefix) {
+			if _, present := nets[name]; !present {
+				if err := vboxManager.vbm("dhcpserver", "remove", "--netname", name); err != nil {
+					fmt.Printf("PurgeHostOnlyNetwork: Unable to remove orphan dhcp server %q: %s\n", name, err)
+				}
+			}
+		}
+	}
 }
 
 func listHostOnlyAdapters(vbox VBoxManager) (map[string]*hostOnlyNetwork, error) {
@@ -137,6 +161,42 @@ func getHostOnlyAdapter(nets map[string]*hostOnlyNetwork, hostIP net.IP, netmask
 	}
 
 	return nil
+}
+
+func listDHCPServers(vbox VBoxManager) (map[string]*dhcpServer, error) {
+	out, err := vbox.vbmOut("list", "dhcpservers")
+	if err != nil {
+		return nil, err
+	}
+
+	m := map[string]*dhcpServer{}
+	dhcp := &dhcpServer{}
+
+	err = parseKeyValues(out, reColonLine, func(key, val string) error {
+		switch key {
+		case "NetworkName":
+			dhcp = &dhcpServer{}
+			m[val] = dhcp
+			dhcp.NetworkName = val
+		case "IP":
+			dhcp.IPv4.IP = net.ParseIP(val)
+		case "upperIPAddress":
+			dhcp.UpperIP = net.ParseIP(val)
+		case "lowerIPAddress":
+			dhcp.LowerIP = net.ParseIP(val)
+		case "NetworkMask":
+			dhcp.IPv4.Mask = parseIPv4Mask(val)
+		case "Enabled":
+			dhcp.Enabled = (val == "Yes")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }
 
 func parseAndValidateCIDR(hostOnlyCIDR string) (net.IP, *net.IPNet, error) {

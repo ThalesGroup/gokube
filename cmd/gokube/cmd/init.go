@@ -94,7 +94,7 @@ func initRun(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	virtualbox.DeleteHostOnlyNetwork()
+	virtualbox.PurgeHostOnlyNetwork()
 	fmt.Println("Deleting previous minikube VM...")
 	minikube.Delete()
 
