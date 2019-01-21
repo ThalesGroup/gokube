@@ -25,8 +25,7 @@ import (
 )
 
 const (
-	URL     = "https://storage.googleapis.com/kubernetes-release/release/v%s/bin/windows/amd64/kubectl.exe"
-	VERSION = "1.12.4"
+	URL = "https://storage.googleapis.com/kubernetes-release/release/%s/bin/windows/amd64/kubectl.exe"
 )
 
 // ConfigUseContext ...
@@ -79,15 +78,6 @@ func CreateDockerRegistrySecret(name string, dockerServer string, dockerUsername
 	cmd.Run()
 }
 
-//Download ...
-func Download(dst string) {
-	if _, err := os.Stat(gokube.GetBinDir() + "/kubectl.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("kubectl v"+VERSION, URL, VERSION)
-		utils.MoveFile(gokube.GetTempDir()+"/kubectl.exe", dst+"/kubectl.exe")
-		utils.RemoveDir(gokube.GetTempDir())
-	}
-}
-
 // DeleteSecret ...
 func DeleteSecret(name string) {
 	cmd := exec.Command("kubectl", "delete", "secret", name)
@@ -96,8 +86,21 @@ func DeleteSecret(name string) {
 	cmd.Run()
 }
 
-// Purge ...
-func Purge() {
+// DownloadExecutable ...
+func DownloadExecutable(dst string, kubectlVersion string) {
+	if _, err := os.Stat(gokube.GetBinDir() + "/kubectl.exe"); os.IsNotExist(err) {
+		download.DownloadFromUrl("kubectl "+kubectlVersion, URL, kubectlVersion)
+		utils.MoveFile(gokube.GetTempDir()+"/kubectl.exe", dst+"/kubectl.exe")
+		utils.RemoveDir(gokube.GetTempDir())
+	}
+}
+
+// DeleteExecutable ...
+func DeleteExecutable() {
 	utils.RemoveFile(gokube.GetBinDir() + "/kubectl.exe")
+}
+
+// DeleteWorkingDirectory ...
+func DeleteWorkingDirectory() {
 	utils.CleanDir(utils.GetUserHome() + "/.kube")
 }

@@ -76,15 +76,16 @@ func PurgeHostOnlyNetwork() {
 		fmt.Println("PurgeHostOnlyNetwork")
 		return
 	}
-	if len(dhcps) == 0 {
-		return
-	}
 	for name := range dhcps {
 		if strings.HasPrefix(name, dhcpPrefix) {
 			if _, present := nets[name]; !present {
-				if err := vboxManager.vbm("dhcpserver", "remove", "--netname", name); err != nil {
+				err := vboxManager.vbm("dhcpserver", "remove", "--netname", name)
+				if err != nil {
 					fmt.Printf("PurgeHostOnlyNetwork: Unable to remove orphan dhcp server %q: %s\n", name, err)
 				}
+				//				files := utils.GetUserHome() + "/.VirtualBox/" + name + "*"
+				//				fmt.Println("Files to remove : " + files)
+				//				utils.RemoveFiles(files)
 			}
 		}
 	}

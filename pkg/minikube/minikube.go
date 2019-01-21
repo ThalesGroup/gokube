@@ -29,7 +29,7 @@ import (
 
 // Start ...
 func Start(memory int16, cpus int16, diskSize string, tproxy bool, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool) {
-	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--extra-config=kubelet.network-plugin=cni"}
+	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--enable-default-cni"}
 	if !tproxy {
 		args = append(args, "--docker-env", "HTTP_PROXY="+httpProxy, "--docker-env", "HTTPS_PROXY="+httpsProxy, "--docker-env", "NO_PROXY="+noProxy)
 	}
@@ -54,6 +54,14 @@ func Restart(kubernetesVersion string) {
 // Cache ...
 func Cache(image string) {
 	cmd := exec.Command("minikube", "cache", "add", image)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+}
+
+// Dashboard ...
+func Dashboard() {
+	cmd := exec.Command("minikube", "dashboard")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
@@ -160,8 +168,8 @@ func Ip() {
 	cmd.Run()
 }
 
-// Download ...
-func Download(dst string, minikubeURI string, minikubeVersion string) {
+// DownloadExecutable ...
+func DownloadExecutable(dst string, minikubeURI string, minikubeVersion string) {
 	if _, err := os.Stat(dst + "/minikube.exe"); os.IsNotExist(err) {
 		download.DownloadFromUrl("minikube "+minikubeVersion, minikubeURI, minikubeVersion)
 		utils.MoveFile(gokube.GetTempDir()+"/minikube-windows-amd64.exe", dst+"/minikube.exe")
@@ -169,9 +177,13 @@ func Download(dst string, minikubeURI string, minikubeVersion string) {
 	}
 }
 
-// Purge ...
-func Purge() {
+// DeleteExecutable ...
+func DeleteExecutable() {
 	utils.RemoveFile(gokube.GetBinDir() + "/minikube.exe")
+}
+
+// DeleteWorkingDirectory ...
+func DeleteWorkingDirectory() {
 	utils.CleanDir(utils.GetUserHome() + "/.minikube")
 }
 

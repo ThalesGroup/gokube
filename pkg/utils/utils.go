@@ -113,6 +113,19 @@ func RemoveFile(filePath string) {
 	}
 }
 
+// RemoveFiles ...
+func RemoveFiles(filePath string) {
+	files, err := filepath.Glob(filePath)
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			panic(err)
+		}
+	}
+}
+
 // Untar takes a destination path and a reader; a tar reader loops over the tarfile
 // creating the file structure at 'dst' along the way, and writing any files
 func Untar(src string, dst string) error {
