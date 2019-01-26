@@ -30,9 +30,10 @@ import (
 )
 
 const (
-	MONOCULAR_VERSION     = "1.2.8"
-	NGINX_INGRESS_VERSION = "1.1.4"
-	TPROXY_VERSION        = "1.0.0"
+	MONOCULAR_CHART_VERSION = "1.2.8"
+	MONOCULAR_APP_VERSION   = "1.2.0"
+	NGINX_INGRESS_VERSION   = "1.1.4"
+	TPROXY_VERSION          = "1.0.0"
 )
 
 var minikubeURL string
@@ -99,6 +100,8 @@ func cacheAndTag(imagePath string, imageName string, originalPath string, docker
 
 func initRun(cmd *cobra.Command, args []string) {
 
+	// TODO Add helm-spray integration
+
 	if len(args) > 0 {
 		fmt.Fprintln(os.Stderr, "usage: gokube init")
 		os.Exit(1)
@@ -118,6 +121,7 @@ func initRun(cmd *cobra.Command, args []string) {
 			helm.DeleteWorkingDirectory()
 			kubectl.DeleteWorkingDirectory()
 			docker.DeleteWorkingDirectory()
+			docker.InitWorkingDirectory()
 		}
 		fmt.Println("Downloading gokube dependencies...")
 		minikube.DeleteExecutable()
@@ -153,15 +157,17 @@ func initRun(cmd *cobra.Command, args []string) {
 		minikube.Cache("gcr.io/kubernetes-helm/tiller:" + helmVersion)
 
 		// Put needed images in cache (Nginx ingress controller)
-		cacheAndTag(imageCacheAlternateRepo, "nginx-ingress-controller:0.20.0", "quay.io/kubernetes-ingress-controller", dockerEnv)
+		cacheAndTag(imageCacheAlternateRepo, "nginx-ingress-controller:0.21.0", "quay.io/kubernetes-ingress-controller", dockerEnv)
 		minikube.Cache("k8s.gcr.io/defaultbackend:1.4")
 
-		// Put needed images in cache (Monocular)
-		cacheAndTag(imageCacheAlternateRepo, "chart-repo:v1.0.0", "quay.io/helmpack", dockerEnv)
-		cacheAndTag(imageCacheAlternateRepo, "chartsvc:v1.0.0", "quay.io/helmpack", dockerEnv)
-		cacheAndTag(imageCacheAlternateRepo, "monocular-ui:v1.0.0", "quay.io/helmpack", dockerEnv)
-		minikube.Cache("docker.io/bitnami/mongodb:4.0.3")
-		minikube.Cache("migmartri/prerender:latest")
+		if installMonocular {
+			// Put needed images in cache (Monocular)
+			cacheAndTag(imageCacheAlternateRepo, "chart-repo:v"+MONOCULAR_APP_VERSION, "quay.io/helmpack", dockerEnv)
+			cacheAndTag(imageCacheAlternateRepo, "chartsvc:v"+MONOCULAR_APP_VERSION, "quay.io/helmpack", dockerEnv)
+			cacheAndTag(imageCacheAlternateRepo, "monocular-ui:v"+MONOCULAR_APP_VERSION, "quay.io/helmpack", dockerEnv)
+			minikube.Cache("docker.io/bitnami/mongodb:4.0.3")
+			minikube.Cache("migmartri/prerender:latest")
+		}
 
 		if transparentProxy && httpProxy != "" && httpsProxy != "" {
 			// Put needed images in cache (any-proxy)
@@ -178,19 +184,23 @@ func initRun(cmd *cobra.Command, args []string) {
 	helm.Init()
 
 	// Add Helm repository
-	helm.RepoAdd("monocular", "https://helm.github.io/monocular")
+	if installMonocular {
+		helm.RepoAdd("monocular", "https://helm.github.io/monocular")
+	}
 	helm.RepoAdd("miniapps", miniappsRepo)
 	helm.RepoUpdate()
 
-	// Deploy Monocular (if requested)
-	fmt.Println("Installing monocular...")
 	//	minikube.AddonsEnable("ingress")
 	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", NGINX_INGRESS_VERSION)
-	var goKubeConfiguration = "sync.repos[0].name=miniapps,sync.repos[0].url=" + miniappsRepo + ",chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=gokube,prerender.image.pullPolicy=IfNotPresent,ingress.hosts[0]="
-	if !transparentProxy && httpProxy != "" && httpsProxy != "" {
-		goKubeConfiguration = goKubeConfiguration + ",sync.httpProxy=" + httpProxy + ",sync.httpsProxy=" + httpsProxy
+
+	if installMonocular {
+		fmt.Println("Installing monocular...")
+		var goKubeConfiguration = "sync.repos[0].name=miniapps,sync.repos[0].url=" + miniappsRepo + ",chartsvc.replicas=1,ui.replicaCount=1,ui.image.pullPolicy=IfNotPresent,ui.appName=gokube,prerender.image.pullPolicy=IfNotPresent,ingress.hosts[0]="
+		if !transparentProxy && httpProxy != "" && httpsProxy != "" {
+			goKubeConfiguration = goKubeConfiguration + ",sync.httpProxy=" + httpProxy + ",sync.httpsProxy=" + httpsProxy
+		}
+		helm.UpgradeWithConfiguration("gokube", "kube-system", goKubeConfiguration, "monocular/monocular", MONOCULAR_CHART_VERSION)
 	}
-	helm.UpgradeWithConfiguration("gokube", "kube-system", goKubeConfiguration, "monocular/monocular", MONOCULAR_VERSION)
 
 	// Deploy transparent proxy (if requested)
 	if transparentProxy && httpProxy != "" && httpsProxy != "" {
