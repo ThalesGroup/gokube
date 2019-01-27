@@ -19,10 +19,10 @@ notifications:
 before_install:
 
 install:
+- GOOS=windows GOARCH=amd64 go get -t -v ./...
 
 script:
 - cd cmd/gokube
-- GOOS=windows GOARCH=amd64 go get -t -v ./...
 - GOOS=windows GOARCH=amd64 go build -o bin/$ARTIFACT_NAME
 - ls -al bin
 
