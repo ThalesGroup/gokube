@@ -161,11 +161,12 @@ func DockerEnv() []utils.EnvVar {
 }
 
 // IP...
-func Ip() {
-	cmd := exec.Command("minikube", "ip")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
+func Ip() string {
+	out, err := exec.Command("minikube", "ip").Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(out)
 }
 
 // DownloadExecutable ...

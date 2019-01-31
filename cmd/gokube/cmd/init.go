@@ -17,7 +17,10 @@ package cmd
 import (
 	"fmt"
 	"github.com/gemalto/gokube/pkg/gokube"
+	"github.com/gemalto/gokube/pkg/stern"
+	"log"
 	"os"
+	"strings"
 
 	"github.com/gemalto/gokube/pkg/utils"
 
@@ -42,9 +45,11 @@ var dockerVersion string
 var kubernetesVersion string
 var kubectlVersion string
 var helmVersion string
+var sternVersion string
 var memory int16
 var cpus int16
 var disk string
+var checkIP string
 var insecureRegistry string
 var httpProxy string
 var httpsProxy string
@@ -72,9 +77,11 @@ func init() {
 	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.12", "The kubernetes version")
 	initCmd.Flags().StringVarP(&kubectlVersion, "kubectl-version", "", "v1.13.2", "The kubectl version")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.12.2", "The helm version")
+	initCmd.Flags().StringVarP(&sternVersion, "stern-version", "", "1.10.0", "The stern version")
 	initCmd.Flags().Int16VarP(&memory, "memory", "", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&cpus, "cpus", "", int16(4), "Number of CPUs allocated to the minikube VM")
 	initCmd.Flags().StringVarP(&disk, "disk", "", "20g", "Disk size allocated to the minikube VM. Format: <number>[<unit>], where unit = b, k, m or g")
+	initCmd.Flags().StringVarP(&checkIP, "check-ip", "", "192.168.99.100", "Checks if minikube VM allocated IP matches the provided one (0.0.0.0 means no check)")
 	initCmd.Flags().StringVarP(&insecureRegistry, "insecure-registry", "", "", "Insecure Docker registries to pass to the Docker daemon. The default service CIDR range will automatically be added.")
 	initCmd.Flags().StringVarP(&httpProxy, "http-proxy", "", os.Getenv("HTTP_PROXY"), "HTTP proxy variable for docker engine in minikube VM")
 	initCmd.Flags().StringVarP(&httpsProxy, "https-proxy", "", os.Getenv("HTTPS_PROXY"), "HTTPS proxy variable for docker engine in minikube VM")
@@ -99,8 +106,6 @@ func cacheAndTag(imagePath string, imageName string, originalPath string, docker
 }
 
 func initRun(cmd *cobra.Command, args []string) {
-
-	// TODO Add helm-spray integration
 
 	if len(args) > 0 {
 		fmt.Fprintln(os.Stderr, "usage: gokube init")
@@ -132,6 +137,8 @@ func initRun(cmd *cobra.Command, args []string) {
 		docker.DownloadExecutable(gokube.GetBinDir(), dockerVersion)
 		kubectl.DeleteExecutable()
 		kubectl.DownloadExecutable(gokube.GetBinDir(), kubectlVersion)
+		stern.DeleteExecutable()
+		stern.DownloadExecutable(gokube.GetBinDir(), sternVersion)
 	}
 
 	if transparentProxy {
@@ -144,9 +151,12 @@ func initRun(cmd *cobra.Command, args []string) {
 	minikube.ConfigSet("WantUpdateNotification", "false")
 	// Enable dashboard
 	minikube.ConfigSet("dashboard", "true")
-	// Displays minikube IP
-	fmt.Print("Minikube IP: ")
-	minikube.Ip()
+	// Checks minikube IP
+	var minikubeIP = minikube.Ip()
+	if strings.Compare("0.0.0.0", checkIP) != 0 && strings.Compare(checkIP, minikubeIP) != 0 {
+		log.Fatalf("Minikube IP (%s) does not match expected IP (%s)", minikubeIP, checkIP)
+		os.Exit(1)
+	}
 
 	if imageCache {
 		// TODO use version const for docker images to match helm versions
