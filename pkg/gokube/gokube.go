@@ -37,7 +37,7 @@ func GetBinDir() string {
 
 // GetTempDir ...
 func GetTempDir() string {
-	return GetBinDir() + "/../tmp"
+	return GetBinDir() + "/tmp"
 }
 
 // WhereAmI returns a string containing the file name, function name

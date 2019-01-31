@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	URL = "https://github.com/cvila84/helm-spray/releases/download/%s/helm-spray-linux-amd64.tgz"
+	URL = "https://github.com/cvila84/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
 )
 
 //Version ...
@@ -40,26 +40,25 @@ func Version() {
 // InstallPlugin ...
 func InstallPlugin(helmSprayVersion string) {
 	var pluginHome = utils.GetUserHome() + "/.helm/plugins/helm-spray"
-	_, err := os.Stat(pluginHome)
-	if os.IsNotExist(err) {
-		_, err := os.Create(pluginHome)
-		if err != nil {
-			panic(err)
-		}
-	}
+	utils.CreateDir(pluginHome)
 	if _, err := os.Stat(pluginHome + "/helm-spray.exe"); os.IsNotExist(err) {
 		download.DownloadFromUrl("helm-spray "+helmSprayVersion, URL, helmSprayVersion)
-		utils.MoveFiles(gokube.GetTempDir(), pluginHome)
+		utils.MoveFile(gokube.GetTempDir()+"/helm-spray.exe", pluginHome+"/helm-spray.exe")
+		utils.MoveFile(gokube.GetTempDir()+"/plugin.yaml", pluginHome+"/plugin.yaml")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
 }
 
-// DeleteExecutable ...
-func DeleteExecutable() {
-	utils.RemoveFile(gokube.GetBinDir() + "/helm.exe")
-}
-
-// DeleteWorkingDirectory ...
-func DeleteWorkingDirectory() {
-	utils.CleanDir(utils.GetUserHome() + "/.helm")
+// DeletePlugin ...
+func DeletePlugin() {
+	var pluginHome = utils.GetUserHome() + "/.helm/plugins/helm-spray"
+	_, err := os.Stat(pluginHome)
+	if os.IsNotExist(err) {
+		return
+	}
+	if err != nil {
+		panic(err)
+	}
+	utils.RemoveFiles(pluginHome + "/*")
+	utils.RemoveDir(pluginHome)
 }

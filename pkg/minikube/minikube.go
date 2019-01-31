@@ -166,7 +166,7 @@ func Ip() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return string(out)
+	return strings.TrimRight(string(out), "\r\n")
 }
 
 // DownloadExecutable ...

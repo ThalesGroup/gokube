@@ -35,7 +35,7 @@ func DownloadFromUrl(name string, tpl string, version string) int64 {
 	if strings.Contains(tpl, "%s") {
 		url = fmt.Sprintf(tpl, version)
 	}
-	
+
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]
 
@@ -85,6 +85,8 @@ func DownloadFromUrl(name string, tpl string, version string) int64 {
 	switch fileType {
 	case "zip":
 		utils.Unzip(gokube.GetTempDir()+"/"+fileName, gokube.GetTempDir())
+	case "tgz":
+		utils.Untar(gokube.GetTempDir()+"/"+fileName, gokube.GetTempDir())
 	case "gz":
 		utils.Untar(gokube.GetTempDir()+"/"+fileName, gokube.GetTempDir())
 	}

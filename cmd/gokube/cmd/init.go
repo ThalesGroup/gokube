@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/gemalto/gokube/pkg/gokube"
+	"github.com/gemalto/gokube/pkg/helmspray"
 	"github.com/gemalto/gokube/pkg/stern"
 	"log"
 	"os"
@@ -45,6 +46,7 @@ var dockerVersion string
 var kubernetesVersion string
 var kubectlVersion string
 var helmVersion string
+var helmSprayVersion string
 var sternVersion string
 var memory int16
 var cpus int16
@@ -77,6 +79,7 @@ func init() {
 	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.12", "The kubernetes version")
 	initCmd.Flags().StringVarP(&kubectlVersion, "kubectl-version", "", "v1.13.2", "The kubectl version")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.12.2", "The helm version")
+	initCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", "v3.2.0", "The helm version")
 	initCmd.Flags().StringVarP(&sternVersion, "stern-version", "", "1.10.0", "The stern version")
 	initCmd.Flags().Int16VarP(&memory, "memory", "", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&cpus, "cpus", "", int16(4), "Number of CPUs allocated to the minikube VM")
@@ -199,6 +202,11 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 	helm.RepoAdd("miniapps", miniappsRepo)
 	helm.RepoUpdate()
+
+	if upgrade {
+		helmspray.DeletePlugin()
+		helmspray.InstallPlugin(helmSprayVersion)
+	}
 
 	//	minikube.AddonsEnable("ingress")
 	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", NGINX_INGRESS_VERSION)
