@@ -17,6 +17,7 @@ package docker
 import (
 	"fmt"
 	"github.com/gemalto/gokube/pkg/download"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -83,7 +84,7 @@ func RemoveImage(image string, envVars []utils.EnvVar) {
 	for _, element := range envVars {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", element.Name, element.Value))
 	}
-	cmd.Stdout = os.Stdout
+	cmd.Stdout = ioutil.Discard
 	cmd.Stderr = os.Stderr
 	cmd.Run()
 }

@@ -34,10 +34,11 @@ import (
 )
 
 const (
-	MONOCULAR_CHART_VERSION = "1.2.8"
-	MONOCULAR_APP_VERSION   = "1.2.0"
-	NGINX_INGRESS_VERSION   = "1.1.4"
-	TPROXY_VERSION          = "1.0.0"
+	MONOCULAR_CHART_VERSION     = "1.2.8"
+	MONOCULAR_APP_VERSION       = "1.2.0"
+	NGINX_INGRESS_CHART_VERSION = "1.1.4"
+	NGINX_INGRESS_APP_VERSION   = "0.21.0"
+	TPROXY_CHART_VERSION        = "1.0.0"
 )
 
 var minikubeURL string
@@ -170,7 +171,7 @@ func initRun(cmd *cobra.Command, args []string) {
 		minikube.Cache("gcr.io/kubernetes-helm/tiller:" + helmVersion)
 
 		// Put needed images in cache (Nginx ingress controller)
-		cacheAndTag(imageCacheAlternateRepo, "nginx-ingress-controller:0.21.0", "quay.io/kubernetes-ingress-controller", dockerEnv)
+		cacheAndTag(imageCacheAlternateRepo, "nginx-ingress-controller:"+NGINX_INGRESS_APP_VERSION, "quay.io/kubernetes-ingress-controller", dockerEnv)
 		minikube.Cache("k8s.gcr.io/defaultbackend:1.4")
 
 		if installMonocular {
@@ -209,7 +210,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	//	minikube.AddonsEnable("ingress")
-	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", NGINX_INGRESS_VERSION)
+	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", NGINX_INGRESS_CHART_VERSION)
 
 	if installMonocular {
 		fmt.Println("Installing monocular...")
@@ -223,14 +224,16 @@ func initRun(cmd *cobra.Command, args []string) {
 	// Deploy transparent proxy (if requested)
 	if transparentProxy && httpProxy != "" && httpsProxy != "" {
 		fmt.Println("Installing transparent proxy...")
-		helm.UpgradeWithConfiguration("any-proxy", "kube-system", "global.httpProxy="+httpProxy+",global.httpsProxy="+httpsProxy, "miniapps/any-proxy", TPROXY_VERSION)
+		helm.UpgradeWithConfiguration("any-proxy", "kube-system", "global.httpProxy="+httpProxy+",global.httpsProxy="+httpsProxy, "miniapps/any-proxy", TPROXY_CHART_VERSION)
 	}
 
 	// Patch kubernetes-dashboard to expose it on nodePort 30000
 	kubectl.Patch("kube-system", "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
 
 	fmt.Println("\ngokube has been installed.")
-	fmt.Println("Now, you need more or less 10 minutes for running pods...")
+	if !imageCache {
+		fmt.Println("Now, you need more or less 10 minutes for running pods...")
+	}
 	fmt.Println("\nTo verify that pods are running, execute:")
 	fmt.Println("> kubectl get pods --all-namespaces")
 	fmt.Println("")
