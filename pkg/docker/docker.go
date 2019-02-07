@@ -114,11 +114,13 @@ func DeleteExecutable() {
 
 // InitWorkingDirectory ...
 func InitWorkingDirectory() {
-	var configJsonPath = utils.GetUserHome() + "/.docker/config.json"
+	var dockerHome = utils.GetUserHome() + "/.docker"
+	var configJsonPath = dockerHome + "/config.json"
 	_, err := os.Stat(configJsonPath)
 	if err == nil {
 		return
 	}
+	utils.CreateDir(dockerHome)
 	newFile, err := os.Create(configJsonPath)
 	if err != nil {
 		fmt.Printf("Error while creating %s\n", configJsonPath)
