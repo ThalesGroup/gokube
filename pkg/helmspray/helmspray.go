@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	URL = "https://github.com/cvila84/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
+	URL = "https://github.com/gemalto/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
 )
 
 //Version ...
