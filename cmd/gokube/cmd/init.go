@@ -123,15 +123,15 @@ func initRun(cmd *cobra.Command, args []string) {
 	//	fmt.Println("Deleting host-only network used by minikube...")
 	//	virtualbox.PurgeHostOnlyNetwork()
 
+	if clean {
+		fmt.Println("Deleting gokube working directories...")
+		minikube.DeleteWorkingDirectory()
+		helm.DeleteWorkingDirectory()
+		kubectl.DeleteWorkingDirectory()
+		docker.DeleteWorkingDirectory()
+		docker.InitWorkingDirectory()
+	}
 	if upgrade {
-		if clean {
-			fmt.Println("Deleting gokube working directories...")
-			minikube.DeleteWorkingDirectory()
-			helm.DeleteWorkingDirectory()
-			kubectl.DeleteWorkingDirectory()
-			docker.DeleteWorkingDirectory()
-			docker.InitWorkingDirectory()
-		}
 		fmt.Println("Downloading gokube dependencies...")
 		minikube.DeleteExecutable()
 		minikube.DownloadExecutable(gokube.GetBinDir(), minikubeURL, minikubeVersion)
