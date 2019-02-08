@@ -101,13 +101,13 @@ func CopyFile(src, dst string) error {
 func CleanDir(dirPath string) {
 	dir, err := ioutil.ReadDir(dirPath)
 	if err == nil {
-		for _, e := range dir {
-			err := os.RemoveAll(path.Join([]string{dirPath, e.Name()}...))
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
+        for _, e := range dir {
+            err := os.RemoveAll(path.Join([]string{dirPath, e.Name()}...))
+            if err != nil {
+                panic(err)
+            }
+        }
+    }
 }
 
 // RemoveDir ...
