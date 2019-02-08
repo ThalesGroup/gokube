@@ -64,6 +64,19 @@ func MoveFile(oldPath string, newPath string) {
 	}
 }
 
+// MoveFiles ...
+func MoveFiles(oldPath string, newPath string) {
+	files, err := filepath.Glob(oldPath)
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range files {
+		if err := os.Rename(f, newPath); err != nil {
+			panic(err)
+		}
+	}
+}
+
 func CopyFile(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
@@ -110,6 +123,19 @@ func RemoveFile(filePath string) {
 	err := os.RemoveAll(filePath)
 	if err != nil {
 		panic(err)
+	}
+}
+
+// RemoveFiles ...
+func RemoveFiles(filePath string) {
+	files, err := filepath.Glob(filePath)
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			panic(err)
+		}
 	}
 }
 

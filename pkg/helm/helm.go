@@ -125,8 +125,8 @@ func Version() {
 	cmd.Run()
 }
 
-// Download ...
-func Download(dst string, helmVersion string) {
+// DownloadExecutable ...
+func DownloadExecutable(dst string, helmVersion string) {
 	if _, err := os.Stat(gokube.GetBinDir() + "/helm.exe"); os.IsNotExist(err) {
 		download.DownloadFromUrl("helm "+helmVersion, URL, helmVersion)
 		utils.MoveFile(gokube.GetTempDir()+"/windows-amd64/helm.exe", dst+"/helm.exe")
@@ -134,8 +134,12 @@ func Download(dst string, helmVersion string) {
 	}
 }
 
-// Purge ...
-func Purge() {
+// DeleteExecutable ...
+func DeleteExecutable() {
 	utils.RemoveFile(gokube.GetBinDir() + "/helm.exe")
+}
+
+// DeleteWorkingDirectory ...
+func DeleteWorkingDirectory() {
 	utils.CleanDir(utils.GetUserHome() + "/.helm")
 }

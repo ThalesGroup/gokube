@@ -12,40 +12,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package gokube
+package cmd
 
 import (
-	"log"
-	"os"
-	"os/exec"
-	"strings"
+	"github.com/gemalto/gokube/pkg/minikube"
+	"github.com/spf13/cobra"
 )
 
-// GetBinDir ...
-func GetBinDir() string {
-	path, err := exec.LookPath("gokube")
-	if err != nil {
-		panic(err)
-	}
-	if path == "gokube.exe" {
-		path = whereAmI()
-	} else {
-		path = strings.TrimSuffix(path, "\\gokube.exe")
-	}
-	return path
+// startCmd represents the start command
+var startCmd = &cobra.Command{
+	Use:   "start",
+	Short: "Starts minikube. This command starts minikube",
+	Long:  "Starts minikube. This command starts minikube",
+	Run:   startRun,
 }
 
-// GetTempDir ...
-func GetTempDir() string {
-	return GetBinDir() + "/tmp"
+func init() {
+	startCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.12", "The kubernetes version (ex: v1.10.12)")
+	RootCmd.AddCommand(startCmd)
 }
 
-// WhereAmI returns a string containing the file name, function name
-// and the line number of a specified entry on the call stack
-func whereAmI() string {
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return dir
+func startRun(cmd *cobra.Command, args []string) {
+	minikube.Restart(kubernetesVersion)
 }

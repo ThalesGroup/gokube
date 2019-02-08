@@ -25,7 +25,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// stopCmd represents the stop command
+const (
+	GOKUBE_VERSION = "1.5.0"
+)
+
+// versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Shows version for gokube",
@@ -35,7 +39,7 @@ var versionCmd = &cobra.Command{
 			fmt.Fprintln(os.Stderr, "usage: gokube version")
 			os.Exit(1)
 		}
-		fmt.Println("gokube version: v1.4.0")
+		fmt.Println("gokube version: v" + GOKUBE_VERSION)
 		minikube.Version()
 		helm.Version()
 		docker.Version()

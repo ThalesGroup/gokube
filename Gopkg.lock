@@ -43,9 +43,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6eb2645d74b43d9c87b51947df39f7c668a4f422cd512053f7f6f75bfaad0197"
+  digest = "1:61c58b6fc2879cf88c4af5f383d82d743559f9e2c78b80392d90818666dd4a22"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+    "windows/registry",
+  ]
   pruneopts = "UT"
   revision = "d0be0721c37eeb5299f245a996a483160fc36940"
 
@@ -105,6 +109,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/spf13/cobra",
+    "golang.org/x/sys/windows/registry",
     "gopkg.in/cheggaaa/pb.v2",
   ]
   solver-name = "gps-cdcl"

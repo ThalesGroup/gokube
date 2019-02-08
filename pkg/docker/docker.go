@@ -16,20 +16,19 @@ package docker
 
 import (
 	"fmt"
+	"github.com/gemalto/gokube/pkg/download"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 
-	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/utils"
 )
 
 const (
-	//	URL     = "https://download.docker.com/win/static/edge/x86_64/docker-%s-ce.zip"
-	//	VERSION = "17.10.0"
-	URL     = "https://github.com/StefanScherer/docker-cli-builder/releases/download/%s-ce/docker.exe"
-	VERSION = "18.06.1"
+	//	URL     = "https://download.docker.com/win/static/edge/x86_64/docker-%s.zip"
+	URL = "https://github.com/StefanScherer/docker-cli-builder/releases/download/%s/docker.exe"
 )
 
 // LoadImages ...
@@ -78,6 +77,18 @@ func TagImage(image string, tag string, envVars []utils.EnvVar) {
 	cmd.Run()
 }
 
+// RemoveImage ...
+func RemoveImage(image string, envVars []utils.EnvVar) {
+	cmd := exec.Command("docker", "rmi", image)
+	cmd.Env = append(os.Environ())
+	for _, element := range envVars {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", element.Name, element.Value))
+	}
+	cmd.Stdout = ioutil.Discard
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+}
+
 // Version ...
 func Version() {
 	fmt.Println("docker version: ")
@@ -87,40 +98,29 @@ func Version() {
 	cmd.Run()
 }
 
-// Download ...
-func Download(dst string) {
+// DownloadExecutable ...
+func DownloadExecutable(dst string, version string) {
 	if _, err := os.Stat(gokube.GetBinDir() + "/docker.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("docker v"+VERSION, URL, VERSION)
+		download.DownloadFromUrl("docker v"+version, URL, version)
 		utils.MoveFile(gokube.GetTempDir()+"/docker.exe", dst+"/docker.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
 }
 
-// RemoveImage ...
-func RemoveImage(image string, envVars []utils.EnvVar) {
-	cmd := exec.Command("docker", "rmi", image)
-	cmd.Env = append(os.Environ())
-	for _, element := range envVars {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", element.Name, element.Value))
-	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// Purge ...
-func Purge() {
+// DeleteExecutable ...
+func DeleteExecutable() {
 	utils.RemoveFile(gokube.GetBinDir() + "/docker.exe")
-	utils.CleanDir(utils.GetUserHome() + "/.docker")
 }
 
-// Init ...
-func Init() {
-	var configJsonPath = utils.GetUserHome() + "/.docker/config.json"
+// InitWorkingDirectory ...
+func InitWorkingDirectory() {
+	var dockerHome = utils.GetUserHome() + "/.docker"
+	var configJsonPath = dockerHome + "/config.json"
 	_, err := os.Stat(configJsonPath)
 	if err == nil {
 		return
 	}
+	utils.CreateDir(dockerHome)
 	newFile, err := os.Create(configJsonPath)
 	if err != nil {
 		fmt.Printf("Error while creating %s\n", configJsonPath)
@@ -128,4 +128,9 @@ func Init() {
 	newFile.WriteString("{}")
 	newFile.Sync()
 	newFile.Close()
+}
+
+// DeleteWorkingDirectory ...
+func DeleteWorkingDirectory() {
+	utils.CleanDir(utils.GetUserHome() + "/.docker")
 }
