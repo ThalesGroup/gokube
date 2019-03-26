@@ -39,7 +39,10 @@ func Start(memory int16, cpus int16, diskSize string, tproxy bool, httpProxy str
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	err := cmd.Run()
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Restart ...
@@ -48,6 +51,36 @@ func Restart(kubernetesVersion string) {
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Stop ...
+func Stop() {
+	cmd := exec.Command("minikube", "stop")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Status ...
+func Status() {
+	cmd := exec.Command("minikube", "status")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+}
+
+// Delete ...
+func Delete() {
+	cmd := exec.Command("minikube", "delete")
+	//	cmd.Stdout = os.Stdout
+	//	cmd.Stderr = os.Stderr
 	cmd.Run()
 }
 
@@ -72,38 +105,6 @@ func AddonsEnable(addon string) {
 	cmd := exec.Command("minikube", "addons", "enable", addon)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// QuickStart ...
-func QuickStart() {
-	cmd := exec.Command("minikube", "start")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// Stop ...
-func Stop() {
-	cmd := exec.Command("minikube", "stop")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// Status ...
-func Status() {
-	cmd := exec.Command("minikube", "status")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// Delete ...
-func Delete() {
-	cmd := exec.Command("minikube", "delete")
-	//	cmd.Stdout = os.Stdout
-	//	cmd.Stderr = os.Stderr
 	cmd.Run()
 }
 

@@ -76,7 +76,7 @@ var initCmd = &cobra.Command{
 func init() {
 	initCmd.Flags().StringVarP(&minikubeURL, "minikube-url", "", "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe", "The URL to download minikube")
 	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", "v0.33.1", "The minikube version")
-	initCmd.Flags().StringVarP(&dockerVersion, "docker-version", "", "18.09", "The docker version")
+	initCmd.Flags().StringVarP(&dockerVersion, "docker-version", "", "18.09.0", "The docker version")
 	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.13", "The kubernetes version")
 	initCmd.Flags().StringVarP(&kubectlVersion, "kubectl-version", "", "v1.13.5", "The kubectl version")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.13.1", "The helm version")
