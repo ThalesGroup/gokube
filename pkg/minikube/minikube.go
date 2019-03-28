@@ -33,8 +33,8 @@ func Start(memory int16, cpus int16, diskSize string, tproxy bool, httpProxy str
 	if !tproxy {
 		args = append(args, "--docker-env", "HTTP_PROXY="+httpProxy, "--docker-env", "HTTPS_PROXY="+httpsProxy, "--docker-env", "NO_PROXY="+noProxy)
 	}
-	if cache {
-		args = append(args, "--cache-images")
+	if !cache {
+		args = append(args, "--cache-images=false")
 	}
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
