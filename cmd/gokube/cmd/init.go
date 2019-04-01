@@ -19,12 +19,11 @@ import (
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/helmspray"
 	"github.com/gemalto/gokube/pkg/stern"
+	"github.com/gemalto/gokube/pkg/utils"
 	"log"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/gemalto/gokube/pkg/utils"
 
 	"github.com/gemalto/gokube/pkg/docker"
 	"github.com/gemalto/gokube/pkg/helm"
@@ -64,6 +63,7 @@ var clean bool
 var imageCache bool
 var imageCacheAlternateRepo string
 var miniappsRepo string
+var ingressController bool
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -96,6 +96,7 @@ func init() {
 	initCmd.Flags().BoolVarP(&imageCache, "image-cache", "", true, "Download docker images in cache before pulling them in minikube")
 	initCmd.Flags().StringVarP(&imageCacheAlternateRepo, "image-cache-alternate-repo", "", os.Getenv("ALTERNATE_REPO"), "Alternate docker repo used to download images in cache")
 	initCmd.Flags().StringVarP(&miniappsRepo, "miniapps-repo", "", "https://gemalto.github.io/miniapps", "Helm repository for miniapps")
+	initCmd.Flags().BoolVarP(&ingressController, "ingress-controller", "", false, "Deploy ingress controller")
 	RootCmd.AddCommand(initCmd)
 }
 
@@ -171,15 +172,17 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	if imageCache {
-		fmt.Println("Putting docker images in cache...")
+		fmt.Println("Caching additional docker images...")
 		dockerEnv := minikube.DockerEnv()
 
 		// Put needed images in cache (Helm)
 		cache("gcr.io/kubernetes-helm", imageCacheAlternateRepo, "tiller:"+helmVersion, dockerEnv)
 
-		// Put needed images in cache (Nginx ingress controller)
-		cache("quay.io/kubernetes-ingress-controller", imageCacheAlternateRepo, "nginx-ingress-controller:"+NGINX_INGRESS_APP_VERSION, dockerEnv)
-		cache("gcr.io/google_containers", imageCacheAlternateRepo, "defaultbackend:1.4", dockerEnv)
+		if ingressController {
+			// Put needed images in cache (Nginx ingress controller)
+			cache("quay.io/kubernetes-ingress-controller", imageCacheAlternateRepo, "nginx-ingress-controller:"+NGINX_INGRESS_APP_VERSION, dockerEnv)
+			cache("gcr.io/google_containers", imageCacheAlternateRepo, "defaultbackend:1.4", dockerEnv)
+		}
 
 		if transparentProxy && httpProxy != "" && httpsProxy != "" {
 			// Put needed images in cache (any-proxy)
@@ -195,23 +198,27 @@ func initRun(cmd *cobra.Command, args []string) {
 	fmt.Println("Initializing helm...")
 	helm.Init()
 
-	// Add Helm repository
+	// Add helm repository
 	helm.RepoAdd("miniapps", miniappsRepo)
 	helm.RepoUpdate()
 
 	if upgrade {
+		// Add helm spray plugin
 		helmspray.DeletePlugin()
 		helmspray.InstallPlugin(helmSprayVersion)
 	}
 
-	fmt.Println("Enabling ingress...")
-	minikube.AddonsEnable("ingress")
-	time.Sleep(5 * time.Second)
-	kubectl.Patch("kube-system", "deploy", "nginx-ingress-controller", "{\"spec\": {\"template\": {\"spec\": {\"hostNetwork\": true}}}}")
-	//	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", NGINX_INGRESS_CHART_VERSION)
+	if ingressController {
+		// Deploy ingress controller
+		fmt.Println("Deploying ingress controller...")
+		minikube.AddonsEnable("ingress")
+		time.Sleep(60 * time.Second)
+		kubectl.Patch("kube-system", "deploy", "nginx-ingress-controller", "{\"spec\": {\"template\": {\"spec\": {\"hostNetwork\": true}}}}")
+		//	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", NGINX_INGRESS_CHART_VERSION)
+	}
 
-	// Deploy transparent proxy (if requested)
 	if transparentProxy && httpProxy != "" && httpsProxy != "" {
+		// Deploy transparent proxy
 		fmt.Println("Installing transparent proxy...")
 		helm.UpgradeWithConfiguration("any-proxy", "kube-system", "global.httpProxy="+httpProxy+",global.httpsProxy="+httpsProxy, "miniapps/any-proxy", TPROXY_CHART_VERSION)
 	}
