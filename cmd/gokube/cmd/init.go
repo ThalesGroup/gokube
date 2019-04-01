@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gemalto/gokube/pkg/utils"
 
@@ -205,6 +206,7 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	fmt.Println("Enabling ingress...")
 	minikube.AddonsEnable("ingress")
+	time.Sleep(5 * time.Second)
 	kubectl.Patch("kube-system", "deploy", "nginx-ingress-controller", "{\"spec\": {\"template\": {\"spec\": {\"hostNetwork\": true}}}}")
 	//	helm.UpgradeWithConfiguration("nginx", "kube-system", "controller.hostNetwork=true", "stable/nginx-ingress", NGINX_INGRESS_CHART_VERSION)
 
