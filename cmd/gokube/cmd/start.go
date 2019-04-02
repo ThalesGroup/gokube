@@ -28,7 +28,7 @@ var startCmd = &cobra.Command{
 }
 
 func init() {
-	startCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.12", "The kubernetes version (ex: v1.10.12)")
+	startCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.13", "The kubernetes version")
 	RootCmd.AddCommand(startCmd)
 }
 
