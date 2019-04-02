@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.5.0 - 02/08/2019
+* Bump to helm-spray v3.2.0 and stern v1.10.0 [#6](https://github.com/gemalto/gokube/pull/6)
+
 ## Version 1.4.0 - 11/21/2018
 * Bump to monocular v1.2.0 (that support http proxy)
 * Bump to docker v18.06
