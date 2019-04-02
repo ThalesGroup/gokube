@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.6.0 - 04/02/2019
+* Bump to minikube v1.0.0 [#7](https://github.com/gemalto/gokube/pull/7)
+
 ## Version 1.5.0 - 02/08/2019
 * Bump to helm-spray v3.2.0 and stern v1.10.0 [#6](https://github.com/gemalto/gokube/pull/6)
 
