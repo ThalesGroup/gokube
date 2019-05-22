@@ -28,6 +28,15 @@ const (
 	URL = "https://storage.googleapis.com/kubernetes-release/release/%s/bin/windows/amd64/kubectl.exe"
 )
 
+// GetObject ...
+func GetObject(namespace string, resourceType string, resourceName string) string {
+	output, err := exec.Command("kubectl", "--namespace", namespace, "get", resourceType, resourceName).Output()
+	if err != nil {
+		return ""
+	}
+	return string(output)
+}
+
 // ConfigUseContext ...
 func ConfigUseContext(context string) {
 	cmd := exec.Command("kubectl", "config", "use-context", context)
