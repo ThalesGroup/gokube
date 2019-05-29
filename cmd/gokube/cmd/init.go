@@ -34,11 +34,10 @@ import (
 )
 
 const (
-	MONOCULAR_CHART_VERSION     = "1.2.8"
-	MONOCULAR_APP_VERSION       = "1.2.0"
-	NGINX_INGRESS_CHART_VERSION = "1.1.4"
-	NGINX_INGRESS_APP_VERSION   = "0.23.0"
-	TPROXY_CHART_VERSION        = "1.0.0"
+	NGINX_INGRESS_APP_VERSION  = "0.23.0"
+	TPROXY_CHART_VERSION       = "1.0.0"
+	DEFAULT_KUBERNETES_VERSION = "v1.10.13"
+	DEFAULT_MINIKUBE_VERSION   = "v1.1.0"
 )
 
 var minikubeURL string
@@ -68,19 +67,27 @@ var ingressController bool
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + monocular and creates the virtual machine (minikube)",
-	Long:  "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + monocular and creates the virtual machine (minikube)",
+	Short: "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern and creates the virtual machine (minikube)",
+	Long:  "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern and creates the virtual machine (minikube)",
 	Run:   initRun,
 }
 
 func init() {
+	var defaultKubernetesVersion = os.Getenv("KUBERNETES_VERSION")
+	if len(defaultKubernetesVersion) == 0 {
+		defaultKubernetesVersion = DEFAULT_KUBERNETES_VERSION
+	}
+	var defaultMinikubeVersion = os.Getenv("MINIKUBE_VERSION")
+	if len(defaultMinikubeVersion) == 0 {
+		defaultMinikubeVersion = DEFAULT_MINIKUBE_VERSION
+	}
 	initCmd.Flags().StringVarP(&minikubeURL, "minikube-url", "", "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe", "The URL to download minikube")
-	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", "v1.0.0", "The minikube version")
+	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", defaultMinikubeVersion, "The minikube version")
 	initCmd.Flags().StringVarP(&dockerVersion, "docker-version", "", "18.09.0", "The docker version")
-	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.13", "The kubernetes version")
-	initCmd.Flags().StringVarP(&kubectlVersion, "kubectl-version", "", "v1.13.5", "The kubectl version")
+	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", defaultKubernetesVersion, "The kubernetes version")
+	initCmd.Flags().StringVarP(&kubectlVersion, "kubectl-version", "", "v1.13.6", "The kubectl version")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.13.1", "The helm version")
-	initCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", "v3.3.0", "The helm version")
+	initCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", "v3.4.2", "The helm version")
 	initCmd.Flags().StringVarP(&sternVersion, "stern-version", "", "1.10.0", "The stern version")
 	initCmd.Flags().Int16VarP(&memory, "memory", "", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&cpus, "cpus", "", int16(4), "Number of CPUs allocated to the minikube VM")
@@ -160,7 +167,7 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	// Create virtual machine (minikube)
 	minikube.Start(memory, cpus, disk, transparentProxy, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, imageCache)
-	// Disbale notification for updates
+	// Disable notification for updates
 	minikube.ConfigSet("WantUpdateNotification", "false")
 	// Enable dashboard
 	minikube.ConfigSet("dashboard", "true")
@@ -224,8 +231,18 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	// Patch kubernetes-dashboard to expose it on nodePort 30000
-	fmt.Println("Exposing kubernetes dashboard...")
-	kubectl.Patch("kube-system", "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
+	fmt.Print("Exposing kubernetes dashboard...")
+	for n := 1; n < 12; n++ {
+		var dashboardService = kubectl.GetObject("kube-system", "svc", "kubernetes-dashboard")
+		if len(dashboardService) > 0 {
+			fmt.Println()
+			kubectl.Patch("kube-system", "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
+			break
+		} else {
+			fmt.Print(".")
+			time.Sleep(10 * time.Second)
+		}
+	}
 
 	fmt.Println("\ngokube has been installed.")
 	if !imageCache {
