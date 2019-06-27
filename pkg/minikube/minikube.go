@@ -28,13 +28,19 @@ import (
 )
 
 // Start ...
-func Start(memory int16, cpus int16, diskSize string, tproxy bool, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool) {
+func Start(memory int16, cpus int16, diskSize string, tproxy bool, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--enable-default-cni"}
 	if !tproxy {
 		args = append(args, "--docker-env", "HTTP_PROXY="+httpProxy, "--docker-env", "HTTPS_PROXY="+httpsProxy, "--docker-env", "NO_PROXY="+noProxy)
 	}
 	if !cache {
 		args = append(args, "--cache-images=false")
+	}
+	if dnsProxy {
+		args = append(args, "--dns-proxy")
+	}
+	if !hostDNSResolver {
+		args = append(args, "--host-dns-resolver=false")
 	}
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout

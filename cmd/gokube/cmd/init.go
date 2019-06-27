@@ -37,7 +37,7 @@ const (
 	NGINX_INGRESS_APP_VERSION  = "0.23.0"
 	TPROXY_CHART_VERSION       = "1.0.0"
 	DEFAULT_KUBERNETES_VERSION = "v1.10.13"
-	DEFAULT_MINIKUBE_VERSION   = "v1.1.0"
+	DEFAULT_MINIKUBE_VERSION   = "v1.2.0"
 )
 
 var minikubeURL string
@@ -63,6 +63,8 @@ var imageCache bool
 var imageCacheAlternateRepo string
 var miniappsRepo string
 var ingressController bool
+var dnsProxy bool
+var hostDNSResolver bool
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -104,6 +106,8 @@ func init() {
 	initCmd.Flags().StringVarP(&imageCacheAlternateRepo, "image-cache-alternate-repo", "", os.Getenv("ALTERNATE_REPO"), "Alternate docker repo used to download images in cache")
 	initCmd.Flags().StringVarP(&miniappsRepo, "miniapps-repo", "", "https://gemalto.github.io/miniapps", "Helm repository for miniapps")
 	initCmd.Flags().BoolVarP(&ingressController, "ingress-controller", "", false, "Deploy ingress controller")
+	initCmd.Flags().BoolVarP(&dnsProxy, "dns-proxy", "", false, "Use Virtualbox NAT DNS proxy (could be instable)")
+	initCmd.Flags().BoolVarP(&hostDNSResolver, "host-dns-resolver", "", false, "Use Virtualbox NAT DNS host resolver (could be instable)")
 	RootCmd.AddCommand(initCmd)
 }
 
@@ -128,8 +132,7 @@ func cache(originalImagePath string, alternateImagePath string, imageName string
 func initRun(cmd *cobra.Command, args []string) {
 
 	if len(args) > 0 {
-		fmt.Fprintln(os.Stderr, "usage: gokube init")
-		os.Exit(1)
+		log.Fatalln("usage: gokube init")
 	}
 
 	// TODO add manifest to ask for admin rights
@@ -166,7 +169,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	// Create virtual machine (minikube)
-	minikube.Start(memory, cpus, disk, transparentProxy, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, imageCache)
+	minikube.Start(memory, cpus, disk, transparentProxy, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, imageCache, dnsProxy, hostDNSResolver)
 	// Disable notification for updates
 	minikube.ConfigSet("WantUpdateNotification", "false")
 	// Enable dashboard
@@ -175,7 +178,6 @@ func initRun(cmd *cobra.Command, args []string) {
 	var minikubeIP = minikube.Ip()
 	if strings.Compare("0.0.0.0", checkIP) != 0 && strings.Compare(checkIP, minikubeIP) != 0 {
 		log.Fatalf("Minikube IP (%s) does not match expected IP (%s)", minikubeIP, checkIP)
-		os.Exit(1)
 	}
 
 	if imageCache {
