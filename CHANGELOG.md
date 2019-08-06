@@ -1,5 +1,14 @@
 # GoKube Release Notes
 
+## Version 1.7.0 - 08/06/2019
+* Bump to minikube v1.3.0 (to benefit from the NAT DNS options), bump to helm spray v3.4.3 [#10](https://github.com/gemalto/gokube/pull/10)
+
+## Version 1.6.2 - 05/29/2019
+* kubernetes-dashboard not always patched [#9](https://github.com/gemalto/gokube/pull/9)
+
+## Version 1.6.1 - 05/22/2019
+* Fix for kubernetes-dashboard not always patched [#8](https://github.com/gemalto/gokube/issues/8)
+
 ## Version 1.6.0 - 04/02/2019
 * Bump to minikube v1.0.0 [#7](https://github.com/gemalto/gokube/pull/7)
 
