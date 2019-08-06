@@ -54,6 +54,14 @@ type dhcpServer struct {
 var ErrNetworkAddrCidr = errors.New("host-only cidr must be specified with a host address, not a network address")
 var vboxManager = NewVBoxManager()
 
+// DeactivateNatDnsHostResolver...
+func DeactivateNatDnsHostResolver() {
+	err := vboxManager.vbm("modifyvm", "minikube", "--natdnshostresolver1", "off")
+	if err != nil {
+		panic(err)
+	}
+}
+
 // PurgeHostOnlyNetwork ...
 func PurgeHostOnlyNetwork() {
 	nets, err := listHostOnlyAdapters(vboxManager)
