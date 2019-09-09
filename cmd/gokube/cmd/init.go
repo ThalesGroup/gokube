@@ -89,7 +89,7 @@ func init() {
 	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", defaultKubernetesVersion, "The kubernetes version")
 	initCmd.Flags().StringVarP(&kubectlVersion, "kubectl-version", "", "v1.13.6", "The kubectl version")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.13.1", "The helm version")
-	initCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", "v3.4.3", "The helm version")
+	initCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", "v3.4.4", "The helm version")
 	initCmd.Flags().StringVarP(&sternVersion, "stern-version", "", "1.10.0", "The stern version")
 	initCmd.Flags().Int16VarP(&memory, "memory", "", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&cpus, "cpus", "", int16(4), "Number of CPUs allocated to the minikube VM")
