@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.7.2 - 09/09/2019
+* Bump to helm spray v3.4.4 (which fixes issues on liveness/readiness for id-provider)
+
 ## Version 1.7.1 - 08/14/2019
 * Bump to minikube v1.3.1 (which fixes a TTY/PTY issue preventing gokube init progress bar to be displayed)
 
