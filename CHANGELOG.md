@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.7.3 - 09/11/2019
+* Enhance management of default kubernetes version (using KUBERNETES_VERSION environment variable)
+
 ## Version 1.7.2 - 09/10/2019
 * Bump to helm spray v3.4.4 (which fixes issues on liveness/readiness for id-provider) [#12](https://github.com/gemalto/gokube/pull/12)
 
