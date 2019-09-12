@@ -1,7 +1,14 @@
 # GoKube Release Notes
 
+## Version 1.7.4 - 09/12/2019
+* Enhance management of default kubernetes version (hotfix)
+<p>Changing the kubernetes version with the environment variable did not prevent a potential upgrade of kubernetes
+upon a VM restart (e.g. gokube stop / gokube start). The desired version of kubernetes is now stored under
+.gokube/config.yaml and is used for init and start commands</p>
+
 ## Version 1.7.3 - 09/11/2019
-* Enhance management of default kubernetes version (using KUBERNETES_VERSION environment variable)
+* Enhance management of default kubernetes version
+<p>You can change the default kubernetes version (v1.10.13) for your VM in setting a KUBERNETES_VERSION global environment variable</p>
 
 ## Version 1.7.2 - 09/10/2019
 * Bump to helm spray v3.4.4 (which fixes issues on liveness/readiness for id-provider) [#12](https://github.com/gemalto/gokube/pull/12)
