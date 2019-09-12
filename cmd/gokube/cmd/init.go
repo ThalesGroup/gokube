@@ -173,7 +173,11 @@ func initRun(cmd *cobra.Command, args []string) {
 		imageCache = true
 	}
 
+	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for start command
+	gokube.WriteConfig(kubernetesVersion)
+
 	// Create virtual machine (minikube)
+	fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
 	minikube.Start(memory, cpus, disk, transparentProxy, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, imageCache, dnsProxy, hostDNSResolver)
 	// Disable notification for updates
 	minikube.ConfigSet("WantUpdateNotification", "false")

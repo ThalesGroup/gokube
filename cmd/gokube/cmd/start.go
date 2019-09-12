@@ -15,8 +15,11 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"os"
 )
 
 // startCmd represents the start command
@@ -28,10 +31,18 @@ var startCmd = &cobra.Command{
 }
 
 func init() {
-	startCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", "v1.10.13", "The kubernetes version")
+	currentKubernetesVersion := viper.GetString("kubernetes-version")
+	if len(currentKubernetesVersion) == 0 {
+		currentKubernetesVersion = os.Getenv("KUBERNETES_VERSION")
+		if len(currentKubernetesVersion) == 0 {
+			currentKubernetesVersion = DEFAULT_KUBERNETES_VERSION
+		}
+	}
+	startCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", currentKubernetesVersion, "The kubernetes version")
 	RootCmd.AddCommand(startCmd)
 }
 
 func startRun(cmd *cobra.Command, args []string) {
+	fmt.Printf("Starting minikube VM with kubernetes %s...\n", kubernetesVersion)
 	minikube.Restart(kubernetesVersion)
 }

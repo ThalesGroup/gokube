@@ -15,9 +15,11 @@ limitations under the License.
 package gokube
 
 import (
+	"github.com/spf13/viper"
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"strings"
 )
 
@@ -38,6 +40,37 @@ func GetBinDir() string {
 // GetTempDir ...
 func GetTempDir() string {
 	return GetBinDir() + "/tmp"
+}
+
+// WriteConfig ...
+func WriteConfig(kubernetesVersion string) {
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+	configPath := usr.HomeDir + "/.gokube"
+	configFile := "config"
+	configFilePath := configPath + "/config.yaml"
+	if _, existDirErr := os.Stat(configPath); os.IsNotExist(existDirErr) {
+		createDirErr := os.Mkdir(configPath, os.ModePerm)
+		if createDirErr != nil {
+			log.Fatal(createDirErr)
+		}
+	}
+	if _, existFileErr := os.Stat(configFilePath); os.IsNotExist(existFileErr) {
+		_, createFileErr := os.OpenFile(configFilePath, os.O_RDONLY|os.O_CREATE, 0666)
+		if createFileErr != nil {
+			log.Fatal(createFileErr)
+		}
+	}
+	viper.SetConfigName(configFile)
+	viper.AddConfigPath(configPath)
+	viper.SetConfigType("yaml")
+	viper.Set("kubernetes-version", kubernetesVersion)
+	err = viper.WriteConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // WhereAmI returns a string containing the file name, function name

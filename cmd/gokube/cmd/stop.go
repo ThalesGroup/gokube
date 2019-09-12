@@ -15,6 +15,7 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
 )
@@ -32,5 +33,6 @@ func init() {
 }
 
 func stopRun(cmd *cobra.Command, args []string) {
+	fmt.Println("Stopping minikube VM...")
 	minikube.Stop()
 }
