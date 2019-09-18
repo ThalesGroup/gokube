@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -31,6 +32,7 @@ var startCmd = &cobra.Command{
 }
 
 func init() {
+	gokube.ReadConfig()
 	currentKubernetesVersion := viper.GetString("kubernetes-version")
 	if len(currentKubernetesVersion) == 0 {
 		currentKubernetesVersion = os.Getenv("KUBERNETES_VERSION")

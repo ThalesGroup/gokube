@@ -42,6 +42,23 @@ func GetTempDir() string {
 	return GetBinDir() + "/tmp"
 }
 
+// ReadConfig ...
+func ReadConfig() {
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+	configPath := usr.HomeDir + "/.gokube"
+	configFile := "config"
+	viper.SetConfigName(configFile)
+	viper.AddConfigPath(configPath)
+	viper.SetConfigType("yaml")
+	readConfigErr := viper.ReadInConfig()
+	if readConfigErr != nil {
+		log.Fatal(readConfigErr)
+	}
+}
+
 // WriteConfig ...
 func WriteConfig(kubernetesVersion string) {
 	usr, err := user.Current()

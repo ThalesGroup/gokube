@@ -1,7 +1,10 @@
 # GoKube Release Notes
 
-## Version 1.7.4 - 09/12/2019
+## Version 1.7.5 - 09/18/2019
 * Enhance management of default kubernetes version (hotfix)
+
+## Version 1.7.4 - 09/12/2019
+* Enhance management of default kubernetes version
 <p>Changing the kubernetes version with the environment variable did not prevent a potential upgrade of kubernetes
 upon a VM restart (e.g. gokube stop / gokube start). The desired version of kubernetes is now stored under
 .gokube/config.yaml and is used for init and start commands</p>
