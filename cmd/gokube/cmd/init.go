@@ -16,20 +16,20 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/gemalto/gokube/pkg/gokube"
-	"github.com/gemalto/gokube/pkg/helmspray"
-	"github.com/gemalto/gokube/pkg/stern"
-	"github.com/gemalto/gokube/pkg/utils"
 	"log"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/coreos/go-semver/semver"
 	"github.com/gemalto/gokube/pkg/docker"
+	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/helm"
+	"github.com/gemalto/gokube/pkg/helmspray"
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
-
+	"github.com/gemalto/gokube/pkg/stern"
+	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -246,11 +246,16 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	// Patch kubernetes-dashboard to expose it on nodePort 30000
 	fmt.Print("Exposing kubernetes dashboard...")
+	dashboardNamespace := "kube-system"
+	// Starting with minikube 1.4.0, the default namespace for kubernetes-dashboard add-on is kube-dashboard
+	if semver.New(minikubeVersion[1:]).Compare(*semver.New("1.4.0")) >= 0 {
+		dashboardNamespace = "kube-dashboard"
+	}
 	for n := 1; n < 12; n++ {
-		var dashboardService = kubectl.GetObject("kube-system", "svc", "kubernetes-dashboard")
+		var dashboardService = kubectl.GetObject(dashboardNamespace, "svc", "kubernetes-dashboard")
 		if len(dashboardService) > 0 {
 			fmt.Println()
-			kubectl.Patch("kube-system", "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
+			kubectl.Patch(dashboardNamespace, "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
 			break
 		} else {
 			fmt.Print(".")

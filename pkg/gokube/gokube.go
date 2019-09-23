@@ -50,12 +50,25 @@ func ReadConfig() {
 	}
 	configPath := usr.HomeDir + "/.gokube"
 	configFile := "config"
+	configFilePath := configPath + "/config.yaml"
+	if _, existDirErr := os.Stat(configPath); os.IsNotExist(existDirErr) {
+		createDirErr := os.Mkdir(configPath, os.ModePerm)
+		if createDirErr != nil {
+			log.Fatal(createDirErr)
+		}
+	}
+	if _, existFileErr := os.Stat(configFilePath); os.IsNotExist(existFileErr) {
+		_, createFileErr := os.OpenFile(configFilePath, os.O_RDONLY|os.O_CREATE, 0666)
+		if createFileErr != nil {
+			log.Fatal(createFileErr)
+		}
+	}
 	viper.SetConfigName(configFile)
 	viper.AddConfigPath(configPath)
 	viper.SetConfigType("yaml")
 	readConfigErr := viper.ReadInConfig()
 	if readConfigErr != nil {
-		log.Fatal(readConfigErr)
+		log.Println(readConfigErr)
 	}
 }
 

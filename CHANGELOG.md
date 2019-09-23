@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.7.6 - 09/23/2019
+* Fix for 1.7.5 "Unable to read config file" [#13](https://github.com/gemalto/gokube/issues/13)
+
 ## Version 1.7.5 - 09/18/2019
 * Enhance management of default kubernetes version (hotfix)
 

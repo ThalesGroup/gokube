@@ -2,6 +2,17 @@
 
 
 [[projects]]
+  digest = "1:484f9c39ef481b516dd78918feb90525ce55c03932878c090461b3cbccb631e9"
+  name = "github.com/coreos/go-semver"
+  packages = [
+    ".",
+    "semver",
+  ]
+  pruneopts = "UT"
+  revision = "e214231b295a8ea9479f11b70b35d5acf3556d9b"
+  version = "v0.3.0"
+
+[[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
@@ -217,6 +228,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/coreos/go-semver",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "golang.org/x/sys/windows/registry",
