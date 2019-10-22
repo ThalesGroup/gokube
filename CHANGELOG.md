@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.7.7 - 16/10/2019
+* Update helm-spray to 3.4.5 [#42](https://github.com/gemalto/helm-spray/pull/42)
+
 ## Version 1.7.6 - 09/23/2019
 * Fix for 1.7.5 "Unable to read config file" [#13](https://github.com/gemalto/gokube/issues/13)
 
