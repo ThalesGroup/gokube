@@ -36,9 +36,12 @@ import (
 const (
 	NGINX_INGRESS_APP_VERSION  = "0.23.0"
 	TPROXY_CHART_VERSION       = "1.0.0"
-	DEFAULT_KUBERNETES_VERSION = "v1.10.13"
-	DEFAULT_KUBECTL_VERSION    = "v1.14.6"
-	DEFAULT_MINIKUBE_VERSION   = "v1.3.1"
+	DEFAULT_KUBERNETES_VERSION = "v1.14.8"
+	DEFAULT_KUBECTL_VERSION    = "v1.14.8"
+	DEFAULT_MINIKUBE_VERSION   = "v1.5.0"
+	DEFAULT_DOCKER_VERSION     = "19.03.3"
+	DEFAULT_HELM_VERSION       = "v2.15.1"
+	DEFAULT_HELM_SPRAY_VERSION = "v3.4.5"
 )
 
 var minikubeURL string
@@ -88,13 +91,25 @@ func init() {
 	if len(defaultMinikubeVersion) == 0 {
 		defaultMinikubeVersion = DEFAULT_MINIKUBE_VERSION
 	}
+	var defaultDockerVersion = os.Getenv("DOCKER_VERSION")
+	if len(defaultDockerVersion) == 0 {
+		defaultDockerVersion = DEFAULT_DOCKER_VERSION
+	}
+	var defaultHelmVersion = os.Getenv("HELM_VERSION")
+	if len(defaultHelmVersion) == 0 {
+		defaultHelmVersion = DEFAULT_HELM_VERSION
+	}
+	var defaultHelmSprayVersion = os.Getenv("HELM_SPRAY_VERSION")
+	if len(defaultHelmSprayVersion) == 0 {
+		defaultHelmSprayVersion = DEFAULT_HELM_SPRAY_VERSION
+	}
 	initCmd.Flags().StringVarP(&minikubeURL, "minikube-url", "", "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe", "The URL to download minikube")
 	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", defaultMinikubeVersion, "The minikube version")
-	initCmd.Flags().StringVarP(&dockerVersion, "docker-version", "", "18.09.0", "The docker version")
+	initCmd.Flags().StringVarP(&dockerVersion, "docker-version", "", defaultDockerVersion, "The docker version")
 	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", defaultKubernetesVersion, "The kubernetes version")
 	initCmd.Flags().StringVarP(&kubectlVersion, "kubectl-version", "", defaultKubectlVersion, "The kubectl version")
-	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", "v2.13.1", "The helm version")
-	initCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", "v3.4.5", "The helm version")
+	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", defaultHelmVersion, "The helm version")
+	initCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", defaultHelmSprayVersion, "The helm spray plugin version")
 	initCmd.Flags().StringVarP(&sternVersion, "stern-version", "", "1.10.0", "The stern version")
 	initCmd.Flags().Int16VarP(&memory, "memory", "", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&cpus, "cpus", "", int16(4), "Number of CPUs allocated to the minikube VM")

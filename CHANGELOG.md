@@ -1,6 +1,9 @@
 # GoKube Release Notes
 
-## Version 1.7.7 - 16/10/2019
+## Version 1.8.0 - 10/28/2019
+* Big bump to kubernetes v1.14.8, minikube v1.5.0, helm v2.15.1 and docker 19.03.3
+
+## Version 1.7.7 - 10/16/2019
 * Update helm-spray to 3.4.5 [#42](https://github.com/gemalto/helm-spray/pull/42)
 
 ## Version 1.7.6 - 09/23/2019
