@@ -30,6 +30,7 @@ import (
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/gemalto/gokube/pkg/stern"
 	"github.com/gemalto/gokube/pkg/utils"
+	"github.com/gemalto/gokube/pkg/virtualbox"
 	"github.com/spf13/cobra"
 )
 
@@ -155,12 +156,34 @@ func initRun(cmd *cobra.Command, args []string) {
 		log.Fatalln("usage: gokube init")
 	}
 
-	// TODO add manifest to ask for admin rights
+	// TODO add manifest to ask for admin rights (when we will need to remove host-only network)
+
+	// Check minimum requirements
+	if semver.New(minikubeVersion[1:]).Compare(*semver.New("1.4.0")) < 0 {
+		log.Fatalln("gokube is only compatible with minikube version >= 1.4.0")
+	}
+
 	fmt.Println("Deleting previous minikube VM...")
 	minikube.Delete()
-	//  Does not work well with VB6 and not yet tested with VB5
-	//	fmt.Println("Deleting host-only network used by minikube...")
-	//	virtualbox.PurgeHostOnlyNetwork()
+
+	// VB6 persists DHCP leases which prevent minikube to get the expected 192.168.99.100 IP address
+	// Wait 5 seconds to make sure DHCP leases files are unlocked following VM deletion
+	fmt.Print("Resetting host-only network used by minikube...")
+	var err error
+	for n := 1; n < 4; n++ {
+		time.Sleep(5 * time.Second)
+		err = virtualbox.ResetHostOnlyNetworkLeases("192.168.99.1/24")
+		if err == nil {
+			break
+		} else {
+			fmt.Print(".")
+		}
+	}
+	if err != nil {
+		fmt.Printf("\nCannot reset host-only network: %s", err)
+	} else {
+		fmt.Println()
+	}
 
 	if clean {
 		fmt.Println("Deleting gokube working directories...")
@@ -196,8 +219,6 @@ func initRun(cmd *cobra.Command, args []string) {
 	minikube.Start(memory, cpus, disk, transparentProxy, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, imageCache, dnsProxy, hostDNSResolver)
 	// Disable notification for updates
 	minikube.ConfigSet("WantUpdateNotification", "false")
-	// Enable dashboard
-	minikube.ConfigSet("dashboard", "true")
 	// Checks minikube IP
 	var minikubeIP = minikube.Ip()
 	if strings.Compare("0.0.0.0", checkIP) != 0 && strings.Compare(checkIP, minikubeIP) != 0 {
@@ -230,6 +251,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	// Switch context to minikube for kubectl and helm
 	kubectl.ConfigUseContext("minikube")
 
+	// TODO try to replace this with minikube addons enable tiller (available in 1.5.0)
 	// Install helm
 	fmt.Println("Initializing helm...")
 	helm.Init()
@@ -260,18 +282,10 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	// Patch kubernetes-dashboard to expose it on nodePort 30000
-	fmt.Print("Exposing kubernetes dashboard...")
-	dashboardNamespace := "kube-system"
-	// Starting with minikube 1.4.0, the default namespace for kubernetes-dashboard add-on is kube-dashboard
-	if semver.New(minikubeVersion[1:]).Compare(*semver.New("1.4.0")) >= 0 {
-		dashboardNamespace = "kube-dashboard"
-	}
-	// Starting with minikube 1.5.0, the default namespace for kubernetes-dashboard add-on is kubernetes-dashboard
-	if semver.New(minikubeVersion[1:]).Compare(*semver.New("1.5.0")) >= 0 {
-		dashboardNamespace = "kubernetes-dashboard"
-	}
+	fmt.Print("Exposing kubernetes dashboard to nodeport 30000...")
+	dashboardNamespace := "kubernetes-dashboard"
 	for n := 1; n < 12; n++ {
-		var dashboardService = kubectl.GetObject(dashboardNamespace, "svc", "kubernetes-dashboard")
+		var dashboardService = kubectl.GetObject("kubernetes-dashboard", "svc", "kubernetes-dashboard")
 		if len(dashboardService) > 0 {
 			fmt.Println()
 			kubectl.Patch(dashboardNamespace, "svc", "kubernetes-dashboard", "{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":30000}]}}")
@@ -283,10 +297,4 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Println("\ngokube has been installed.")
-	if !imageCache {
-		fmt.Println("Now, you need more or less 10 minutes for running pods...")
-	}
-	fmt.Println("\nTo verify that pods are running, execute:")
-	fmt.Println("> kubectl get pods --all-namespaces")
-	fmt.Println("")
 }
