@@ -23,6 +23,8 @@ import (
 	"os"
 )
 
+var currentKubernetesVersion string
+
 // startCmd represents the start command
 var startCmd = &cobra.Command{
 	Use:   "start",
@@ -33,18 +35,18 @@ var startCmd = &cobra.Command{
 
 func init() {
 	gokube.ReadConfig()
-	currentKubernetesVersion := viper.GetString("kubernetes-version")
-	if len(currentKubernetesVersion) == 0 {
-		currentKubernetesVersion = os.Getenv("KUBERNETES_VERSION")
-		if len(currentKubernetesVersion) == 0 {
-			currentKubernetesVersion = DEFAULT_KUBERNETES_VERSION
+	defaultKubernetesVersion := viper.GetString("kubernetes-version")
+	if len(defaultKubernetesVersion) == 0 {
+		defaultKubernetesVersion = os.Getenv("KUBERNETES_VERSION")
+		if len(defaultKubernetesVersion) == 0 {
+			defaultKubernetesVersion = DEFAULT_KUBERNETES_VERSION
 		}
 	}
-	startCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", currentKubernetesVersion, "The kubernetes version")
+	startCmd.Flags().StringVarP(&currentKubernetesVersion, "kubernetes-version", "", defaultKubernetesVersion, "The kubernetes version")
 	RootCmd.AddCommand(startCmd)
 }
 
 func startRun(cmd *cobra.Command, args []string) {
-	fmt.Printf("Starting minikube VM with kubernetes %s...\n", kubernetesVersion)
-	minikube.Restart(kubernetesVersion)
+	fmt.Printf("Starting minikube VM with kubernetes %s...\n", currentKubernetesVersion)
+	minikube.Restart(currentKubernetesVersion)
 }

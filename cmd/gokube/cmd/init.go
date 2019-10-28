@@ -38,9 +38,9 @@ const (
 	TPROXY_CHART_VERSION       = "1.0.0"
 	DEFAULT_KUBERNETES_VERSION = "v1.14.8"
 	DEFAULT_KUBECTL_VERSION    = "v1.14.8"
-	DEFAULT_MINIKUBE_VERSION   = "v1.5.0"
+	DEFAULT_MINIKUBE_VERSION   = "v1.4.0"
 	DEFAULT_DOCKER_VERSION     = "19.03.3"
-	DEFAULT_HELM_VERSION       = "v2.15.1"
+	DEFAULT_HELM_VERSION       = "v2.14.3"
 	DEFAULT_HELM_SPRAY_VERSION = "v3.4.5"
 )
 
@@ -204,7 +204,7 @@ func initRun(cmd *cobra.Command, args []string) {
 		log.Println("!!!!!!!!!!!!!!!!!!!!!!!!!")
 		log.Println("!!!!!!!! CAUTION !!!!!!!!")
 		log.Println("!!!!!!!!!!!!!!!!!!!!!!!!!")
-		log.Fatalf("Minikube IP (%s) does not match expected IP (%s), VM post-installation process aborted", minikubeIP, checkIP)
+		log.Fatalf("Minikube IP (%s) does not match expected IP (%s), VM post-installation process aborted\n", minikubeIP, checkIP)
 	}
 
 	if imageCache {
@@ -265,6 +265,10 @@ func initRun(cmd *cobra.Command, args []string) {
 	// Starting with minikube 1.4.0, the default namespace for kubernetes-dashboard add-on is kube-dashboard
 	if semver.New(minikubeVersion[1:]).Compare(*semver.New("1.4.0")) >= 0 {
 		dashboardNamespace = "kube-dashboard"
+	}
+	// Starting with minikube 1.5.0, the default namespace for kubernetes-dashboard add-on is kubernetes-dashboard
+	if semver.New(minikubeVersion[1:]).Compare(*semver.New("1.5.0")) >= 0 {
+		dashboardNamespace = "kubernetes-dashboard"
 	}
 	for n := 1; n < 12; n++ {
 		var dashboardService = kubectl.GetObject(dashboardNamespace, "svc", "kubernetes-dashboard")
