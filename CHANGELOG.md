@@ -1,7 +1,22 @@
 # GoKube Release Notes
 
-## Version 1.8.0 - 10/28/2019
-* Big bump to kubernetes v1.14.8, minikube v1.5.0, helm v2.15.1 and docker 19.03.3
+## Version 1.8.0 - 11/1/2019
+THE BIG ONE
+
+* Bump to kubernetes v1.16.4, minikube v1.6.1, helm v2.16.1 and docker 19.03.3
+* Support of Virtualbox 6 (with the limitation that no other VMs shall be running during gokube init)
+* Added warning messages on gokube stop to prevent crashes/unstabilities on VM restart
+* Support of environment variables to download more recent versions of dependencies (to avoid generating a new version of gokube each time)
+* Added pause and resume commands
+
+Supported environment variables are:
+- KUBERNETES_VERSION (ex: "v1.16.4")
+- MINIKUBE_VERSION (ex: "v1.6.1")
+- DOCKER_VERSION (ex: "19.03.3")
+- HELM_VERSION (ex: "v2.16.1")
+- HELM_SPRAY_VERSION (ex: "v3.4.5")
+
+As recent minikube versions automatically selects the best hypervisor, please note no tests have been made yet for Win10/Hyper-V contexts
 
 ## Version 1.7.7 - 10/16/2019
 * Update helm-spray to 3.4.5 [#42](https://github.com/gemalto/helm-spray/pull/42)

@@ -54,18 +54,45 @@ type dhcpServer struct {
 var ErrNetworkAddrCidr = errors.New("host-only CIDR must be specified with a host address, not a network address")
 var vboxManager = NewVBoxManager()
 
-func ResetHostOnlyNetworkLeases(hostOnlyCIDR string) error {
+func Pause() error {
+	err := vboxManager.vbm("controlvm", "minikube", "pause")
+	if err != nil {
+		return errors.New("not able to pause VM")
+	}
+	return nil
+}
+
+func Resume() error {
+	err := vboxManager.vbm("controlvm", "minikube", "resume")
+	if err != nil {
+		return errors.New("not able to resume VM")
+	}
+	return nil
+}
+
+func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, debug bool) error {
 	nets, err := listHostOnlyAdapters(vboxManager)
 	if err != nil {
 		return errors.New("not able to list host-only network interfaces")
+	}
+	if debug {
+		for k := range nets {
+			fmt.Printf("\nResetHostOnlyNetworkLeases: listHostOnlyAdapters: %s", k)
+		}
 	}
 	ip, network, err := parseAndValidateCIDR(hostOnlyCIDR)
 	if err != nil {
 		return errors.New("not able to parse CIDR to find host-only network interface")
 	}
+	if debug {
+		fmt.Printf("\nResetHostOnlyNetworkLeases: parseAndValidateCIDR: %s,%s", ip.String(), network.String())
+	}
 	hostOnlyNet := getHostOnlyAdapter(nets, ip, network.Mask)
 	if hostOnlyNet == nil {
 		return errors.New("not able to get host-only network interface matching minikube CIDR")
+	}
+	if debug {
+		fmt.Printf("\nResetHostOnlyNetworkLeases: getHostOnlyAdapter: %s", hostOnlyNet.NetworkName)
 	}
 	filesPattern := utils.GetUserHome() + "/.VirtualBox/" + hostOnlyNet.NetworkName + "*"
 	files, err := filepath.Glob(filesPattern)
@@ -73,8 +100,14 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string) error {
 		return errors.New("not able to get host-only network interface DHCP leases files")
 	}
 	for _, f := range files {
+		if debug {
+			fmt.Printf("\nResetHostOnlyNetworkLeases: deleting lease file %s...", f)
+		}
 		if err := os.Remove(f); err != nil {
-			return errors.New(fmt.Sprintf("not able to delete %s\n", f))
+			return errors.New(fmt.Sprintf("not able to delete lease file %s\n", f))
+		}
+		if debug {
+			fmt.Printf("\nResetHostOnlyNetworkLeases: deleted lease file %s", f)
 		}
 	}
 	return nil

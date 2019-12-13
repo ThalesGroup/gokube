@@ -16,16 +16,18 @@ package helm
 
 import (
 	"fmt"
+	"github.com/coreos/go-semver/semver"
+	"github.com/gemalto/gokube/pkg/download"
 	"os"
 	"os/exec"
 
-	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/utils"
 )
 
 const (
-	URL = "https://storage.googleapis.com/kubernetes-helm/helm-%s-windows-amd64.tar.gz"
+	URL2 = "https://storage.googleapis.com/kubernetes-helm/helm-%s-windows-amd64.tar.gz"
+	URL3 = "https://get.helm.sh/helm-%s-windows-amd64.zip"
 )
 
 // Upgrade ...
@@ -128,7 +130,11 @@ func Version() {
 // DownloadExecutable ...
 func DownloadExecutable(dst string, helmVersion string) {
 	if _, err := os.Stat(gokube.GetBinDir() + "/helm.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("helm "+helmVersion, URL, helmVersion)
+		if semver.New(helmVersion[1:]).Compare(*semver.New("3.0.0")) >= 0 {
+			download.DownloadFromUrl("helm "+helmVersion, URL3, helmVersion)
+		} else {
+			download.DownloadFromUrl("helm "+helmVersion, URL2, helmVersion)
+		}
 		utils.MoveFile(gokube.GetTempDir()+"/windows-amd64/helm.exe", dst+"/helm.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
