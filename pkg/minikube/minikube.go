@@ -17,6 +17,7 @@ package minikube
 import (
 	"bufio"
 	"fmt"
+	"github.com/coreos/go-semver/semver"
 	"os"
 	"os/exec"
 	"strconv"
@@ -30,6 +31,9 @@ import (
 // Start ...
 func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--enable-default-cni"}
+	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.6.0")) >= 0 {
+		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
+	}
 	if !cache {
 		args = append(args, "--cache-images=false")
 	}

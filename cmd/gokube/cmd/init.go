@@ -151,8 +151,8 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	// Check minimum requirements
-	if semver.New(minikubeVersion[1:]).Compare(*semver.New("1.5.2")) <= 0 {
-		fmt.Println("gokube is only compatible with minikube version > 1.6.0")
+	if semver.New(minikubeVersion[1:]).Compare(*semver.New("1.6.1")) < 0 {
+		fmt.Println("gokube is only compatible with minikube version >= 1.6.1")
 		os.Exit(1)
 	}
 	if semver.New(helmVersion[1:]).Compare(*semver.New("2.16.1")) < 0 {

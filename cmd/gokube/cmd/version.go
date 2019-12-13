@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	GOKUBE_VERSION = "1.8.0-rc.1"
+	GOKUBE_VERSION = "1.8.0-rc.2"
 )
 
 // versionCmd represents the version command
