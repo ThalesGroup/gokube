@@ -55,6 +55,9 @@ func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsPro
 // Restart ...
 func Restart(kubernetesVersion string) {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion}
+	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.6.0")) >= 0 {
+		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
+	}
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
