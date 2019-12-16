@@ -89,7 +89,10 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, debug bool) error {
 	}
 	hostOnlyNet := getHostOnlyAdapter(nets, ip, network.Mask)
 	if hostOnlyNet == nil {
-		return errors.New("not able to get host-only network interface matching minikube CIDR")
+		if debug {
+			fmt.Printf("ResetHostOnlyNetworkLeases: getHostOnlyAdapter: no host-only network interface matching minikube CDR")
+		}
+		return nil
 	}
 	if debug {
 		fmt.Printf("\nResetHostOnlyNetworkLeases: getHostOnlyAdapter: %s", hostOnlyNet.NetworkName)
