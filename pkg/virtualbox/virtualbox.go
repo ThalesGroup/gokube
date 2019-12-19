@@ -17,12 +17,12 @@ package virtualbox
 import (
 	"errors"
 	"fmt"
+	"github.com/gemalto/gokube/pkg/utils"
 	"golang.org/x/sys/windows/registry"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 const (
@@ -51,52 +51,69 @@ type dhcpServer struct {
 	Enabled     bool
 }
 
-var ErrNetworkAddrCidr = errors.New("host-only cidr must be specified with a host address, not a network address")
+var ErrNetworkAddrCidr = errors.New("host-only CIDR must be specified with a host address, not a network address")
 var vboxManager = NewVBoxManager()
 
-// DeactivateNatDnsHostResolver...
-func DeactivateNatDnsHostResolver() {
-	err := vboxManager.vbm("modifyvm", "minikube", "--natdnshostresolver1", "off")
+func Pause() error {
+	err := vboxManager.vbm("controlvm", "minikube", "pause")
 	if err != nil {
-		panic(err)
+		return errors.New("not able to pause VM")
 	}
+	return nil
 }
 
-// PurgeHostOnlyNetwork ...
-func PurgeHostOnlyNetwork() {
+func Resume() error {
+	err := vboxManager.vbm("controlvm", "minikube", "resume")
+	if err != nil {
+		return errors.New("not able to resume VM")
+	}
+	return nil
+}
+
+func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, debug bool) error {
 	nets, err := listHostOnlyAdapters(vboxManager)
 	if err != nil {
-		fmt.Println("PurgeHostOnlyNetwork: Not able to list host-only network interfaces")
-		return
+		return errors.New("not able to list host-only network interfaces")
 	}
-	ip, network, err := parseAndValidateCIDR("192.168.99.1/24")
-	if err != nil {
-		fmt.Println("PurgeHostOnlyNetwork: Not able to parse CIDR to find host-only network interface")
-		return
-	}
-	hostOnlyNet := getHostOnlyAdapter(nets, ip, network.Mask)
-	if hostOnlyNet != nil {
-		fmt.Println("Deleting previous minikube host-only network interface...")
-		vboxManager.vbm("hostonlyif", "remove", hostOnlyNet.Name)
-	}
-	dhcps, err := listDHCPServers(vboxManager)
-	if err != nil {
-		fmt.Println("PurgeHostOnlyNetwork")
-		return
-	}
-	for name := range dhcps {
-		if strings.HasPrefix(name, dhcpPrefix) {
-			if _, present := nets[name]; !present {
-				err := vboxManager.vbm("dhcpserver", "remove", "--netname", name)
-				if err != nil {
-					fmt.Printf("PurgeHostOnlyNetwork: Unable to remove orphan dhcp server %q: %s\n", name, err)
-				}
-				//				files := utils.GetUserHome() + "/.VirtualBox/" + name + "*"
-				//				fmt.Println("Files to remove : " + files)
-				//				utils.RemoveFiles(files)
-			}
+	if debug {
+		for k := range nets {
+			fmt.Printf("\nResetHostOnlyNetworkLeases: listHostOnlyAdapters: %s", k)
 		}
 	}
+	ip, network, err := parseAndValidateCIDR(hostOnlyCIDR)
+	if err != nil {
+		return errors.New("not able to parse CIDR to find host-only network interface")
+	}
+	if debug {
+		fmt.Printf("\nResetHostOnlyNetworkLeases: parseAndValidateCIDR: %s,%s", ip.String(), network.String())
+	}
+	hostOnlyNet := getHostOnlyAdapter(nets, ip, network.Mask)
+	if hostOnlyNet == nil {
+		if debug {
+			fmt.Printf("\nResetHostOnlyNetworkLeases: getHostOnlyAdapter: no host-only network interface matching minikube CDR")
+		}
+		return nil
+	}
+	if debug {
+		fmt.Printf("\nResetHostOnlyNetworkLeases: getHostOnlyAdapter: %s", hostOnlyNet.NetworkName)
+	}
+	filesPattern := utils.GetUserHome() + "/.VirtualBox/" + hostOnlyNet.NetworkName + "*"
+	files, err := filepath.Glob(filesPattern)
+	if err != nil {
+		return errors.New("not able to get host-only network interface DHCP leases files")
+	}
+	for _, f := range files {
+		if debug {
+			fmt.Printf("\nResetHostOnlyNetworkLeases: deleting lease file %s...", f)
+		}
+		if err := os.Remove(f); err != nil {
+			return errors.New(fmt.Sprintf("not able to delete lease file %s\n", f))
+		}
+		if debug {
+			fmt.Printf("\nResetHostOnlyNetworkLeases: deleted lease file %s", f)
+		}
+	}
+	return nil
 }
 
 func listHostOnlyAdapters(vbox VBoxManager) (map[string]*hostOnlyNetwork, error) {

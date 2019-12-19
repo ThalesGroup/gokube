@@ -16,7 +16,8 @@ package minikube
 
 import (
 	"bufio"
-	"log"
+	"fmt"
+	"github.com/coreos/go-semver/semver"
 	"os"
 	"os/exec"
 	"strconv"
@@ -28,10 +29,10 @@ import (
 )
 
 // Start ...
-func Start(memory int16, cpus int16, diskSize string, tproxy bool, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
+func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--enable-default-cni"}
-	if !tproxy {
-		args = append(args, "--docker-env", "HTTP_PROXY="+httpProxy, "--docker-env", "HTTPS_PROXY="+httpsProxy, "--docker-env", "NO_PROXY="+noProxy)
+	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.6.0")) >= 0 {
+		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
 	}
 	if !cache {
 		args = append(args, "--cache-images=false")
@@ -54,6 +55,9 @@ func Start(memory int16, cpus int16, diskSize string, tproxy bool, httpProxy str
 // Restart ...
 func Restart(kubernetesVersion string) {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion}
+	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.6.0")) >= 0 {
+		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
+	}
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -143,7 +147,8 @@ func Version() {
 func DockerEnv() []utils.EnvVar {
 	out, err := exec.Command("minikube", "docker-env").Output()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Print(err)
+		os.Exit(1)
 	}
 	scanner := bufio.NewScanner(strings.NewReader(string(out)))
 	var envVar []utils.EnvVar
@@ -171,7 +176,8 @@ func DockerEnv() []utils.EnvVar {
 func Ip() string {
 	out, err := exec.Command("minikube", "ip").Output()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Print(err)
+		os.Exit(1)
 	}
 	return strings.TrimRight(string(out), "\r\n")
 }
