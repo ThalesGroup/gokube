@@ -1,6 +1,6 @@
 # GoKube Release Notes
 
-## Version 1.8.0 - 11/1/2019
+## Version 1.8.0 - 12/19/2019
 THE BIG ONE
 
 * Bump to kubernetes v1.16.4, minikube v1.6.1, helm v2.16.1 and docker 19.03.3
