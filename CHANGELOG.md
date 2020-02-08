@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.8.1 - 02/08/2020
+* Bump to kubernetes v1.17.2, minikube v1.7.2
+
 ## Version 1.8.0 - 12/19/2019
 THE BIG ONE
 

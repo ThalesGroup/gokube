@@ -35,9 +35,9 @@ import (
 
 const (
 	NGINX_INGRESS_APP_VERSION  = "0.23.0"
-	DEFAULT_KUBERNETES_VERSION = "v1.16.4"
-	DEFAULT_KUBECTL_VERSION    = "v1.16.4"
-	DEFAULT_MINIKUBE_VERSION   = "v1.6.1"
+	DEFAULT_KUBERNETES_VERSION = "v1.17.2"
+	DEFAULT_KUBECTL_VERSION    = "v1.17.2"
+	DEFAULT_MINIKUBE_VERSION   = "v1.7.2"
 	DEFAULT_MINIKUBE_URL       = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
 	DEFAULT_DOCKER_VERSION     = "19.03.3"
 	DEFAULT_HELM_VERSION       = "v2.16.1"
