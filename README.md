@@ -44,7 +44,7 @@ gokube is building and delivering under Travis.
 #### Upgrade gokube
 
 ```shell
-$ gokube init --upgrade
+$ gokube init
 ```
 
 ## How to install gokube?
@@ -60,7 +60,13 @@ $ gokube init --upgrade
 
 You will use C:\gokube\bin to store executable files.
 
-#### Set up Your Directory
+#### Set up your environment
+
+gokube is aware of HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables.
+When these variables are set, they are used to download the gokube dependencies and to configure docker daemon.
+You can define different proxy values for docker daemon in using --http-proxy, --https-proxy and --no-proxy init command flags
+
+#### Set up your directory
 
 You’ll need a place to store the gokube executable:
 * Open Windows Explorer.
@@ -73,28 +79,30 @@ You’ll need a place to store the gokube executable:
 * Copy executable file to: C:\gokube\bin
 * The gokube executable will be named as gokube-version-type+platform.arch.exe. Rename the executable to gokube.exe for ease of use.
 
-#### Verify the Executable
+#### Verify the executable
 
 In your preferred CLI, at the prompt, type gokube and press the Enter key. You should see output that starts with:
 
 ```shell
 $ gokube
-
-gokube is a nice installer to provide an environment for developing day-to-day 
-with kubernetes & helm on your laptop.
+gokube is a nice installer to provide an environment for developing day-to-day with kubernetes & helm on your laptop.
 
 Usage:
   gokube [command]
 
 Available Commands:
   help        Help about any command
-  init        Initializes gokube. This command downloads dependencies: 
-              minikube + helm + kubectl + docker + monocular and creates the virtual 
-              machine (minikube)
+  init        Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern and creates the virtual machine (minikube)
+  pause       Pauses minikube. This command pauses minikube VM
+  resume      Resumes minikube. This command resumes minikube VM
+  start       Starts minikube. This command starts minikube
+  stop        Stops minikube. This command stops minikube
   version     Shows version for gokube
 
 Flags:
   -h, --help   help for gokube
+
+Use "gokube [command] --help" for more information about a command.
 ```
 If you do, then the installation is complete.
 
@@ -104,32 +112,49 @@ If you don’t, double-check the path that you placed the gokube.exe file in and
 
 ```shell
 $ gokube init
-
-minikube v0.28.0: 40.83 MiB / 40.83 MiB [-------------------------------------] 100.00% 2.21 MiB p/s
-helm v2.9.1: 8.78 MiB / 8.78 MiB [--------------------------------------------] 100.00% 2.20 MiB p/s
-docker v17.09.0: 16.17 MiB / 16.17 MiB [--------------------------------------] 100.00% 2.11 MiB p/s
-kubectl v1.10.0: 52.16 MiB / 52.16 MiB [--------------------------------------] 100.00% 1.61 MiB p/s
-
-Installing goKube!
-
-Starting local Kubernetes v1.10.0 cluster...
-Starting VM...
-Downloading Minikube ISO
- 153.08 MB / 153.08 MB  100.00% 0ssss
-Getting VM IP address...
-Waiting for image caching to complete...
-Moving files into cluster...
-Downloading kubelet v1.10.0
-Downloading kubeadm v1.10.0
-Finished Downloading kubeadm v1.10.0
-Finished Downloading kubelet v1.10.0
-Setting up certs...
-Connecting to cluster...
-Setting up kubeconfig...
-Starting cluster components...
-Kubectl is now configured to use the cluster.
-Loading cached images from config file.
+WARNING: Your Virtualbox GUI shall not be open and no other VM shall be currently running
+Press <CTRL+C> within the next 10s it you need to check this or press <ENTER> now to continue...
+Deleting previous minikube VM...
+Resetting host-only network used by minikube...
+This version of gokube is launched for the first time, forcing upgrade...
+Downloading gokube dependencies...
+minikube v1.8.2: 52.12 MiB / 52.12 MiB [--------------------------------------] 100.00% 1.63 MiB p/s
+helm v2.16.3: 24.16 MiB / 24.16 MiB [-----------------------------------------] 100.00% 1.81 MiB p/s
+docker v19.03.3: 65.28 MiB / 65.28 MiB [--------------------------------------] 100.00% 1.39 MiB p/s
+kubectl v1.17.3: 41.95 MiB / 41.95 MiB [--------------------------------------] 100.00% 2.23 MiB p/s
+stern v1.11.0: 20.93 MiB / 20.93 MiB [----------------------------------------] 100.00% 1.36 MiB p/s
+Creating minikube VM with kubernetes v1.17.3...
+* minikube v1.8.2 on Microsoft Windows 7 Enterprise Service Pack 1 6.1.7601 Build 7601
+* Automatically selected the virtualbox driver
+* Downloading VM boot image ...
+    > minikube-v1.8.0.iso.sha256: 65 B / 65 B [--------------] 100.00% ? p/s 0s
+    > minikube-v1.8.0.iso: 173.56 MiB / 173.56 MiB [ 100.00% 2.23 MiB p/s 1m18s
+* Downloading preloaded images tarball for k8s v1.17.3 ...
+    > preloaded-images-k8s-v1-v1.17.3-docker-overlay2.tar.lz4: 499.26 MiB / 499
+* Creating virtualbox VM (CPUs=4, Memory=8192MB, Disk=20000MB) ...
+* Found network options:
+  - HTTP_PROXY=http://10.43.216.8:8080
+  - HTTPS_PROXY=http://10.43.216.8:8080
+  - NO_PROXY=minikube,dockerhub.gemalto.com,r-buildggs.gemalto.com,nexusfreel1-emea-proxy.gemalto.com,127.0.0.1,192.168.99.100
+  - http_proxy=http://10.43.216.8:8080
+  - https_proxy=http://10.43.216.8:8080
+  - no_proxy=minikube,dockerhub.gemalto.com,r-buildggs.gemalto.com,nexusfreel1-emea-proxy.gemalto.com,127.0.0.1,192.168.99.100
+* Preparing Kubernetes v1.17.3 on Docker 19.03.6 ...
+  - env HTTP_PROXY=http://10.43.216.8:8080
+  - env HTTPS_PROXY=http://10.43.216.8:8080
+  - env NO_PROXY=minikube,dockerhub.gemalto.com,r-buildggs.gemalto.com,nexusfreel1-emea-proxy.gemalto.com,127.0.0.1,192.168.99.100
+  - env HTTP_PROXY=http://10.43.216.8:8080
+  - env HTTPS_PROXY=http://10.43.216.8:8080
+  - env NO_PROXY=minikube,dockerhub.gemalto.com,r-buildggs.gemalto.com,nexusfreel1-emea-proxy.gemalto.com,127.0.0.1,192.168.99.100
+  - apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true
+* Launching Kubernetes ...
+* Enabling addons: default-storageclass, storage-provisioner
+* Waiting for cluster to come online ...
+* Done! kubectl is now configured to use "minikube"
+* The 'dashboard' addon is enabled
+Caching additional docker images...
 Switched to context "minikube".
+Initializing helm...
 Creating C:\Users\user\.helm
 Creating C:\Users\user\.helm\repository
 Creating C:\Users\user\.helm\repository\cache
@@ -145,20 +170,19 @@ $HELM_HOME has been configured at C:\Users\user\.helm.
 Tiller (the Helm server-side component) has been installed into your Kubernetes Cluster.
 
 Please note: by default, Tiller is deployed with an insecure 'allow unauthenticated users' policy.
-Happy Helming!
-"monocular" has been added to your repositories
+To prevent this, run `helm init` with the --tiller-tls-verify flag.
+For more information on securing your installation see: https://docs.helm.sh/using_helm/#securing-your-helm-installation
+"miniapps" has been added to your repositories
 Hang tight while we grab the latest from your chart repositories...
 ...Skip local chart repository
-...Successfully got an update from the "monocular" chart repository
+...Successfully got an update from the "miniapps" chart repository
 ...Successfully got an update from the "stable" chart repository
-Update Complete. ⎈ Happy Helming!⎈
-Starting stable/nginx-ingress components...
-Starting monocular/monocular components...
+Update Complete.
+helm-spray v3.4.5: 5.02 MiB / 5.02 MiB [------------------------------------] 100.00% 631.12 KiB p/s
+Exposing kubernetes dashboard to nodeport 30000...
+service/kubernetes-dashboard patched
 
-goKube! has been installed.
-
-To verify that goKube! has started, run:
-> kubectl get pods --all-namespaces
+gokube has been installed.
 ```
 
 We can see that pods are still being created from the ContainerCreating status:
@@ -209,14 +233,14 @@ kube-system  tiller-deploy-f9b8476d-rk5ps                         1/1    Running
 
 We can stop gokube running the following command:
 ```shell
-$ minikube stop
+$ gokube stop
 Stopping local Kubernetes cluster...
 Machine stopped.
 ```
 
 We can start gokube running the following command:
 ```shell
-$ minikube start
+$ gokube start
 Starting local Kubernetes v1.10.0 cluster...
 Starting VM...
 Getting VM IP address...
@@ -229,7 +253,7 @@ Kubectl is now configured to use the cluster.
 Loading cached images from config file.
 ```
 
-## Additional Links
+## Additional links
 
 * [**Contributing**](./CONTRIBUTING.md)
 * [**Development Guide**](./docs/developer-guide.md)
