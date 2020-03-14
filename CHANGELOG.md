@@ -1,5 +1,10 @@
 # GoKube Release Notes
 
+## Version 1.8.2 - 03/14/2020
+* Upgrade is automatically done the first time you execute a new version of gokube
+* Miniapps URL repo fixed to match new thalesgroup organization
+* Bump to kubernetes v1.17.3, helm 2.16.3, minikube v1.8.2
+
 ## Version 1.8.1 - 02/08/2020
 * Bump to kubernetes v1.17.2, minikube v1.7.2
 

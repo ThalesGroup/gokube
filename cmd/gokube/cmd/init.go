@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/gemalto/gokube/pkg/helmspray"
 	"github.com/gemalto/gokube/pkg/virtualbox"
+	"github.com/spf13/viper"
 	"os"
 	"strings"
 	"time"
@@ -35,16 +36,17 @@ import (
 
 const (
 	NGINX_INGRESS_APP_VERSION  = "0.23.0"
-	DEFAULT_KUBERNETES_VERSION = "v1.17.2"
-	DEFAULT_KUBECTL_VERSION    = "v1.17.2"
-	DEFAULT_MINIKUBE_VERSION   = "v1.7.2"
+	DEFAULT_KUBERNETES_VERSION = "v1.17.3"
+	DEFAULT_KUBECTL_VERSION    = "v1.17.3"
+	DEFAULT_MINIKUBE_VERSION   = "v1.8.2"
 	DEFAULT_MINIKUBE_URL       = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
 	DEFAULT_DOCKER_VERSION     = "19.03.3"
-	DEFAULT_HELM_VERSION       = "v2.16.1"
+	DEFAULT_HELM_VERSION       = "v2.16.3"
 	DEFAULT_HELM_SPRAY_VERSION = "v3.4.5"
 	DEFAULT_STERN_VERSION      = "1.11.0"
 )
 
+var gokubeVersion string
 var minikubeURL string
 var minikubeVersion string
 var dockerVersion string
@@ -81,6 +83,11 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
+	gokube.ReadConfig()
+	gokubeVersion = viper.GetString("gokube-version")
+	if len(gokubeVersion) == 0 {
+		gokubeVersion = "0.0.0"
+	}
 	var defaultKubernetesVersion = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBERNETES_VERSION)
 	var defaultKubectlVersion = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBECTL_VERSION)
 	var defaultMinikubeUrl = getValueFromEnv("MINIKUBE_URL", DEFAULT_MINIKUBE_URL)
@@ -108,7 +115,7 @@ func init() {
 	initCmd.Flags().BoolVarP(&clean, "clean", "c", false, "Clean gokube (remove docker, minikube, kubectl and helm working directories)")
 	initCmd.Flags().BoolVarP(&imageCache, "image-cache", "", true, "Download docker images in cache before pulling them in minikube")
 	initCmd.Flags().StringVarP(&imageCacheAlternateRepo, "image-cache-alternate-repo", "", os.Getenv("ALTERNATE_REPO"), "Alternate docker repo used to download images in cache")
-	initCmd.Flags().StringVarP(&miniappsRepo, "miniapps-repo", "", "https://gemalto.github.io/miniapps", "Helm repository for miniapps")
+	initCmd.Flags().StringVarP(&miniappsRepo, "miniapps-repo", "", "https://thalesgroup.github.io/miniapps", "Helm repository for miniapps")
 	initCmd.Flags().BoolVarP(&ingressController, "ingress-controller", "", false, "Deploy ingress controller")
 	initCmd.Flags().BoolVarP(&dnsProxy, "dns-proxy", "", false, "Use Virtualbox NAT DNS proxy (could be instable)")
 	initCmd.Flags().BoolVarP(&hostDNSResolver, "host-dns-resolver", "", false, "Use Virtualbox NAT DNS host resolver (could be instable)")
@@ -206,12 +213,19 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	if clean {
-		fmt.Println("Deleting gokube working directories...")
+		fmt.Println("Deleting gokube dependencies working directory...")
 		minikube.DeleteWorkingDirectory()
 		helm.DeleteWorkingDirectory()
 		kubectl.DeleteWorkingDirectory()
 		docker.DeleteWorkingDirectory()
 		docker.InitWorkingDirectory()
+	}
+
+	// Force upgrade if persisted gokube-version is lower than the current one
+	if semver.New(gokubeVersion).Compare(*semver.New(GOKUBE_VERSION)) < 0 {
+		fmt.Println("This version of gokube is launched for the first time, forcing upgrade...")
+		gokubeVersion = GOKUBE_VERSION
+		upgrade = true
 	}
 	if upgrade {
 		fmt.Println("Downloading gokube dependencies...")
@@ -228,7 +242,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for start command
-	gokube.WriteConfig(kubernetesVersion)
+	gokube.WriteConfig(gokubeVersion, kubernetesVersion)
 
 	// Create virtual machine (minikube)
 	fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)

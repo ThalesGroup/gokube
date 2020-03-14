@@ -1,7 +1,7 @@
 # gokube
-[![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
+[![Build Status](https://api.travis-ci.org/thalesgroup/gokube.svg?branch=master)](https://travis-ci.org/thalesgroup/gokube)
 
-![gokube](https://gemalto.github.io/gokube/logo/gokube_150x150.png)
+![gokube](https://thalesgroup.github.io/gokube/logo/gokube_150x150.png)
 
 ## What is gokube?
 
@@ -17,18 +17,18 @@ gokube downloads and installs many dependencies such as:
 gokube deploys and configures Monocular for a better user experience!
 You will be able to deploy in one click useful helm charts for developing in your kubernetes cluster.
 
-gokube is configured with a dedicated helm repository named [miniapps](https://gemalto.github.io/miniapps) which contains the following charts:
-* [cassandra](https://github.com/gemalto/miniapps/tree/master/charts/cassandra)
-* [mysql](https://github.com/gemalto/miniapps/tree/master/charts/mysql)
-* [heapster](https://github.com/gemalto/miniapps/tree/master/charts/heapster)
-* [pact](https://github.com/gemalto/miniapps/tree/master/charts/pact)
-* [kibana](https://github.com/gemalto/miniapps/tree/master/charts/kibana)
-* [grafana](https://github.com/gemalto/miniapps/tree/master/charts/grafana)
+gokube is configured with a dedicated helm repository named [miniapps](https://thalesgroup.github.io/miniapps) which contains the following charts:
+* [cassandra](https://github.com/thalesgroup/miniapps/tree/master/charts/cassandra)
+* [mysql](https://github.com/thalesgroup/miniapps/tree/master/charts/mysql)
+* [heapster](https://github.com/thalesgroup/miniapps/tree/master/charts/heapster)
+* [pact](https://github.com/thalesgroup/miniapps/tree/master/charts/pact)
+* [kibana](https://github.com/thalesgroup/miniapps/tree/master/charts/kibana)
+* [grafana](https://github.com/thalesgroup/miniapps/tree/master/charts/grafana)
 
 These charts are optimized in term of memory and cpu for minikube and very useful for developers.
 
 ## Continuous Integration & Delivery 
-[![Build Status](https://api.travis-ci.com/gemalto/gokube.svg?branch=master)](https://travis-ci.com/gemalto/gokube)
+[![Build Status](https://api.travis-ci.org/thalesgroup/gokube.svg?branch=master)](https://travis-ci.org/thalesgroup/gokube)
 
 gokube is building and delivering under Travis. 
 
@@ -38,7 +38,7 @@ gokube is building and delivering under Travis.
 
 #### Download binary
 
-* The latest release for gokube can be download on the [Releases page](https://github.com/gemalto/gokube/releases/latest).
+* The latest release for gokube can be download on the [Releases page](https://github.com/thalesgroup/gokube/releases/latest).
 * Copy executable file to: C:\gokube\bin and replace the previous one.
 
 #### Upgrade gokube
@@ -69,7 +69,7 @@ You’ll need a place to store the gokube executable:
 
 #### Download binary
 
-* The latest release for gokube can be download on the [Releases page](https://github.com/gemalto/gokube/releases/latest).
+* The latest release for gokube can be download on the [Releases page](https://github.com/thalesgroup/gokube/releases/latest).
 * Copy executable file to: C:\gokube\bin
 * The gokube executable will be named as gokube-version-type+platform.arch.exe. Rename the executable to gokube.exe for ease of use.
 

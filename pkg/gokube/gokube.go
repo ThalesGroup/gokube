@@ -77,7 +77,7 @@ func ReadConfig() {
 }
 
 // WriteConfig ...
-func WriteConfig(kubernetesVersion string) {
+func WriteConfig(gokubeVersion string, kubernetesVersion string) {
 	usr, err := user.Current()
 	if err != nil {
 		fmt.Print(err)
@@ -103,6 +103,7 @@ func WriteConfig(kubernetesVersion string) {
 	viper.SetConfigName(configFile)
 	viper.AddConfigPath(configPath)
 	viper.SetConfigType("yaml")
+	viper.Set("gokube-version", gokubeVersion)
 	viper.Set("kubernetes-version", kubernetesVersion)
 	err = viper.WriteConfig()
 	if err != nil {
