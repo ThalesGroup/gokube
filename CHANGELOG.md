@@ -1,5 +1,9 @@
 # GoKube Release Notes
 
+## Version 1.9.0 - 03/27/2020
+* Bump to minikube 1.9.0, K8S 1.18, docker 19.03.8
+* Upgrade is now also possible upon restart (when we don't want VM to be respawn)
+
 ## Version 1.8.2 - 03/14/2020
 * Upgrade is automatically done the first time you execute a new version of gokube
 * Miniapps URL repo fixed to match new thalesgroup organization
