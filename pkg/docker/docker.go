@@ -28,7 +28,7 @@ import (
 
 const (
 	//	URL     = "https://download.docker.com/win/static/edge/x86_64/docker-%s.zip"
-	URL = "https://github.com/StefanScherer/docker-cli-builder/releases/download/%s/docker.exe"
+	URL = "https://github.com/cvila84/docker-cli-builder/releases/download/%s/docker.exe"
 )
 
 // LoadImages ...
