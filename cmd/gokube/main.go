@@ -15,9 +15,25 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"github.com/gemalto/gokube/cmd/gokube/cmd"
+	"github.com/tcnksm/go-latest"
+)
+
+var (
+	githubTag = &latest.GithubTag{
+		Owner:      "ThalesGroup",
+		Repository: "gokube",
+	}
 )
 
 func main() {
+	res, _ := latest.Check(githubTag, cmd.GOKUBE_VERSION)
+	if res == nil {
+		fmt.Printf("WARNING: Cannot look for gokube upgrades, please check your connection\n")
+	}
+	if res != nil && res.Outdated {
+		fmt.Printf("WARNING: This version of gokube is outdated, please download the newest one on https://github.com/ThalesGroup/gokube/releases/tag/v%s\n", res.Current)
+	}
 	cmd.Execute()
 }

@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.9.1 - 03/31/2020
+* Shows a warning if not using the latest gokube release
+
 ## Version 1.9.0 - 03/27/2020
 * Bump to minikube 1.9.0, K8S 1.18, docker 19.03.8
 * Upgrade is now also possible upon restart (when we don't want VM to be respawn)
