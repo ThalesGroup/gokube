@@ -1,5 +1,9 @@
 # GoKube Release Notes
 
+## Version 1.9.2 - 04/04/2020
+* Bump to minikube 1.9.1
+* Reduced the timeout to check for new version of gokube
+
 ## Version 1.9.1 - 03/31/2020
 * Shows a warning if not using the latest gokube release
 

@@ -16,8 +16,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/cvila84/go-latest"
 	"github.com/gemalto/gokube/cmd/gokube/cmd"
-	"github.com/tcnksm/go-latest"
+	"time"
 )
 
 var (
@@ -28,9 +29,9 @@ var (
 )
 
 func main() {
-	res, _ := latest.Check(githubTag, cmd.GOKUBE_VERSION)
+	res, _ := latest.Check(githubTag, cmd.GOKUBE_VERSION, 5*time.Second)
 	if res == nil {
-		fmt.Printf("WARNING: Cannot look for gokube upgrades, please check your connection\n")
+		fmt.Printf("WARNING: Cannot find gokube latest release, please check your connection\n")
 	}
 	if res != nil && res.Outdated {
 		fmt.Printf("WARNING: This version of gokube is outdated, please download the newest one on https://github.com/ThalesGroup/gokube/releases/tag/v%s\n", res.Current)
