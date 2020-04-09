@@ -34,7 +34,7 @@ var stopCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(stopCmd)
-	stopCmd.Flags().BoolVarP(&forceStop, "force", "f", false, "Force VM stop (don't display warning message before stopping)")
+	stopCmd.Flags().BoolVarP(&forceStop, "quiet", "q", false, "Don't display warning message before stopping")
 }
 
 func stopRun(cmd *cobra.Command, args []string) {
