@@ -114,7 +114,7 @@ func init() {
 	initCmd.Flags().BoolVarP(&dnsProxy, "dns-proxy", "", false, "Use Virtualbox NAT DNS proxy (could be instable)")
 	initCmd.Flags().BoolVarP(&hostDNSResolver, "host-dns-resolver", "", false, "Use Virtualbox NAT DNS host resolver (could be instable)")
 	initCmd.Flags().BoolVarP(&debug, "debug", "", false, "Activate debug logging")
-	initCmd.Flags().BoolVarP(&forceInit, "force", "f", false, "Force VM init (don't display warning message before initializing)")
+	initCmd.Flags().BoolVarP(&forceInit, "quiet", "q", false, "Don't display warning message before initializing")
 	RootCmd.AddCommand(initCmd)
 }
 
