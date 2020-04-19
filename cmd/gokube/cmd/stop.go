@@ -22,8 +22,6 @@ import (
 	"time"
 )
 
-var forceStop bool
-
 // stopCmd represents the stop command
 var stopCmd = &cobra.Command{
 	Use:   "stop",
@@ -33,12 +31,16 @@ var stopCmd = &cobra.Command{
 }
 
 func init() {
+	defaultGokubeQuiet := false
+	if len(getValueFromEnv("GOKUBE_QUIET", "")) > 0 {
+		defaultGokubeQuiet = true
+	}
 	RootCmd.AddCommand(stopCmd)
-	stopCmd.Flags().BoolVarP(&forceStop, "quiet", "q", false, "Don't display warning message before stopping")
+	stopCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before stopping")
 }
 
 func stopRun(cmd *cobra.Command, args []string) {
-	if !forceStop {
+	if !quiet {
 		fmt.Println("WARNING: You should not stop a VM with a lot of running pods as the restart will be unstable")
 		fmt.Print("Press <CTRL+C> within the next 10s it you need to perform some clean or press <ENTER> now to continue...")
 		enter := make(chan bool, 1)

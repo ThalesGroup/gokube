@@ -27,8 +27,8 @@ import (
 	"gopkg.in/cheggaaa/pb.v2"
 )
 
-// DownloadFromUrl ...
-func DownloadFromUrl(name string, tpl string, version string) int64 {
+// FromUrl ...
+func FromUrl(name string, tpl string, version string) int64 {
 
 	url := tpl
 
@@ -41,10 +41,10 @@ func DownloadFromUrl(name string, tpl string, version string) int64 {
 
 	// Templates definition: https://github.com/cheggaaa/pb/blob/v2/preset.go
 	var tmpl string
-	//tmpl = `{{ green "` + name + `: " }}{{counters . }} {{bar . "[" "=" ">" "_" "]" | green }} {{percent . }} {{speed . }}`
-	tmpl = `{{ green "` + name + `: " }}{{counters . }} {{bar . | green }} {{percent . }} {{speed . }}`
+	//tmpl = `{{ yellow "` + name + `: " }}{{counters . }} {{bar . "[" "=" ">" "_" "]" | green }} {{percent . }} {{speed . }}`
+	tmpl = `{{ yellow "` + name + `: " }}{{counters . }} {{bar . | green }} {{percent . }} {{speed . }}`
 
-	utils.CreateDir(gokube.GetTempDir())
+	utils.CreateDirs(gokube.GetTempDir())
 	output, err := os.Create(gokube.GetTempDir() + "/" + fileName)
 	if err != nil {
 		panic(err)
@@ -84,11 +84,17 @@ func DownloadFromUrl(name string, tpl string, version string) int64 {
 	fileType := tokens[len(tokens)-1]
 	switch fileType {
 	case "zip":
-		utils.Unzip(gokube.GetTempDir()+"/"+fileName, gokube.GetTempDir())
+		if err = utils.Unzip(gokube.GetTempDir()+"/"+fileName, gokube.GetTempDir()); err != nil {
+			panic(err)
+		}
 	case "tgz":
-		utils.Untar(gokube.GetTempDir()+"/"+fileName, gokube.GetTempDir())
+		if err = utils.Untar(gokube.GetTempDir()+"/"+fileName, gokube.GetTempDir()); err != nil {
+			panic(err)
+		}
 	case "gz":
-		utils.Untar(gokube.GetTempDir()+"/"+fileName, gokube.GetTempDir())
+		if err = utils.Untar(gokube.GetTempDir()+"/"+fileName, gokube.GetTempDir()); err != nil {
+			panic(err)
+		}
 	}
 
 	return n

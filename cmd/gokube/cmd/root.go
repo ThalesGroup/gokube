@@ -15,10 +15,42 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/gemalto/gokube/pkg/docker"
+	"github.com/gemalto/gokube/pkg/gokube"
+	"github.com/gemalto/gokube/pkg/helm"
+	"github.com/gemalto/gokube/pkg/helmspray"
+	"github.com/gemalto/gokube/pkg/kubectl"
+	"github.com/gemalto/gokube/pkg/minikube"
+	"github.com/gemalto/gokube/pkg/stern"
 	"os"
 
 	"github.com/spf13/cobra"
 )
+
+const (
+	DEFAULT_KUBERNETES_VERSION = "v1.18.2"
+	DEFAULT_KUBECTL_VERSION    = "v1.18.2"
+	DEFAULT_MINIKUBE_VERSION   = "v1.9.2"
+	DEFAULT_MINIKUBE_URL       = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
+	DEFAULT_DOCKER_VERSION     = "19.03.8"
+	DEFAULT_HELM_VERSION       = "v3.1.2"
+	DEFAULT_HELM_SPRAY_VERSION = "v4.0.0"
+	DEFAULT_HELM_SPRAY_URL     = "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
+	DEFAULT_STERN_VERSION      = "1.11.0"
+	DEFAULT_MINIAPPS_REPO      = "https://thalesgroup.github.io/miniapps"
+)
+
+var minikubeURL string
+var minikubeVersion string
+var dockerVersion string
+var kubectlVersion string
+var helmVersion string
+var helmSprayURL string
+var helmSprayVersion string
+var sternVersion string
+var askForUpgrade bool
+var debug bool
+var quiet bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -27,6 +59,25 @@ var RootCmd = &cobra.Command{
 	Long:  `gokube is a nice installer to provide an environment for developing day-to-day with kubernetes & helm on your laptop.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 	},
+}
+
+func installHelmPlugins() {
+	helmspray.DeletePlugin()
+	// TODO rely on helm plugin install
+	helmspray.InstallPlugin(helmSprayURL, helmSprayVersion)
+}
+
+func upgrade() {
+	minikube.DeleteExecutable()
+	minikube.DownloadExecutable(gokube.GetBinDir(), minikubeURL, minikubeVersion)
+	helm.DeleteExecutable()
+	helm.DownloadExecutable(gokube.GetBinDir(), helmVersion)
+	docker.DeleteExecutable()
+	docker.DownloadExecutable(gokube.GetBinDir(), dockerVersion)
+	kubectl.DeleteExecutable()
+	kubectl.DownloadExecutable(gokube.GetBinDir(), kubectlVersion)
+	stern.DeleteExecutable()
+	stern.DownloadExecutable(gokube.GetBinDir(), sternVersion)
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.

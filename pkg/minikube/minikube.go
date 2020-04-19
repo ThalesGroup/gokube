@@ -28,12 +28,16 @@ import (
 	"github.com/gemalto/gokube/pkg/utils"
 )
 
-// Start ...
-func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
-	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--enable-default-cni"}
+func patchStartArgs(args []string, kubernetesVersion string) {
 	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.16.0")) >= 0 && semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.18.0")) < 0 {
 		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
 	}
+}
+
+// Start ...
+func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
+	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--enable-default-cni"}
+	//patchStartArgs(args, kubernetesVersion)
 	if !cache {
 		args = append(args, "--cache-images=false")
 	}
@@ -55,9 +59,7 @@ func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsPro
 // Restart ...
 func Restart(kubernetesVersion string) {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion}
-	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.16.0")) >= 0 && semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.18.0")) < 0 {
-		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
-	}
+	//patchStartArgs(args, kubernetesVersion)
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -185,7 +187,7 @@ func Ip() string {
 // DownloadExecutable ...
 func DownloadExecutable(dst string, minikubeURI string, minikubeVersion string) {
 	if _, err := os.Stat(dst + "/minikube.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("minikube "+minikubeVersion, minikubeURI, minikubeVersion)
+		download.FromUrl("minikube "+minikubeVersion, minikubeURI, minikubeVersion)
 		utils.MoveFile(gokube.GetTempDir()+"/minikube-windows-amd64.exe", dst+"/minikube.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}

@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/coreos/go-semver/semver"
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
@@ -32,23 +31,19 @@ var startCmd = &cobra.Command{
 }
 
 func init() {
-	gokube.ReadConfig()
-	var defaultKubernetesVersion = viper.GetString("kubernetes-version")
-	if len(defaultKubernetesVersion) == 0 {
-		defaultKubernetesVersion = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBERNETES_VERSION)
-	}
 	var defaultKubectlVersion = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBECTL_VERSION)
 	var defaultMinikubeUrl = getValueFromEnv("MINIKUBE_URL", DEFAULT_MINIKUBE_URL)
 	var defaultMinikubeVersion = getValueFromEnv("MINIKUBE_VERSION", DEFAULT_MINIKUBE_VERSION)
 	var defaultDockerVersion = getValueFromEnv("DOCKER_VERSION", DEFAULT_DOCKER_VERSION)
 	var defaultHelmVersion = getValueFromEnv("HELM_VERSION", DEFAULT_HELM_VERSION)
+	var defaultHelmSprayUrl = getValueFromEnv("HELM_SPRAY_URL", DEFAULT_HELM_SPRAY_URL)
 	var defaultHelmSprayVersion = getValueFromEnv("HELM_SPRAY_VERSION", DEFAULT_HELM_SPRAY_VERSION)
 	startCmd.Flags().StringVarP(&minikubeURL, "minikube-url", "", defaultMinikubeUrl, "The URL to download minikube")
 	startCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", defaultMinikubeVersion, "The minikube version")
 	startCmd.Flags().StringVarP(&dockerVersion, "docker-version", "", defaultDockerVersion, "The docker version")
-	startCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", defaultKubernetesVersion, "The kubernetes version")
 	startCmd.Flags().StringVarP(&kubectlVersion, "kubectl-version", "", defaultKubectlVersion, "The kubectl version")
 	startCmd.Flags().StringVarP(&helmVersion, "helm-version", "", defaultHelmVersion, "The helm version")
+	startCmd.Flags().StringVarP(&helmSprayURL, "helm-spray-url", "", defaultHelmSprayUrl, "The URL to download helm spray plugin")
 	startCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", defaultHelmSprayVersion, "The helm spray plugin version")
 	startCmd.Flags().StringVarP(&sternVersion, "stern-version", "", DEFAULT_STERN_VERSION, "The stern version")
 	startCmd.Flags().BoolVarP(&askForUpgrade, "upgrade", "u", false, "Upgrade gokube (download and setup docker, minikube, kubectl and helm)")
@@ -57,16 +52,17 @@ func init() {
 
 func startRun(cmd *cobra.Command, args []string) {
 
-	helm3 = false
-	if semver.New(helmVersion[1:]).Compare(*semver.New("3.0.0")) >= 0 {
-		helm3 = true
-	}
-
 	if askForUpgrade {
 		fmt.Println("Downloading gokube dependencies...")
 		upgrade()
 		fmt.Println("Installing helm plugins...")
 		installHelmPlugins()
+	}
+
+	gokube.ReadConfig()
+	kubernetesVersionForStart := viper.GetString("kubernetes-version")
+	if len(kubernetesVersionForStart) == 0 {
+		kubernetesVersionForStart = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBERNETES_VERSION)
 	}
 
 	fmt.Printf("Starting minikube VM with kubernetes %s...\n", kubernetesVersion)

@@ -27,7 +27,6 @@ import (
 )
 
 const (
-	//	URL     = "https://download.docker.com/win/static/edge/x86_64/docker-%s.zip"
 	URL = "https://github.com/cvila84/docker-cli-builder/releases/download/%s/docker.exe"
 )
 
@@ -101,7 +100,7 @@ func Version() {
 // DownloadExecutable ...
 func DownloadExecutable(dst string, version string) {
 	if _, err := os.Stat(gokube.GetBinDir() + "/docker.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("docker v"+version, URL, version)
+		download.FromUrl("docker v"+version, URL, version)
 		utils.MoveFile(gokube.GetTempDir()+"/docker.exe", dst+"/docker.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
@@ -120,7 +119,7 @@ func InitWorkingDirectory() {
 	if err == nil {
 		return
 	}
-	utils.CreateDir(dockerHome)
+	utils.CreateDirs(dockerHome)
 	newFile, err := os.Create(configJsonPath)
 	if err != nil {
 		fmt.Printf("Error while creating %s\n", configJsonPath)
@@ -132,5 +131,6 @@ func InitWorkingDirectory() {
 
 // DeleteWorkingDirectory ...
 func DeleteWorkingDirectory() {
+	// Delete and recreate will not work if .docker is a symlink !
 	utils.CleanDir(utils.GetUserHome() + "/.docker")
 }

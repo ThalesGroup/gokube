@@ -16,10 +16,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/gemalto/gokube/pkg/helmspray"
-	"github.com/gemalto/gokube/pkg/stern"
 	"github.com/gemalto/gokube/pkg/virtualbox"
-	"github.com/spf13/viper"
 	"os"
 	"strings"
 	"time"
@@ -33,27 +30,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	DEFAULT_KUBERNETES_VERSION = "v1.18.0"
-	DEFAULT_KUBECTL_VERSION    = "v1.18.0"
-	DEFAULT_MINIKUBE_VERSION   = "v1.9.1"
-	DEFAULT_MINIKUBE_URL       = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
-	DEFAULT_DOCKER_VERSION     = "19.03.8"
-	DEFAULT_HELM_VERSION       = "v2.16.3"
-	DEFAULT_HELM_SPRAY_VERSION = "v3.4.5"
-	DEFAULT_STERN_VERSION      = "1.11.0"
-)
-
-var gokubeVersion string
-var minikubeURL string
-var minikubeVersion string
-var dockerVersion string
 var kubernetesVersion string
-var kubectlVersion string
-var helmVersion string
-var helm3 bool
-var helmSprayVersion string
-var sternVersion string
 var memory int16
 var cpus int16
 var disk string
@@ -63,13 +40,10 @@ var insecureRegistry string
 var httpProxy string
 var httpsProxy string
 var noProxy string
-var askForUpgrade bool
 var askForClean bool
 var miniappsRepo string
 var dnsProxy bool
 var hostDNSResolver bool
-var debug bool
-var forceInit bool
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -80,24 +54,25 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
-	gokube.ReadConfig()
-	gokubeVersion = viper.GetString("gokube-version")
-	if len(gokubeVersion) == 0 {
-		gokubeVersion = "0.0.0"
-	}
 	var defaultKubernetesVersion = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBERNETES_VERSION)
 	var defaultKubectlVersion = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBECTL_VERSION)
 	var defaultMinikubeUrl = getValueFromEnv("MINIKUBE_URL", DEFAULT_MINIKUBE_URL)
 	var defaultMinikubeVersion = getValueFromEnv("MINIKUBE_VERSION", DEFAULT_MINIKUBE_VERSION)
 	var defaultDockerVersion = getValueFromEnv("DOCKER_VERSION", DEFAULT_DOCKER_VERSION)
 	var defaultHelmVersion = getValueFromEnv("HELM_VERSION", DEFAULT_HELM_VERSION)
+	var defaultHelmSprayUrl = getValueFromEnv("HELM_SPRAY_URL", DEFAULT_HELM_SPRAY_URL)
 	var defaultHelmSprayVersion = getValueFromEnv("HELM_SPRAY_VERSION", DEFAULT_HELM_SPRAY_VERSION)
+	defaultGokubeQuiet := false
+	if len(getValueFromEnv("GOKUBE_QUIET", "")) > 0 {
+		defaultGokubeQuiet = true
+	}
 	initCmd.Flags().StringVarP(&minikubeURL, "minikube-url", "", defaultMinikubeUrl, "The URL to download minikube")
 	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", defaultMinikubeVersion, "The minikube version")
 	initCmd.Flags().StringVarP(&dockerVersion, "docker-version", "", defaultDockerVersion, "The docker version")
 	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", defaultKubernetesVersion, "The kubernetes version")
 	initCmd.Flags().StringVarP(&kubectlVersion, "kubectl-version", "", defaultKubectlVersion, "The kubectl version")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", defaultHelmVersion, "The helm version")
+	initCmd.Flags().StringVarP(&helmSprayURL, "helm-spray-url", "", defaultHelmSprayUrl, "The URL to download helm spray plugin")
 	initCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", defaultHelmSprayVersion, "The helm spray plugin version")
 	initCmd.Flags().StringVarP(&sternVersion, "stern-version", "", DEFAULT_STERN_VERSION, "The stern version")
 	initCmd.Flags().BoolVarP(&askForUpgrade, "upgrade", "u", false, "Upgrade gokube (download and setup docker, minikube, kubectl and helm)")
@@ -110,11 +85,11 @@ func init() {
 	initCmd.Flags().StringVarP(&httpProxy, "http-proxy", "", os.Getenv("HTTP_PROXY"), "HTTP proxy variable for docker engine in minikube VM")
 	initCmd.Flags().StringVarP(&httpsProxy, "https-proxy", "", os.Getenv("HTTPS_PROXY"), "HTTPS proxy variable for docker engine in minikube VM")
 	initCmd.Flags().StringVarP(&noProxy, "no-proxy", "", os.Getenv("NO_PROXY"), "No proxy variable for docker engine in minikube VM")
-	initCmd.Flags().StringVarP(&miniappsRepo, "miniapps-repo", "", "https://thalesgroup.github.io/miniapps", "Helm repository for miniapps")
+	initCmd.Flags().StringVarP(&miniappsRepo, "miniapps-repo", "", DEFAULT_MINIAPPS_REPO, "Helm repository for miniapps")
 	initCmd.Flags().BoolVarP(&dnsProxy, "dns-proxy", "", false, "Use Virtualbox NAT DNS proxy (could be instable)")
 	initCmd.Flags().BoolVarP(&hostDNSResolver, "host-dns-resolver", "", false, "Use Virtualbox NAT DNS host resolver (could be instable)")
 	initCmd.Flags().BoolVarP(&debug, "debug", "", false, "Activate debug logging")
-	initCmd.Flags().BoolVarP(&forceInit, "quiet", "q", false, "Don't display warning message before initializing")
+	initCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before initializing")
 	RootCmd.AddCommand(initCmd)
 }
 
@@ -128,12 +103,20 @@ func getValueFromEnv(envVar string, defaultValue string) string {
 
 func checkMinimumRequirements() {
 	// Check minimum requirements
-	if semver.New(minikubeVersion[1:]).Compare(*semver.New("1.6.1")) < 0 {
-		fmt.Println("gokube is only compatible with minikube version >= 1.6.1")
+	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.8.0")) < 0 {
+		fmt.Println("FATAL: This gokube version is only compatible with kubernetes version >= 1.8.0")
 		os.Exit(1)
 	}
-	if semver.New(helmVersion[1:]).Compare(*semver.New("2.16.1")) < 0 {
-		fmt.Println("gokube is only compatible with helm version >= 2.16.1")
+	if semver.New(minikubeVersion[1:]).Compare(*semver.New("1.6.1")) < 0 {
+		fmt.Println("FATAL: This gokube version is only compatible with minikube version >= 1.6.1")
+		os.Exit(1)
+	}
+	if semver.New(helmVersion[1:]).Compare(*semver.New("3.0.0-0")) < 0 {
+		fmt.Println("FATAL: This gokube version is only compatible with helm version >= 3.0.0-0")
+		os.Exit(1)
+	}
+	if semver.New(helmSprayVersion[1:]).Compare(*semver.New("4.0.0-0")) < 0 {
+		fmt.Println("FATAL: This gokube version is only compatible with helm-spray version >= 4.0.0-0")
 		os.Exit(1)
 	}
 }
@@ -189,24 +172,10 @@ func exposeDashboard(port int) {
 }
 
 func installHelm() {
-	// Initialize helm
-	if !helm3 {
-		helm.Init()
-	}
 	// Add helm miniapps repository
+	// TODO install chartmuseum (for local development) as helm serve does not exist anymore in helm v3
 	helm.RepoAdd("miniapps", miniappsRepo)
 	helm.RepoUpdate()
-}
-
-func installHelmPlugins() {
-	if !helm3 {
-		// Add helm spray plugin
-		helmspray.DeletePlugin()
-		helmspray.InstallPlugin(helmSprayVersion)
-	} else {
-		// TODO rely on helm plugin install
-		fmt.Println("WARNING: helm-spray NOT installed as plugin installation is not yet compatible with helm3")
-	}
 }
 
 func checkMinikubeIP() {
@@ -225,19 +194,6 @@ func clean() {
 	docker.InitWorkingDirectory()
 }
 
-func upgrade() {
-	minikube.DeleteExecutable()
-	minikube.DownloadExecutable(gokube.GetBinDir(), minikubeURL, minikubeVersion)
-	helm.DeleteExecutable()
-	helm.DownloadExecutable(gokube.GetBinDir(), helmVersion)
-	docker.DeleteExecutable()
-	docker.DownloadExecutable(gokube.GetBinDir(), dockerVersion)
-	kubectl.DeleteExecutable()
-	kubectl.DownloadExecutable(gokube.GetBinDir(), kubectlVersion)
-	stern.DeleteExecutable()
-	stern.DownloadExecutable(gokube.GetBinDir(), sternVersion)
-}
-
 func initRun(cmd *cobra.Command, args []string) {
 	if len(args) > 0 {
 		fmt.Println("usage: gokube init")
@@ -246,14 +202,10 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	checkMinimumRequirements()
 
-	helm3 = false
-	if semver.New(helmVersion[1:]).Compare(*semver.New("3.0.0")) >= 0 {
-		helm3 = true
-	}
 	ipCheckNeeded = strings.Compare("0.0.0.0", checkIP) != 0
 
 	// Warn user with pre-requisites
-	if ipCheckNeeded && !forceInit {
+	if ipCheckNeeded && !quiet {
 		confirmCommandExecution()
 	}
 
