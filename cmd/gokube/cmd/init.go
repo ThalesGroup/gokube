@@ -178,7 +178,7 @@ func configureHelm(localRepoIp string) {
 	helm.RepoAdd("miniapps", miniappsRepo)
 	helm.RepoUpdate()
 	// Install chartmuseum
-	helm.Upgrade("stable/chartmuseum", "", "chartmuseum", "kube-system", "service.type=NodePort,service.nodePort=32767", "")
+	helm.Upgrade("stable/chartmuseum", "", "chartmuseum", "kube-system", "env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
 	fmt.Printf("Waiting for chartmuseum")
 	for n := 1; n < 6; n++ {
 		readyReplicas := kubectl.Get("kube-system", "deploy", "chartmuseum-chartmuseum", "{.status.readyReplicas}")
