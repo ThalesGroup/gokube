@@ -15,7 +15,6 @@ limitations under the License.
 package download
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -30,11 +29,7 @@ import (
 // FromUrl ...
 func FromUrl(name string, tpl string, version string) int64 {
 
-	url := tpl
-
-	if strings.Contains(tpl, "%s") {
-		url = fmt.Sprintf(tpl, version)
-	}
+	url := strings.Replace(tpl, "%s", version, -1)
 
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]

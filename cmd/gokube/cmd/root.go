@@ -18,6 +18,7 @@ import (
 	"github.com/gemalto/gokube/pkg/docker"
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/helm"
+	"github.com/gemalto/gokube/pkg/helmpush"
 	"github.com/gemalto/gokube/pkg/helmspray"
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
@@ -36,6 +37,8 @@ const (
 	DEFAULT_HELM_VERSION       = "v3.1.2"
 	DEFAULT_HELM_SPRAY_VERSION = "v4.0.0"
 	DEFAULT_HELM_SPRAY_URL     = "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
+	DEFAULT_HELM_PUSH_VERSION  = "0.8.1"
+	DEFAULT_HELM_PUSH_URL      = "https://github.com/chartmuseum/helm-push/releases/download/v%s/helm-push_%s_windows_amd64.tar.gz"
 	DEFAULT_STERN_VERSION      = "1.11.0"
 	DEFAULT_MINIAPPS_REPO      = "https://thalesgroup.github.io/miniapps"
 )
@@ -62,9 +65,11 @@ var RootCmd = &cobra.Command{
 }
 
 func installHelmPlugins() {
-	helmspray.DeletePlugin()
 	// TODO rely on helm plugin install
+	helmspray.DeletePlugin()
 	helmspray.InstallPlugin(helmSprayURL, helmSprayVersion)
+	helmpush.DeletePlugin()
+	helmpush.InstallPlugin(DEFAULT_HELM_PUSH_URL, DEFAULT_HELM_PUSH_VERSION)
 }
 
 func upgrade() {

@@ -28,9 +28,13 @@ const (
 	URL = "https://storage.googleapis.com/kubernetes-release/release/%s/bin/windows/amd64/kubectl.exe"
 )
 
-// GetObject ...
-func GetObject(namespace string, resourceType string, resourceName string) string {
-	output, err := exec.Command("kubectl", "--namespace", namespace, "get", resourceType, resourceName).Output()
+// Get ...
+func Get(namespace string, resourceType string, resourceName string, jsonPath string) string {
+	var args = []string{"--namespace", namespace, "get", resourceType, resourceName}
+	if len(jsonPath) > 0 {
+		args = append(args, "-o", "jsonpath="+jsonPath)
+	}
+	output, err := exec.Command("kubectl", args...).Output()
 	if err != nil {
 		return ""
 	}

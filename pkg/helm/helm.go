@@ -29,9 +29,22 @@ const (
 )
 
 // Upgrade ...
-func Upgrade(chart string, release string) {
+func Upgrade(chart string, version string, release string, namespace string, configuration string, valuesFile string) {
+	var args = []string{"upgrade", "--install", "--devel", release, chart}
+	if len(version) > 0 {
+		args = append(args, "--version", version)
+	}
+	if len(namespace) > 0 {
+		args = append(args, "--namespace", namespace)
+	}
+	if len(configuration) > 0 {
+		args = append(args, "--set", configuration)
+	}
+	if len(valuesFile) > 0 {
+		args = append(args, "-f", valuesFile)
+	}
 	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", "upgrade", "--install", "--devel", release, chart)
+	cmd := exec.Command("helm", args...)
 	cmd.Stderr = os.Stderr
 	cmd.Run()
 }
@@ -39,47 +52,7 @@ func Upgrade(chart string, release string) {
 // Delete ...
 func Delete(release string) {
 	fmt.Println("Deleting " + release + " components...")
-	cmd := exec.Command("helm", "delete", release, "--purge")
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// UpgradeWithNamespaceVersionAndConfiguration ...
-func UpgradeWithNamespaceVersionAndConfiguration(name string, namespace string, version string, configuration string, chart string) {
-	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", "upgrade", "--install", "--devel", name, "--namespace", namespace, "--version", version, "--set", configuration, chart)
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// UpgradeWithConfiguration ...
-func UpgradeWithConfiguration(name string, namespace string, configuration string, chart string, version string) {
-	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", "install", chart, "--name", name, "--namespace", namespace, "--set", configuration, "--version", version)
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// UpgradeWithValues ...
-func UpgradeWithValues(namespace string, values string, chart string) {
-	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", "install", chart, "--namespace", namespace, "-f", values)
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// UpgradeWithNamespaceAndVersion ...
-func UpgradeWithNamespaceAndVersion(name string, namespace string, version string, chart string) {
-	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", "upgrade", "--install", "--devel", name, "--namespace", namespace, "--version", version, chart)
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// Init ...
-func Init() {
-	cmd := exec.Command("helm", "init", "--upgrade", "--wait", "--tiller-connection-timeout", "600")
-	cmd.Stdout = os.Stdout
+	cmd := exec.Command("helm", "delete", release)
 	cmd.Stderr = os.Stderr
 	cmd.Run()
 }
@@ -120,6 +93,15 @@ func RepoRemove(name string) {
 func Version() {
 	fmt.Print("helm version: ")
 	cmd := exec.Command("helm", "version", "--client", "--short")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+}
+
+//Version ...
+func PluginsVersion() {
+	fmt.Print("helm plugins version:\n")
+	cmd := exec.Command("helm", "plugin", "list")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()

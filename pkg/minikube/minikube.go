@@ -28,12 +28,6 @@ import (
 	"github.com/gemalto/gokube/pkg/utils"
 )
 
-func patchStartArgs(args []string, kubernetesVersion string) {
-	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.16.0")) >= 0 && semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.18.0")) < 0 {
-		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
-	}
-}
-
 // Start ...
 func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--enable-default-cni"}
@@ -80,14 +74,6 @@ func Stop() {
 	}
 }
 
-// Status ...
-func Status() {
-	cmd := exec.Command("minikube", "status")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
 // Delete ...
 func Delete() {
 	cmd := exec.Command("minikube", "delete")
@@ -104,26 +90,9 @@ func Cache(image string) {
 	cmd.Run()
 }
 
-// Dashboard ...
-func Dashboard() {
-	cmd := exec.Command("minikube", "dashboard")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
 // AddonsEnable ...
 func AddonsEnable(addon string) {
 	cmd := exec.Command("minikube", "addons", "enable", addon)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// CopyCerts ...
-func CopyCerts() {
-	path := toLinuxPath("cp -r /home/docker/* etc/docker/certs.d")
-	cmd := exec.Command("minikube", "ssh", "sudo", path)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
@@ -203,9 +172,10 @@ func DeleteWorkingDirectory() {
 	utils.CleanDir(utils.GetUserHome() + "/.minikube")
 }
 
-func toLinuxPath(path string) string {
-	path = strings.Replace(path, "\\", "/", -1)
-	return strings.Replace(path, "C:", "/c", -1)
+func patchStartArgs(args []string, kubernetesVersion string) {
+	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.16.0")) >= 0 && semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.18.0")) < 0 {
+		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
+	}
 }
 
 func trimQuotes(s string) string {

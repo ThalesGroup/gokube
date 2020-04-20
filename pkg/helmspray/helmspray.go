@@ -15,23 +15,11 @@ limitations under the License.
 package helmspray
 
 import (
-	"fmt"
-	"os"
-	"os/exec"
-
 	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/utils"
+	"os"
 )
-
-//Version ...
-func Version() {
-	fmt.Print("helm-spray version:\n")
-	cmd := exec.Command("helm", "plugin", "list")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
 
 // InstallPlugin ...
 func InstallPlugin(helmSprayURI string, helmSprayVersion string) {

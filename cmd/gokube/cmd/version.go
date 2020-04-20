@@ -19,7 +19,6 @@ import (
 	"github.com/cvila84/go-latest"
 	"github.com/gemalto/gokube/pkg/docker"
 	"github.com/gemalto/gokube/pkg/gokube"
-	"github.com/gemalto/gokube/pkg/helmspray"
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/spf13/viper"
 	"os"
@@ -58,7 +57,7 @@ var versionCmd = &cobra.Command{
 		docker.Version()
 		kubectl.Version()
 		helm.Version()
-		helmspray.Version()
+		helm.PluginsVersion()
 	},
 }
 

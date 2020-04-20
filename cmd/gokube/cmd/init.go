@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/gemalto/gokube/pkg/virtualbox"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -158,7 +159,7 @@ func resetVBLease() {
 
 func exposeDashboard(port int) {
 	for n := 1; n < 12; n++ {
-		var dashboardService = kubectl.GetObject("kubernetes-dashboard", "svc", "kubernetes-dashboard")
+		var dashboardService = kubectl.Get("kubernetes-dashboard", "svc", "kubernetes-dashboard", "")
 		if len(dashboardService) > 0 {
 			fmt.Println()
 			patchPayload := fmt.Sprintf("{\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9090,\"nodePort\":%d}]}}", port)
@@ -171,11 +172,34 @@ func exposeDashboard(port int) {
 	}
 }
 
-func installHelm() {
-	// Add helm miniapps repository
-	// TODO install chartmuseum (for local development) as helm serve does not exist anymore in helm v3
+func configureHelm(localRepoIp string) {
+	// Add helm stable and miniapps repository
+	helm.RepoAdd("stable", "https://kubernetes-charts.storage.googleapis.com")
 	helm.RepoAdd("miniapps", miniappsRepo)
 	helm.RepoUpdate()
+	// Install chartmuseum
+	helm.Upgrade("stable/chartmuseum", "", "chartmuseum", "kube-system", "service.type=NodePort,service.nodePort=32767", "")
+	fmt.Printf("Waiting for chartmuseum")
+	for n := 1; n < 6; n++ {
+		readyReplicas := kubectl.Get("kube-system", "deploy", "chartmuseum-chartmuseum", "{.status.readyReplicas}")
+		var ready int
+		if len(readyReplicas) > 0 {
+			n, err := strconv.Atoi(readyReplicas)
+			if err != nil {
+				fmt.Printf("\nCannot check chartmuseum readiness: %s\n", err)
+				os.Exit(1)
+			}
+			ready = n
+		}
+		if ready > 0 {
+			fmt.Println()
+			break
+		} else {
+			fmt.Print(".")
+			time.Sleep(5 * time.Second)
+		}
+	}
+	helm.RepoAdd("minikube", "http://"+localRepoIp+":32767")
 }
 
 func checkMinikubeIP() {
@@ -255,8 +279,8 @@ func initRun(cmd *cobra.Command, args []string) {
 	kubectl.ConfigUseContext("minikube")
 
 	// Install helm
-	fmt.Println("Initializing helm...")
-	installHelm()
+	fmt.Println("Configuring helm...")
+	configureHelm(minikube.Ip())
 	if askForUpgrade {
 		fmt.Println("Installing helm plugins...")
 		installHelmPlugins()
