@@ -31,10 +31,10 @@ import (
 const (
 	DEFAULT_KUBERNETES_VERSION = "v1.18.2"
 	DEFAULT_KUBECTL_VERSION    = "v1.18.2"
-	DEFAULT_MINIKUBE_VERSION   = "v1.9.2"
+	DEFAULT_MINIKUBE_VERSION   = "v1.10.0"
 	DEFAULT_MINIKUBE_URL       = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
 	DEFAULT_DOCKER_VERSION     = "19.03.8"
-	DEFAULT_HELM_VERSION       = "v3.2.0"
+	DEFAULT_HELM_VERSION       = "v3.2.1"
 	DEFAULT_HELM_SPRAY_VERSION = "v4.0.0"
 	DEFAULT_HELM_SPRAY_URL     = "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
 	DEFAULT_HELM_PUSH_VERSION  = "0.8.1"

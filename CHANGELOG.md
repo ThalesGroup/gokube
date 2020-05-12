@@ -1,5 +1,9 @@
 # GoKube Release Notes
 
+## Version 1.10.0 - 05/12/2020
+* Bump to minikube 1.10.0
+* Bump to helm-spray 4.0.0 (which implies support only for helm 3)
+
 ## Version 1.9.2 - 04/04/2020
 * Bump to minikube 1.9.1
 * Reduced the timeout to check for new version of gokube
