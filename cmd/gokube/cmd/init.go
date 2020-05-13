@@ -158,7 +158,7 @@ func resetVBLease() {
 }
 
 func exposeDashboard(port int) {
-	for n := 1; n < 12; n++ {
+	for n := 1; n <= 12; n++ {
 		var dashboardService = kubectl.Get("kubernetes-dashboard", "svc", "kubernetes-dashboard", "")
 		if len(dashboardService) > 0 {
 			fmt.Println()
@@ -167,7 +167,11 @@ func exposeDashboard(port int) {
 			break
 		} else {
 			fmt.Print(".")
-			time.Sleep(5 * time.Second)
+			if n == 12 {
+				fmt.Printf("\nWARNING: kubernetes-dashboard is not present after 60s, which probably means its installation failed")
+			} else {
+				time.Sleep(5 * time.Second)
+			}
 		}
 	}
 }
@@ -180,7 +184,7 @@ func configureHelm(localRepoIp string) {
 	// Install chartmuseum
 	helm.Upgrade("stable/chartmuseum", "", "chartmuseum", "kube-system", "env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
 	fmt.Printf("Waiting for chartmuseum")
-	for n := 1; n < 6; n++ {
+	for n := 1; n <= 12; n++ {
 		readyReplicas := kubectl.Get("kube-system", "deploy", "chartmuseum-chartmuseum", "{.status.readyReplicas}")
 		var ready int
 		if len(readyReplicas) > 0 {
@@ -196,7 +200,11 @@ func configureHelm(localRepoIp string) {
 			break
 		} else {
 			fmt.Print(".")
-			time.Sleep(5 * time.Second)
+			if n == 12 {
+				fmt.Printf("\nWARNING: chartmuseum is not ready after 60s, which probably means its installation failed")
+			} else {
+				time.Sleep(5 * time.Second)
+			}
 		}
 	}
 	helm.RepoAdd("minikube", "http://"+localRepoIp+":32767")

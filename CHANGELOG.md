@@ -1,8 +1,10 @@
 # GoKube Release Notes
 
 ## Version 1.10.0 - 05/12/2020
-* Bump to minikube 1.10.0
-* Bump to helm-spray 4.0.0 (which implies support only for helm 3)
+**NOTE: Starting from this version, gokube is only compatible with helm 3**
+
+* Bump to minikube 1.10.1 (1.10 is buggy)
+* Bump to helm-spray 4.0.0
 
 ## Version 1.9.2 - 04/04/2020
 * Bump to minikube 1.9.1
@@ -24,7 +26,7 @@
 * Bump to kubernetes v1.17.2, minikube v1.7.2
 
 ## Version 1.8.0 - 12/19/2019
-THE BIG ONE
+**THE BIG ONE**
 
 * Bump to kubernetes v1.16.4, minikube v1.6.1, helm v2.16.1 and docker 19.03.3
 * Support of Virtualbox 6 (with the limitation that no other VMs shall be running during gokube init)
