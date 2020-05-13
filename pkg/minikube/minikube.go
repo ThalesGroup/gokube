@@ -32,6 +32,15 @@ import (
 func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--enable-default-cni"}
 	//patchStartArgs(args, kubernetesVersion)
+	if len(httpProxy) > 0 {
+		args = append(args, "--docker-env http_proxy="+httpProxy)
+	}
+	if len(httpsProxy) > 0 {
+		args = append(args, "--docker-env https_proxy="+httpsProxy)
+	}
+	if len(noProxy) > 0 {
+		args = append(args, "--docker-env no_proxy="+noProxy)
+	}
 	if !cache {
 		args = append(args, "--cache-images=false")
 	}

@@ -168,7 +168,7 @@ func exposeDashboard(port int) {
 		} else {
 			fmt.Print(".")
 			if n == 12 {
-				fmt.Printf("\nWARNING: kubernetes-dashboard is not present after 60s, which probably means its installation failed")
+				fmt.Printf("\nWARNING: kubernetes-dashboard is not present after 60s, which probably means its installation failed\n")
 			} else {
 				time.Sleep(5 * time.Second)
 			}
@@ -176,14 +176,7 @@ func exposeDashboard(port int) {
 	}
 }
 
-func configureHelm(localRepoIp string) {
-	// Add helm stable and miniapps repository
-	helm.RepoAdd("stable", "https://kubernetes-charts.storage.googleapis.com")
-	helm.RepoAdd("miniapps", miniappsRepo)
-	helm.RepoUpdate()
-	// Install chartmuseum
-	helm.Upgrade("stable/chartmuseum", "", "chartmuseum", "kube-system", "env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
-	fmt.Printf("Waiting for chartmuseum")
+func waitChartMuseum() {
 	for n := 1; n <= 12; n++ {
 		readyReplicas := kubectl.Get("kube-system", "deploy", "chartmuseum-chartmuseum", "{.status.readyReplicas}")
 		var ready int
@@ -201,12 +194,23 @@ func configureHelm(localRepoIp string) {
 		} else {
 			fmt.Print(".")
 			if n == 12 {
-				fmt.Printf("\nWARNING: chartmuseum is not ready after 60s, which probably means its installation failed")
+				fmt.Printf("\nWARNING: chartmuseum is not ready after 60s, which probably means its installation failed\n")
 			} else {
 				time.Sleep(5 * time.Second)
 			}
 		}
 	}
+}
+
+func configureHelm(localRepoIp string) {
+	// Add helm stable and miniapps repository
+	helm.RepoAdd("stable", "https://kubernetes-charts.storage.googleapis.com")
+	helm.RepoAdd("miniapps", miniappsRepo)
+	helm.RepoUpdate()
+	// Install chartmuseum
+	helm.Upgrade("stable/chartmuseum", "", "chartmuseum", "kube-system", "env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
+	fmt.Printf("Waiting for chartmuseum...")
+	waitChartMuseum()
 	helm.RepoAdd("minikube", "http://"+localRepoIp+":32767")
 }
 
