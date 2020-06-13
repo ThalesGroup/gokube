@@ -1,20 +1,24 @@
 # GoKube Release Notes
 
+## Version 1.11.0 - 06/13/2020
+* Bump to minikube v1.11.0, K8S v1.18.3, helm v3.2.3
+* Added new helm image plugin
+
 ## Version 1.10.0 - 05/12/2020
 **NOTE: Starting from this version, gokube is only compatible with helm 3**
 
-* Bump to minikube 1.10.1 (1.10 is buggy)
-* Bump to helm-spray 4.0.0
+* Bump to minikube v1.10.1 (1.10 is buggy)
+* Bump to helm-spray v4.0.0
 
 ## Version 1.9.2 - 04/04/2020
-* Bump to minikube 1.9.1
+* Bump to minikube v1.9.1
 * Reduced the timeout to check for new version of gokube
 
 ## Version 1.9.1 - 03/31/2020
 * Shows a warning if not using the latest gokube release
 
 ## Version 1.9.0 - 03/27/2020
-* Bump to minikube 1.9.0, K8S 1.18, docker 19.03.8
+* Bump to minikube v1.9.0, K8S v1.18, docker v19.03.8
 * Upgrade is now also possible upon restart (when we don't want VM to be respawn)
 
 ## Version 1.8.2 - 03/14/2020

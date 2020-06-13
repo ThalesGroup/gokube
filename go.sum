@@ -18,8 +18,6 @@ github.com/coreos/go-semver v0.3.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3Ee
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
-github.com/cvila84/go-latest v0.0.0-20200404092301-5a0adbae5efc h1:dII2t9uXzXkTuRCznoTFxCVw2KZXK6i/zjn44y+Zgxw=
-github.com/cvila84/go-latest v0.0.0-20200404092301-5a0adbae5efc/go.mod h1:miShMewaujgVsxFucd614sqDfHooQXXgCkBwQPAmi6E=
 github.com/cvila84/go-latest v0.1.2 h1:KRIPnvbrKJW+jaVws1Mug0qg7LkbZMQHmgorCoFKCJo=
 github.com/cvila84/go-latest v0.1.2/go.mod h1:KvDHOPGzHQtOi9Q7xTau/CjVZxwnCl79kL5Pn0B08Qk=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

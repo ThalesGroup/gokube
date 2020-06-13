@@ -63,6 +63,8 @@ func init() {
 	var defaultHelmVersion = getValueFromEnv("HELM_VERSION", DEFAULT_HELM_VERSION)
 	var defaultHelmSprayUrl = getValueFromEnv("HELM_SPRAY_URL", DEFAULT_HELM_SPRAY_URL)
 	var defaultHelmSprayVersion = getValueFromEnv("HELM_SPRAY_VERSION", DEFAULT_HELM_SPRAY_VERSION)
+	var defaultHelmImageUrl = getValueFromEnv("HELM_IMAGE_URL", DEFAULT_HELM_IMAGE_URL)
+	var defaultHelmImageVersion = getValueFromEnv("HELM_IMAGE_VERSION", DEFAULT_HELM_IMAGE_VERSION)
 	defaultGokubeQuiet := false
 	if len(getValueFromEnv("GOKUBE_QUIET", "")) > 0 {
 		defaultGokubeQuiet = true
@@ -75,6 +77,8 @@ func init() {
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", defaultHelmVersion, "The helm version")
 	initCmd.Flags().StringVarP(&helmSprayURL, "helm-spray-url", "", defaultHelmSprayUrl, "The URL to download helm spray plugin")
 	initCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", defaultHelmSprayVersion, "The helm spray plugin version")
+	initCmd.Flags().StringVarP(&helmImageURL, "helm-image-url", "", defaultHelmImageUrl, "The URL to download helm image plugin")
+	initCmd.Flags().StringVarP(&helmImageVersion, "helm-image-version", "", defaultHelmImageVersion, "The helm image image version")
 	initCmd.Flags().StringVarP(&sternVersion, "stern-version", "", DEFAULT_STERN_VERSION, "The stern version")
 	initCmd.Flags().BoolVarP(&askForUpgrade, "upgrade", "u", false, "Upgrade gokube (download and setup docker, minikube, kubectl and helm)")
 	initCmd.Flags().BoolVarP(&askForClean, "clean", "c", false, "Clean gokube (remove docker, minikube, kubectl and helm working directories)")
