@@ -14,6 +14,7 @@ func InstallPlugin(helmImageURI string, helmImageVersion string) {
 		download.FromUrl("helm-image "+helmImageVersion, helmImageURI, helmImageVersion)
 		utils.CreateDirs(helm3PluginHome + "/bin")
 		utils.MoveFile(gokube.GetTempDir()+"/bin/helm-image.exe", helm3PluginHome+"/bin/helm-image.exe")
+		utils.MoveFile(gokube.GetTempDir()+"/bin/containerd.exe", helm3PluginHome+"/bin/containerd.exe")
 		utils.MoveFile(gokube.GetTempDir()+"/plugin.yaml", helm3PluginHome+"/plugin.yaml")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
