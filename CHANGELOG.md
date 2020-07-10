@@ -1,7 +1,7 @@
 # GoKube Release Notes
 
 ## Version 1.12.0 - 07/10/2020
-* Bump to minikube v1.12.0, K8S v1.18.5, docker 19.03.12
+* Bump to minikube v1.12.0, K8S v1.18.5, docker 19.03.12, helm-image v1.0.1
 
 ## Version 1.11.0 - 06/20/2020
 * Bump to minikube v1.11.0, K8S v1.18.3, helm v3.2.4, helm-spray v4.0.1
