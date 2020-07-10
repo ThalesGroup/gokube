@@ -30,7 +30,7 @@ import (
 
 // Start ...
 func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
-	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--enable-default-cni"}
+	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--cni=bridge"}
 	//patchStartArgs(args, kubernetesVersion)
 	if len(httpProxy) > 0 {
 		args = append(args, "--docker-env=http_proxy="+httpProxy)
