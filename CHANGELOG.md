@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.12.3 - 08/13/2020
+* Bump to minikube v1.12.3
+
 ## Version 1.12.2 - 08/12/2020
 * Bump to minikube v1.12.2, K8S v1.18.6, helm v3.3.0
 
