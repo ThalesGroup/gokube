@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.14.0 - 10/14/2020
+* Bump to minikube v1.14.0, helm v3.3.4, helm-spray v4.0.3
+
 ## Version 1.13.1 - 09/21/2020
 * Bump to minikube v1.13.1, helm v3.3.3, helm-spray v4.0.2
 
