@@ -208,7 +208,7 @@ func waitChartMuseum() {
 
 func configureHelm(localRepoIp string) {
 	// Add helm stable and miniapps repository
-	helm.RepoAdd("stable", "https://kubernetes-charts.storage.googleapis.com")
+	helm.RepoAdd("stable", "https://charts.helm.sh/stable")
 	helm.RepoAdd("miniapps", miniappsRepo)
 	helm.RepoUpdate()
 	// Install chartmuseum
