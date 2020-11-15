@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.15.0 - 11/16/2020
+* Bump to minikube v1.15.0
+
 ## Version 1.14.2 - 11/13/2020
 * Bump to minikube v1.14.2, K8S v1.18.12, helm v3.4.1, helm-push v0.9.0
 
