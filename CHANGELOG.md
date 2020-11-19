@@ -1,5 +1,9 @@
 # GoKube Release Notes
 
+## Version 1.15.1 - 11/19/2020
+* Bump to minikube v1.15.1
+* Changed chartmuseum chart repo following helm stable repo deprecation
+
 ## Version 1.15.0 - 11/16/2020
 * Bump to minikube v1.15.0
 

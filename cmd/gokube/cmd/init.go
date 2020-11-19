@@ -207,12 +207,12 @@ func waitChartMuseum() {
 }
 
 func configureHelm(localRepoIp string) {
-	// Add helm stable and miniapps repository
-	helm.RepoAdd("stable", "https://charts.helm.sh/stable")
+	// Add helm chartmuseum and miniapps repository
+	helm.RepoAdd("chartmuseum", "https://chartmuseum.github.io/charts")
 	helm.RepoAdd("miniapps", miniappsRepo)
 	helm.RepoUpdate()
 	// Install chartmuseum
-	helm.Upgrade("stable/chartmuseum", "", "chartmuseum", "kube-system", "env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
+	helm.Upgrade("chartmuseum/chartmuseum", "", "chartmuseum", "kube-system", "env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
 	fmt.Printf("Waiting for chartmuseum...")
 	waitChartMuseum()
 	helm.RepoAdd("minikube", "http://"+localRepoIp+":32767")
