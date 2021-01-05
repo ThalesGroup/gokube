@@ -34,7 +34,7 @@ const (
 	DEFAULT_KUBECTL_VERSION    = "v1.18.14"
 	DEFAULT_MINIKUBE_VERSION   = "v1.16.0"
 	DEFAULT_MINIKUBE_URL       = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
-	DEFAULT_DOCKER_VERSION     = "19.03.12"
+	DEFAULT_DOCKER_VERSION     = "20.10.1"
 	DEFAULT_HELM_VERSION       = "v3.4.2"
 	DEFAULT_HELM_SPRAY_VERSION = "v4.0.5"
 	DEFAULT_HELM_SPRAY_URL     = "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
