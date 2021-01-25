@@ -1,5 +1,11 @@
 # GoKube Release Notes
 
+## Version 1.16.1 - 01/25/2021
+* Bump to K8S v1.18.15
+* Revert to docker 19.03.14 (because of issue with docker login on Win7)
+* Did not bump yet to minikube v1.17.0 (because it now requires <host>:<port> for insecure registries)
+* Added commands to manage snapshots
+
 ## Version 1.16.0 - 01/04/2021
 * Bump to minikube v1.16.0, K8S v1.18.14, docker 20.10.1
 

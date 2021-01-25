@@ -12,6 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// TODO add support for wsl2 driver
+
 package cmd
 
 import (
@@ -30,15 +32,15 @@ import (
 )
 
 const (
-	DEFAULT_KUBERNETES_VERSION = "v1.18.14"
-	DEFAULT_KUBECTL_VERSION    = "v1.18.14"
+	DEFAULT_KUBERNETES_VERSION = "v1.18.15"
+	DEFAULT_KUBECTL_VERSION    = "v1.18.15"
 	DEFAULT_MINIKUBE_VERSION   = "v1.16.0"
 	DEFAULT_MINIKUBE_URL       = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
-	DEFAULT_DOCKER_VERSION     = "20.10.1"
-	DEFAULT_HELM_VERSION       = "v3.4.2"
-	DEFAULT_HELM_SPRAY_VERSION = "v4.0.5"
+	DEFAULT_DOCKER_VERSION     = "19.03.14"
+	DEFAULT_HELM_VERSION       = "v3.5.0"
+	DEFAULT_HELM_SPRAY_VERSION = "v4.0.6"
 	DEFAULT_HELM_SPRAY_URL     = "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
-	DEFAULT_HELM_IMAGE_VERSION = "v1.0.2"
+	DEFAULT_HELM_IMAGE_VERSION = "v1.0.3"
 	DEFAULT_HELM_IMAGE_URL     = "https://github.com/cvila84/helm-image/releases/download/%s/helm-image-windows-amd64.tar.gz"
 	DEFAULT_HELM_PUSH_VERSION  = "0.9.0"
 	DEFAULT_HELM_PUSH_URL      = "https://github.com/chartmuseum/helm-push/releases/download/v%s/helm-push_%s_windows_amd64.tar.gz"

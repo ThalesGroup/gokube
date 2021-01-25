@@ -116,6 +116,22 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, debug bool) error {
 	return nil
 }
 
+func TakeSnapshot(name string) error {
+	err := vboxManager.vbm("snapshot", "minikube", "take", name)
+	if err != nil {
+		return errors.New("not able to take VM snapshot")
+	}
+	return nil
+}
+
+func RestoreSnapshot(name string) error {
+	err := vboxManager.vbm("snapshot", "minikube", "restore", name)
+	if err != nil {
+		return errors.New("not able to restore VM snapshot")
+	}
+	return nil
+}
+
 func listHostOnlyAdapters(vbox VBoxManager) (map[string]*hostOnlyNetwork, error) {
 	out, err := vbox.vbmOut("list", "hostonlyifs")
 	if err != nil {
