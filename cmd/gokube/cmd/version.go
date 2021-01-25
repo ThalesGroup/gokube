@@ -19,14 +19,13 @@ import (
 	"github.com/cvila84/go-latest"
 	"github.com/gemalto/gokube/pkg/docker"
 	"github.com/gemalto/gokube/pkg/gokube"
+	"github.com/gemalto/gokube/pkg/helm"
 	"github.com/gemalto/gokube/pkg/kubectl"
+	"github.com/gemalto/gokube/pkg/minikube"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
 	"time"
-
-	"github.com/gemalto/gokube/pkg/helm"
-	"github.com/gemalto/gokube/pkg/minikube"
-	"github.com/spf13/cobra"
 )
 
 const (
@@ -53,6 +52,7 @@ var versionCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		fmt.Println("gokube version: v" + GOKUBE_VERSION)
+		checkLatestVersion()
 		minikube.Version()
 		docker.Version()
 		kubectl.Version()
@@ -61,8 +61,7 @@ var versionCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
+func checkLatestVersion() {
 	res, _ := latest.Check(githubTag, GOKUBE_VERSION, 5*time.Second)
 	if res == nil {
 		fmt.Printf("WARNING: Cannot find gokube latest release, please check your connection\n")
@@ -74,6 +73,10 @@ func init() {
 			fmt.Printf("WARNING: This version of gokube has not yet been published, use it at your own risk !\n")
 		}
 	}
+}
+
+func init() {
+	RootCmd.AddCommand(versionCmd)
 	gokube.ReadConfig()
 	gokubeVersion = viper.GetString("gokube-version")
 	if len(gokubeVersion) == 0 {

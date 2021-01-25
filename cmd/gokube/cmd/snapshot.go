@@ -19,7 +19,6 @@ func init() {
 }
 
 func snapshotRun(cmd *cobra.Command, args []string) {
-	stopRun(cmd, args)
 	fmt.Println("Taking snapshot of minikube VM...")
 	err := virtualbox.TakeSnapshot("gokube")
 	if err != nil {

@@ -73,14 +73,11 @@ func Restart(kubernetesVersion string) {
 }
 
 // Stop ...
-func Stop() {
+func Stop() error {
 	cmd := exec.Command("minikube", "stop")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		panic(err)
-	}
+	return cmd.Run()
 }
 
 // Delete ...

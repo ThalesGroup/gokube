@@ -52,5 +52,8 @@ func stopRun(cmd *cobra.Command, args []string) {
 		}
 	}
 	fmt.Println("Stopping minikube VM...")
-	minikube.Stop()
+	err := minikube.Stop()
+	if err != nil {
+		panic(err)
+	}
 }

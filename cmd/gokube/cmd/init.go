@@ -241,6 +241,7 @@ func initRun(cmd *cobra.Command, args []string) {
 	}
 
 	checkMinimumRequirements()
+	checkLatestVersion()
 
 	ipCheckNeeded = strings.Compare("0.0.0.0", checkIP) != 0
 
@@ -277,12 +278,13 @@ func initRun(cmd *cobra.Command, args []string) {
 	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for (re)start command
 	gokube.WriteConfig(gokubeVersion, kubernetesVersion)
 
+	// Disable notification for updates
+	minikube.ConfigSet("WantUpdateNotification", "false")
+
 	// Create virtual machine (minikube)
 	fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
 	minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver)
 
-	// Disable notification for updates
-	minikube.ConfigSet("WantUpdateNotification", "false")
 	// Enable dashboard
 	minikube.AddonsEnable("dashboard")
 

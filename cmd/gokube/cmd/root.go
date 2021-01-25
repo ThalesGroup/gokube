@@ -26,9 +26,8 @@ import (
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/gemalto/gokube/pkg/stern"
-	"os"
-
 	"github.com/spf13/cobra"
+	"os"
 )
 
 const (

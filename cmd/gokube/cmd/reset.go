@@ -19,11 +19,9 @@ func init() {
 }
 
 func resetRun(cmd *cobra.Command, args []string) {
-	stopRun(cmd, args)
 	fmt.Println("Resetting minikube VM from snapshot...")
 	err := virtualbox.RestoreSnapshot("gokube")
 	if err != nil {
 		panic(err)
 	}
-	startRun(cmd, args)
 }
