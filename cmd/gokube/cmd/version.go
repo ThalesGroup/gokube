@@ -24,7 +24,6 @@ import (
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
 	"time"
 )
 
@@ -43,22 +42,11 @@ var (
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Shows version for gokube",
-	Long:  `Shows version for gokube`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) > 0 {
-			fmt.Fprintln(os.Stderr, "usage: gokube version")
-			os.Exit(1)
-		}
-		fmt.Println("gokube version: v" + GOKUBE_VERSION)
-		checkLatestVersion()
-		minikube.Version()
-		docker.Version()
-		kubectl.Version()
-		helm.Version()
-		helm.PluginsVersion()
-	},
+	Use:          "version",
+	Short:        "Shows version for gokube",
+	Long:         `Shows version for gokube`,
+	RunE:         versionRun,
+	SilenceUsage: true,
 }
 
 func checkLatestVersion() {
@@ -82,4 +70,18 @@ func init() {
 	if len(gokubeVersion) == 0 {
 		gokubeVersion = "0.0.0"
 	}
+}
+
+func versionRun(cmd *cobra.Command, args []string) error {
+	if len(args) > 0 {
+		return cmd.Usage()
+	}
+	fmt.Println("gokube version: v" + GOKUBE_VERSION)
+	checkLatestVersion()
+	minikube.Version()
+	docker.Version()
+	kubectl.Version()
+	helm.Version()
+	helm.PluginsVersion()
+	return nil
 }

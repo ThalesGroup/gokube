@@ -48,10 +48,11 @@ var hostDNSResolver bool
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern and creates the virtual machine (minikube)",
-	Long:  "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern and creates the virtual machine (minikube)",
-	Run:   initRun,
+	Use:          "init",
+	Short:        "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern and creates a minikube VM",
+	Long:         "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern and creates a minikube VM",
+	RunE:         initRun,
+	SilenceUsage: true,
 }
 
 func init() {
@@ -65,6 +66,8 @@ func init() {
 	var defaultHelmSprayVersion = getValueFromEnv("HELM_SPRAY_VERSION", DEFAULT_HELM_SPRAY_VERSION)
 	var defaultHelmImageUrl = getValueFromEnv("HELM_IMAGE_URL", DEFAULT_HELM_IMAGE_URL)
 	var defaultHelmImageVersion = getValueFromEnv("HELM_IMAGE_VERSION", DEFAULT_HELM_IMAGE_VERSION)
+	defaultVMMemory, _ := strconv.Atoi(getValueFromEnv("MINIKUBE_MEMORY", strconv.Itoa(DEFAULT_MINIKUBE_MEMORY)))
+	defaultVMCPUs, _ := strconv.Atoi(getValueFromEnv("MINIKUBE_CPUS", strconv.Itoa(DEFAULT_MINIKUBE_CPUS)))
 	defaultGokubeQuiet := false
 	if len(getValueFromEnv("GOKUBE_QUIET", "")) > 0 {
 		defaultGokubeQuiet = true
@@ -82,8 +85,8 @@ func init() {
 	initCmd.Flags().StringVarP(&sternVersion, "stern-version", "", DEFAULT_STERN_VERSION, "The stern version")
 	initCmd.Flags().BoolVarP(&askForUpgrade, "upgrade", "u", false, "Upgrade gokube (download and setup docker, minikube, kubectl and helm)")
 	initCmd.Flags().BoolVarP(&askForClean, "clean", "c", false, "Clean gokube (remove docker, minikube, kubectl and helm working directories)")
-	initCmd.Flags().Int16VarP(&memory, "memory", "", int16(8192), "Amount of RAM allocated to the minikube VM in MB")
-	initCmd.Flags().Int16VarP(&cpus, "cpus", "", int16(4), "Number of CPUs allocated to the minikube VM")
+	initCmd.Flags().Int16VarP(&memory, "memory", "", int16(defaultVMMemory), "Amount of RAM allocated to the minikube VM in MB")
+	initCmd.Flags().Int16VarP(&cpus, "cpus", "", int16(defaultVMCPUs), "Number of CPUs allocated to the minikube VM")
 	initCmd.Flags().StringVarP(&disk, "disk", "", "20g", "Disk size allocated to the minikube VM. Format: <number>[<unit>], where unit = b, k, m or g")
 	initCmd.Flags().StringVarP(&checkIP, "check-ip", "", "192.168.99.100", "Checks if minikube VM allocated IP matches the provided one (0.0.0.0 means no check)")
 	initCmd.Flags().StringVarP(&insecureRegistry, "insecure-registry", "", os.Getenv("INSECURE_REGISTRY"), "Insecure Docker registries to pass to the Docker daemon. The default service CIDR range will automatically be added.")
@@ -126,7 +129,7 @@ func checkMinimumRequirements() {
 	}
 }
 
-func confirmCommandExecution() {
+func confirmInitCommandExecution() {
 	fmt.Println("WARNING: Your Virtualbox GUI shall not be open and no other VM shall be currently running")
 	fmt.Print("Press <CTRL+C> within the next 10s it you need to check this or press <ENTER> now to continue...")
 	enter := make(chan bool, 1)
@@ -136,6 +139,7 @@ func confirmCommandExecution() {
 	case <-time.After(10 * time.Second):
 		fmt.Println()
 	}
+	time.Sleep(200 * time.Millisecond)
 }
 
 func resetVBLease() {
@@ -234,10 +238,9 @@ func clean() {
 	docker.InitWorkingDirectory()
 }
 
-func initRun(cmd *cobra.Command, args []string) {
+func initRun(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
-		fmt.Println("usage: gokube init")
-		os.Exit(1)
+		return cmd.Usage()
 	}
 
 	checkMinimumRequirements()
@@ -247,7 +250,7 @@ func initRun(cmd *cobra.Command, args []string) {
 
 	// Warn user with pre-requisites
 	if ipCheckNeeded && !quiet {
-		confirmCommandExecution()
+		confirmInitCommandExecution()
 	}
 
 	fmt.Println("Deleting previous minikube VM...")
@@ -309,4 +312,5 @@ func initRun(cmd *cobra.Command, args []string) {
 	exposeDashboard(30000)
 
 	fmt.Println("\ngokube has been installed.")
+	return nil
 }

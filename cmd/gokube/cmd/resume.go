@@ -22,20 +22,21 @@ import (
 
 // resumeCmd represents the resume command
 var resumeCmd = &cobra.Command{
-	Use:   "resume",
-	Short: "Resumes minikube. This command resumes minikube VM",
-	Long:  "Resumes minikube. This command resumes minikube VM",
-	Run:   resumeRun,
+	Use:          "resume",
+	Short:        "Resumes gokube. This command resumes the minikube VM",
+	Long:         "Resumes gokube. This command resumes the minikube VM",
+	RunE:         resumeRun,
+	SilenceUsage: true,
 }
 
 func init() {
 	RootCmd.AddCommand(resumeCmd)
 }
 
-func resumeRun(cmd *cobra.Command, args []string) {
-	fmt.Println("Resuming minikube VM...")
-	err := virtualbox.Resume()
-	if err != nil {
-		panic(err)
+func resumeRun(cmd *cobra.Command, args []string) error {
+	if len(args) > 0 {
+		return cmd.Usage()
 	}
+	fmt.Println("Resuming minikube VM...")
+	return virtualbox.Resume()
 }

@@ -35,6 +35,8 @@ const (
 	DEFAULT_KUBECTL_VERSION    = "v1.18.15"
 	DEFAULT_MINIKUBE_VERSION   = "v1.16.0"
 	DEFAULT_MINIKUBE_URL       = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
+	DEFAULT_MINIKUBE_MEMORY    = 8192
+	DEFAULT_MINIKUBE_CPUS      = 4
 	DEFAULT_DOCKER_VERSION     = "19.03.14"
 	DEFAULT_HELM_VERSION       = "v3.5.0"
 	DEFAULT_HELM_SPRAY_VERSION = "v4.0.6"

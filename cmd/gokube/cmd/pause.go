@@ -22,20 +22,21 @@ import (
 
 // pauseCmd represents the pause command
 var pauseCmd = &cobra.Command{
-	Use:   "pause",
-	Short: "Pauses minikube. This command pauses minikube VM",
-	Long:  "Pauses minikube. This command pauses minikube VM",
-	Run:   pauseRun,
+	Use:          "pause",
+	Short:        "Pauses gokube. This command pauses the minikube VM",
+	Long:         "Pauses gokube. This command pauses the minikube VM",
+	RunE:         pauseRun,
+	SilenceUsage: true,
 }
 
 func init() {
 	RootCmd.AddCommand(pauseCmd)
 }
 
-func pauseRun(cmd *cobra.Command, args []string) {
-	fmt.Println("Pausing minikube VM...")
-	err := virtualbox.Pause()
-	if err != nil {
-		panic(err)
+func pauseRun(cmd *cobra.Command, args []string) error {
+	if len(args) > 0 {
+		return cmd.Usage()
 	}
+	fmt.Println("Pausing minikube VM...")
+	return virtualbox.Pause()
 }

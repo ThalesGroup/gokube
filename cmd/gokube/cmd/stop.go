@@ -24,10 +24,11 @@ import (
 
 // stopCmd represents the stop command
 var stopCmd = &cobra.Command{
-	Use:   "stop",
-	Short: "Stops minikube. This command stops minikube",
-	Long:  "Stops minikube. This command stops minikube",
-	Run:   stopRun,
+	Use:          "stop",
+	Short:        "Stops gokube. This command stops minikube",
+	Long:         "Stops gokube. This command stops minikube",
+	RunE:         stopRun,
+	SilenceUsage: true,
 }
 
 func init() {
@@ -39,21 +40,26 @@ func init() {
 	stopCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before stopping")
 }
 
-func stopRun(cmd *cobra.Command, args []string) {
+func confirmStopCommandExecution() {
+	fmt.Println("WARNING: You should not stop a VM with a lot of running pods as the restart will be unstable")
+	fmt.Print("Press <CTRL+C> within the next 10s it you need to perform some clean or press <ENTER> now to continue...")
+	enter := make(chan bool, 1)
+	go gokube.WaitEnter(enter)
+	select {
+	case <-enter:
+	case <-time.After(10 * time.Second):
+		fmt.Println()
+	}
+	time.Sleep(200 * time.Millisecond)
+}
+
+func stopRun(cmd *cobra.Command, args []string) error {
+	if len(args) > 0 {
+		return cmd.Usage()
+	}
 	if !quiet {
-		fmt.Println("WARNING: You should not stop a VM with a lot of running pods as the restart will be unstable")
-		fmt.Print("Press <CTRL+C> within the next 10s it you need to perform some clean or press <ENTER> now to continue...")
-		enter := make(chan bool, 1)
-		go gokube.WaitEnter(enter)
-		select {
-		case <-enter:
-		case <-time.After(10 * time.Second):
-			fmt.Println()
-		}
+		confirmStopCommandExecution()
 	}
 	fmt.Println("Stopping minikube VM...")
-	err := minikube.Stop()
-	if err != nil {
-		panic(err)
-	}
+	return minikube.Stop()
 }
