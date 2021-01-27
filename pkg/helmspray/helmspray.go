@@ -15,50 +15,28 @@ limitations under the License.
 package helmspray
 
 import (
-	"fmt"
-	"os"
-	"os/exec"
-
 	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/utils"
+	"os"
 )
-
-const (
-	URL = "https://github.com/gemalto/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
-)
-
-//Version ...
-func Version() {
-	fmt.Print("helm-spray version: ")
-	cmd := exec.Command("helm", "plugin", "list")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
 
 // InstallPlugin ...
-func InstallPlugin(helmSprayVersion string) {
-	var pluginHome = utils.GetUserHome() + "/.helm/plugins/helm-spray"
-	utils.CreateDir(pluginHome)
-	if _, err := os.Stat(pluginHome + "/helm-spray.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("helm-spray "+helmSprayVersion, URL, helmSprayVersion)
-		utils.MoveFile(gokube.GetTempDir()+"/helm-spray.exe", pluginHome+"/helm-spray.exe")
-		utils.MoveFile(gokube.GetTempDir()+"/plugin.yaml", pluginHome+"/plugin.yaml")
+func InstallPlugin(helmSprayURI string, helmSprayVersion string) {
+	var helm3PluginHome = utils.GetAppDataHome() + "/helm/plugins/helm-spray"
+	if _, err := os.Stat(helm3PluginHome + "/bin/helm-spray.exe"); os.IsNotExist(err) {
+		download.FromUrl("helm-spray "+helmSprayVersion, helmSprayURI, helmSprayVersion)
+		utils.CreateDirs(helm3PluginHome + "/bin")
+		utils.MoveFile(gokube.GetTempDir()+"/bin/helm-spray.exe", helm3PluginHome+"/bin/helm-spray.exe")
+		utils.MoveFile(gokube.GetTempDir()+"/plugin.yaml", helm3PluginHome+"/plugin.yaml")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
 }
 
 // DeletePlugin ...
 func DeletePlugin() {
-	var pluginHome = utils.GetUserHome() + "/.helm/plugins/helm-spray"
-	_, err := os.Stat(pluginHome)
-	if os.IsNotExist(err) {
-		return
-	}
-	if err != nil {
-		panic(err)
-	}
-	utils.RemoveFiles(pluginHome + "/*")
-	utils.RemoveDir(pluginHome)
+	var helm2PluginHome = utils.GetUserHome() + "/.helm/plugins/helm-spray"
+	var helm3PluginHome = utils.GetAppDataHome() + "/helm/plugins/helm-spray"
+	utils.RemoveDir(helm2PluginHome)
+	utils.RemoveDir(helm3PluginHome)
 }

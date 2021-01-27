@@ -30,9 +30,16 @@ import (
 
 // Start ...
 func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
-	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--network-plugin=cni", "--enable-default-cni"}
-	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.16.0")) >= 0 && semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.18.0")) < 0 {
-		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
+	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--driver=virtualbox"}
+	//patchStartArgs(args, kubernetesVersion)
+	if len(httpProxy) > 0 {
+		args = append(args, "--docker-env=http_proxy="+httpProxy)
+	}
+	if len(httpsProxy) > 0 {
+		args = append(args, "--docker-env=https_proxy="+httpsProxy)
+	}
+	if len(noProxy) > 0 {
+		args = append(args, "--docker-env=no_proxy="+noProxy)
 	}
 	if !cache {
 		args = append(args, "--cache-images=false")
@@ -55,9 +62,7 @@ func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsPro
 // Restart ...
 func Restart(kubernetesVersion string) {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion}
-	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.16.0")) >= 0 && semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.18.0")) < 0 {
-		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
-	}
+	//patchStartArgs(args, kubernetesVersion)
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -68,22 +73,11 @@ func Restart(kubernetesVersion string) {
 }
 
 // Stop ...
-func Stop() {
+func Stop() error {
 	cmd := exec.Command("minikube", "stop")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		panic(err)
-	}
-}
-
-// Status ...
-func Status() {
-	cmd := exec.Command("minikube", "status")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
 // Delete ...
@@ -102,26 +96,9 @@ func Cache(image string) {
 	cmd.Run()
 }
 
-// Dashboard ...
-func Dashboard() {
-	cmd := exec.Command("minikube", "dashboard")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
 // AddonsEnable ...
 func AddonsEnable(addon string) {
 	cmd := exec.Command("minikube", "addons", "enable", addon)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// CopyCerts ...
-func CopyCerts() {
-	path := toLinuxPath("cp -r /home/docker/* etc/docker/certs.d")
-	cmd := exec.Command("minikube", "ssh", "sudo", path)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
@@ -185,7 +162,7 @@ func Ip() string {
 // DownloadExecutable ...
 func DownloadExecutable(dst string, minikubeURI string, minikubeVersion string) {
 	if _, err := os.Stat(dst + "/minikube.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("minikube "+minikubeVersion, minikubeURI, minikubeVersion)
+		download.FromUrl("minikube "+minikubeVersion, minikubeURI, minikubeVersion)
 		utils.MoveFile(gokube.GetTempDir()+"/minikube-windows-amd64.exe", dst+"/minikube.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
@@ -201,9 +178,10 @@ func DeleteWorkingDirectory() {
 	utils.CleanDir(utils.GetUserHome() + "/.minikube")
 }
 
-func toLinuxPath(path string) string {
-	path = strings.Replace(path, "\\", "/", -1)
-	return strings.Replace(path, "C:", "/c", -1)
+func patchStartArgs(args []string, kubernetesVersion string) {
+	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.16.0")) >= 0 && semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.18.0")) < 0 {
+		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
+	}
 }
 
 func trimQuotes(s string) string {

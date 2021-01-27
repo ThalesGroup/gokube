@@ -1,14 +1,67 @@
 # GoKube Release Notes
 
+## Version 1.16.1 - 01/25/2021
+* Bump to K8S v1.18.15
+* Revert to docker 19.03.14 (because of issue with docker login on Win7)
+* Did not bump yet to minikube v1.17.0 (because it now requires <host>:<port> for insecure registries)
+* Added commands to manage snapshots
+
+## Version 1.16.0 - 01/04/2021
+* Bump to minikube v1.16.0, K8S v1.18.14, docker 20.10.1
+
+## Version 1.15.1 - 11/19/2020
+* Bump to minikube v1.15.1
+* Changed chartmuseum chart repo following helm stable repo deprecation
+
+## Version 1.15.0 - 11/16/2020
+* Bump to minikube v1.15.0
+
+## Version 1.14.2 - 11/13/2020
+* Bump to minikube v1.14.2, K8S v1.18.12, helm v3.4.1, helm-push v0.9.0
+
+## Version 1.14.1 - 10/26/2020
+* Bump to minikube v1.14.1, K8S v1.18.10, helm v3.4.0, helm-spray v4.0.5
+
+## Version 1.14.0 - 10/14/2020
+* Bump to minikube v1.14.0, helm v3.3.4, helm-spray v4.0.3
+
+## Version 1.13.1 - 09/21/2020
+* Bump to minikube v1.13.1, helm v3.3.3, helm-spray v4.0.2
+
+## Version 1.13.0 - 09/17/2020
+* Bump to minikube v1.13.0, K8S v1.18.9, helm v3.3.1, helm-image v1.0.2
+
+## Version 1.12.3 - 08/13/2020
+* Bump to minikube v1.12.3
+
+## Version 1.12.2 - 08/12/2020
+* Bump to minikube v1.12.2, K8S v1.18.6, helm v3.3.0
+
+## Version 1.12.1 - 07/23/2020
+* Bump to minikube v1.12.1
+
+## Version 1.12.0 - 07/10/2020
+* Bump to minikube v1.12.0, K8S v1.18.5, docker 19.03.12, helm-image v1.0.1
+
+## Version 1.11.0 - 06/20/2020
+* Bump to minikube v1.11.0, K8S v1.18.3, helm v3.2.4, helm-spray v4.0.1
+* Added new helm image plugin v1.0.0
+
+## Version 1.10.0 - 05/12/2020
+**NOTE: Starting from this version, gokube is only compatible with helm 3**
+
+* Bump to minikube v1.10.1 (1.10 is buggy)
+* Bump to helm-spray v4.0.0
+
 ## Version 1.9.2 - 04/04/2020
-* Bump to minikube 1.9.1
+* Bump to minikube v1.9.1
 * Reduced the timeout to check for new version of gokube
 
 ## Version 1.9.1 - 03/31/2020
 * Shows a warning if not using the latest gokube release
 
 ## Version 1.9.0 - 03/27/2020
-* Bump to minikube 1.9.0, K8S 1.18, docker 19.03.8
+* Bump to minikube v1.9.0, K8S v1.18, docker v19.03.8
 * Upgrade is now also possible upon restart (when we don't want VM to be respawn)
 
 ## Version 1.8.2 - 03/14/2020
@@ -20,7 +73,7 @@
 * Bump to kubernetes v1.17.2, minikube v1.7.2
 
 ## Version 1.8.0 - 12/19/2019
-THE BIG ONE
+**THE BIG ONE**
 
 * Bump to kubernetes v1.16.4, minikube v1.6.1, helm v2.16.1 and docker 19.03.3
 * Support of Virtualbox 6 (with the limitation that no other VMs shall be running during gokube init)

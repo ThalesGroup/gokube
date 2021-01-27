@@ -40,7 +40,7 @@ func Version() {
 // DownloadExecutable ...
 func DownloadExecutable(dst string, sternVersion string) {
 	if _, err := os.Stat(gokube.GetBinDir() + "/stern.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("stern v"+sternVersion, URL, sternVersion)
+		download.FromUrl("stern v"+sternVersion, URL, sternVersion)
 		utils.MoveFile(gokube.GetTempDir()+"/stern_windows_amd64.exe", dst+"/stern.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}

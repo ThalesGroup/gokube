@@ -16,37 +16,72 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-
+	"github.com/cvila84/go-latest"
 	"github.com/gemalto/gokube/pkg/docker"
+	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/helm"
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"time"
 )
 
 const (
-	GOKUBE_VERSION = "1.9.2"
+	GOKUBE_VERSION = "1.16.1"
+)
+
+var gokubeVersion string
+
+var (
+	githubTag = &latest.GithubTag{
+		Owner:      "ThalesGroup",
+		Repository: "gokube",
+	}
 )
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Shows version for gokube",
-	Long:  `Shows version for gokube`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) > 0 {
-			fmt.Fprintln(os.Stderr, "usage: gokube version")
-			os.Exit(1)
+	Use:          "version",
+	Short:        "Shows version for gokube",
+	Long:         `Shows version for gokube`,
+	RunE:         versionRun,
+	SilenceUsage: true,
+}
+
+func checkLatestVersion() {
+	res, _ := latest.Check(githubTag, GOKUBE_VERSION, 5*time.Second)
+	if res == nil {
+		fmt.Printf("WARNING: Cannot find gokube latest release, please check your connection\n")
+	}
+	if res != nil {
+		if res.Outdated {
+			fmt.Printf("WARNING: This version of gokube is outdated, please download the newest one on https://github.com/ThalesGroup/gokube/releases/tag/v%s\n", res.Current)
+		} else if res.New {
+			fmt.Printf("WARNING: This version of gokube has not yet been published, use it at your own risk !\n")
 		}
-		fmt.Println("gokube version: v" + GOKUBE_VERSION)
-		minikube.Version()
-		helm.Version()
-		docker.Version()
-		kubectl.Version()
-	},
+	}
 }
 
 func init() {
 	RootCmd.AddCommand(versionCmd)
+	gokube.ReadConfig()
+	gokubeVersion = viper.GetString("gokube-version")
+	if len(gokubeVersion) == 0 {
+		gokubeVersion = "0.0.0"
+	}
+}
+
+func versionRun(cmd *cobra.Command, args []string) error {
+	if len(args) > 0 {
+		return cmd.Usage()
+	}
+	fmt.Println("gokube version: v" + GOKUBE_VERSION)
+	checkLatestVersion()
+	minikube.Version()
+	docker.Version()
+	kubectl.Version()
+	helm.Version()
+	helm.PluginsVersion()
+	return nil
 }

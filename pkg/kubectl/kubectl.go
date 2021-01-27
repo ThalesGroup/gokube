@@ -28,9 +28,13 @@ const (
 	URL = "https://storage.googleapis.com/kubernetes-release/release/%s/bin/windows/amd64/kubectl.exe"
 )
 
-// GetObject ...
-func GetObject(namespace string, resourceType string, resourceName string) string {
-	output, err := exec.Command("kubectl", "--namespace", namespace, "get", resourceType, resourceName).Output()
+// Get ...
+func Get(namespace string, resourceType string, resourceName string, jsonPath string) string {
+	var args = []string{"--namespace", namespace, "get", resourceType, resourceName}
+	if len(jsonPath) > 0 {
+		args = append(args, "-o", "jsonpath="+jsonPath)
+	}
+	output, err := exec.Command("kubectl", args...).Output()
 	if err != nil {
 		return ""
 	}
@@ -53,14 +57,6 @@ func Patch(namespace string, resourceType string, resourceName string, patch str
 	cmd.Run()
 }
 
-// Apply ...
-func Apply(file string, namespace string) {
-	cmd := exec.Command("kubectl", "create", "-f", file, "--namespace", namespace)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
 // Version ...
 func Version() {
 	fmt.Println("kubectl version: ")
@@ -70,35 +66,10 @@ func Version() {
 	cmd.Run()
 }
 
-// DisabledNetworkPolicy ...
-func DisabledNetworkPolicy() {
-	cmd := exec.Command("kubectl", "-n", "kube-system", "exec", "$(kubectl -n kube-system get pods -l k8s-app='cilium' -o jsonpath='{.items[0].metadata.name}')", "cilium", "config", "PolicyEnforcement=never")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-	fmt.Println("Network Policy disabled.")
-}
-
-// CreateDockerRegistrySecret ...
-func CreateDockerRegistrySecret(name string, dockerServer string, dockerUsername string, dockerPassword string, dockerEmail string) {
-	cmd := exec.Command("kubectl", "create", "secret", "docker-registry", name, dockerServer, dockerUsername, dockerPassword, dockerEmail)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// DeleteSecret ...
-func DeleteSecret(name string) {
-	cmd := exec.Command("kubectl", "delete", "secret", name)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
 // DownloadExecutable ...
 func DownloadExecutable(dst string, kubectlVersion string) {
 	if _, err := os.Stat(gokube.GetBinDir() + "/kubectl.exe"); os.IsNotExist(err) {
-		download.DownloadFromUrl("kubectl "+kubectlVersion, URL, kubectlVersion)
+		download.FromUrl("kubectl "+kubectlVersion, URL, kubectlVersion)
 		utils.MoveFile(gokube.GetTempDir()+"/kubectl.exe", dst+"/kubectl.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}

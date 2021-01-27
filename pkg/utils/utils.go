@@ -33,23 +33,11 @@ type EnvVar struct {
 	Value string
 }
 
-// CreateFile ...
-func CreateFile(filePath string) {
-	var _, err = os.Stat(filePath)
-	if os.IsNotExist(err) {
-		var file, err = os.Create(filePath)
-		if err != nil {
-			panic(err)
-		}
-		defer file.Close()
-	}
-}
-
-// CreateDir ...
-func CreateDir(dirPath string) {
+// CreateDirs ...
+func CreateDirs(dirPath string) {
 	// Check if file already exist
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		err := os.Mkdir(dirPath, 0001)
+		err := os.MkdirAll(dirPath, os.ModePerm)
 		if err != nil {
 			panic(err)
 		}
@@ -64,50 +52,17 @@ func MoveFile(oldPath string, newPath string) {
 	}
 }
 
-// MoveFiles ...
-func MoveFiles(oldPath string, newPath string) {
-	files, err := filepath.Glob(oldPath)
-	if err != nil {
-		panic(err)
-	}
-	for _, f := range files {
-		if err := os.Rename(f, newPath); err != nil {
-			panic(err)
-		}
-	}
-}
-
-func CopyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	if err != nil {
-		return err
-	}
-	return out.Close()
-}
-
 // CleanDir ...
 func CleanDir(dirPath string) {
 	dir, err := ioutil.ReadDir(dirPath)
 	if err == nil {
-        for _, e := range dir {
-            err := os.RemoveAll(path.Join([]string{dirPath, e.Name()}...))
-            if err != nil {
-                panic(err)
-            }
-        }
-    }
+		for _, e := range dir {
+			err := os.RemoveAll(path.Join([]string{dirPath, e.Name()}...))
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
 }
 
 // RemoveDir ...
@@ -123,19 +78,6 @@ func RemoveFile(filePath string) {
 	err := os.RemoveAll(filePath)
 	if err != nil {
 		panic(err)
-	}
-}
-
-// RemoveFiles ...
-func RemoveFiles(filePath string) {
-	files, err := filepath.Glob(filePath)
-	if err != nil {
-		panic(err)
-	}
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			panic(err)
-		}
 	}
 }
 
@@ -196,6 +138,11 @@ func Untar(src string, dst string) error {
 
 		// if it's a file create it
 		case tar.TypeReg:
+			if _, err := os.Stat(filepath.Dir(target)); err != nil {
+				if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+					return err
+				}
+			}
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return err
@@ -264,6 +211,11 @@ func Unzip(src string, dest string) error {
 	return nil
 }
 
+// GetAppDataHome ...
+func GetAppDataHome() string {
+	return os.Getenv("APPDATA")
+}
+
 // GetUserHome ...
 func GetUserHome() string {
 	user, err := user.Current()
@@ -271,13 +223,4 @@ func GetUserHome() string {
 		panic(err)
 	}
 	return user.HomeDir
-}
-
-// WriteFile ...
-func WriteFile(content string, path string) {
-	d1 := []byte(content)
-	err := ioutil.WriteFile(path, d1, 0644)
-	if err != nil {
-		panic(err)
-	}
 }

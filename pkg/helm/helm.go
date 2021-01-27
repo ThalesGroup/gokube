@@ -16,7 +16,6 @@ package helm
 
 import (
 	"fmt"
-	"github.com/coreos/go-semver/semver"
 	"github.com/gemalto/gokube/pkg/download"
 	"os"
 	"os/exec"
@@ -26,14 +25,26 @@ import (
 )
 
 const (
-	URL2 = "https://storage.googleapis.com/kubernetes-helm/helm-%s-windows-amd64.tar.gz"
-	URL3 = "https://get.helm.sh/helm-%s-windows-amd64.zip"
+	URL = "https://get.helm.sh/helm-%s-windows-amd64.zip"
 )
 
 // Upgrade ...
-func Upgrade(chart string, release string) {
+func Upgrade(chart string, version string, release string, namespace string, configuration string, valuesFile string) {
+	var args = []string{"upgrade", "--install", "--devel", release, chart}
+	if len(version) > 0 {
+		args = append(args, "--version", version)
+	}
+	if len(namespace) > 0 {
+		args = append(args, "--namespace", namespace)
+	}
+	if len(configuration) > 0 {
+		args = append(args, "--set", configuration)
+	}
+	if len(valuesFile) > 0 {
+		args = append(args, "-f", valuesFile)
+	}
 	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", "upgrade", "--install", "--devel", release, chart)
+	cmd := exec.Command("helm", args...)
 	cmd.Stderr = os.Stderr
 	cmd.Run()
 }
@@ -41,47 +52,7 @@ func Upgrade(chart string, release string) {
 // Delete ...
 func Delete(release string) {
 	fmt.Println("Deleting " + release + " components...")
-	cmd := exec.Command("helm", "delete", release, "--purge")
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// UpgradeWithNamespaceVersionAndConfiguration ...
-func UpgradeWithNamespaceVersionAndConfiguration(name string, namespace string, version string, configuration string, chart string) {
-	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", "upgrade", "--install", "--devel", name, "--namespace", namespace, "--version", version, "--set", configuration, chart)
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// UpgradeWithConfiguration ...
-func UpgradeWithConfiguration(name string, namespace string, configuration string, chart string, version string) {
-	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", "install", chart, "--name", name, "--namespace", namespace, "--set", configuration, "--version", version)
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// UpgradeWithValues ...
-func UpgradeWithValues(namespace string, values string, chart string) {
-	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", "install", chart, "--namespace", namespace, "-f", values)
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// UpgradeWithNamespaceAndVersion ...
-func UpgradeWithNamespaceAndVersion(name string, namespace string, version string, chart string) {
-	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", "upgrade", "--install", "--devel", name, "--namespace", namespace, "--version", version, chart)
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// Init ...
-func Init() {
-	cmd := exec.Command("helm", "init", "--upgrade", "--wait", "--tiller-connection-timeout", "600")
-	cmd.Stdout = os.Stdout
+	cmd := exec.Command("helm", "delete", release)
 	cmd.Stderr = os.Stderr
 	cmd.Run()
 }
@@ -127,14 +98,19 @@ func Version() {
 	cmd.Run()
 }
 
+//Version ...
+func PluginsVersion() {
+	fmt.Print("helm plugins version:\n")
+	cmd := exec.Command("helm", "plugin", "list")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+}
+
 // DownloadExecutable ...
 func DownloadExecutable(dst string, helmVersion string) {
 	if _, err := os.Stat(gokube.GetBinDir() + "/helm.exe"); os.IsNotExist(err) {
-		if semver.New(helmVersion[1:]).Compare(*semver.New("3.0.0")) >= 0 {
-			download.DownloadFromUrl("helm "+helmVersion, URL3, helmVersion)
-		} else {
-			download.DownloadFromUrl("helm "+helmVersion, URL2, helmVersion)
-		}
+		download.FromUrl("helm "+helmVersion, URL, helmVersion)
 		utils.MoveFile(gokube.GetTempDir()+"/windows-amd64/helm.exe", dst+"/helm.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
@@ -148,4 +124,5 @@ func DeleteExecutable() {
 // DeleteWorkingDirectory ...
 func DeleteWorkingDirectory() {
 	utils.CleanDir(utils.GetUserHome() + "/.helm")
+	utils.RemoveDir(utils.GetAppDataHome() + "/helm")
 }
