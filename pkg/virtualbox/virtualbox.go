@@ -23,6 +23,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strings"
 )
 
 const (
@@ -54,6 +56,21 @@ type dhcpServer struct {
 var ErrNetworkAddrCidr = errors.New("host-only CIDR must be specified with a host address, not a network address")
 var vboxManager = NewVBoxManager()
 
+func IsRunning() (bool, error) {
+	info, err := vboxManager.vbmOut("showvminfo", "minikube")
+	if err != nil {
+		return false, errors.New("not able to get VM info")
+	}
+	re := regexp.MustCompile("(?m)^State:( *)(.*)$")
+	rem := re.FindStringSubmatch(info)
+	if len(rem) > 2 {
+		if strings.HasPrefix(rem[2], "running") {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func Pause() error {
 	err := vboxManager.vbm("controlvm", "minikube", "pause")
 	if err != nil {
@@ -70,12 +87,12 @@ func Resume() error {
 	return nil
 }
 
-func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, debug bool) error {
+func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, verbose bool) error {
 	nets, err := listHostOnlyAdapters(vboxManager)
 	if err != nil {
 		return errors.New("not able to list host-only network interfaces")
 	}
-	if debug {
+	if verbose {
 		for k := range nets {
 			fmt.Printf("\nResetHostOnlyNetworkLeases: listHostOnlyAdapters: %s", k)
 		}
@@ -84,17 +101,17 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, debug bool) error {
 	if err != nil {
 		return errors.New("not able to parse CIDR to find host-only network interface")
 	}
-	if debug {
+	if verbose {
 		fmt.Printf("\nResetHostOnlyNetworkLeases: parseAndValidateCIDR: %s,%s", ip.String(), network.String())
 	}
 	hostOnlyNet := getHostOnlyAdapter(nets, ip, network.Mask)
 	if hostOnlyNet == nil {
-		if debug {
+		if verbose {
 			fmt.Printf("\nResetHostOnlyNetworkLeases: getHostOnlyAdapter: no host-only network interface matching minikube CDR")
 		}
 		return nil
 	}
-	if debug {
+	if verbose {
 		fmt.Printf("\nResetHostOnlyNetworkLeases: getHostOnlyAdapter: %s", hostOnlyNet.NetworkName)
 	}
 	filesPattern := utils.GetUserHome() + "/.VirtualBox/" + hostOnlyNet.NetworkName + "*"
@@ -103,15 +120,23 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, debug bool) error {
 		return errors.New("not able to get host-only network interface DHCP leases files")
 	}
 	for _, f := range files {
-		if debug {
+		if verbose {
 			fmt.Printf("\nResetHostOnlyNetworkLeases: deleting lease file %s...", f)
 		}
 		if err := os.Remove(f); err != nil {
 			return errors.New(fmt.Sprintf("not able to delete lease file %s\n", f))
 		}
-		if debug {
+		if verbose {
 			fmt.Printf("\nResetHostOnlyNetworkLeases: deleted lease file %s", f)
 		}
+	}
+	return nil
+}
+
+func DeleteSnapshot(name string) error {
+	err := vboxManager.vbm("snapshot", "minikube", "delete", name)
+	if err != nil {
+		return errors.New("not able to delete VM snapshot")
 	}
 	return nil
 }

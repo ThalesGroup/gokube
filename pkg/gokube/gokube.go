@@ -44,21 +44,27 @@ func GetTempDir() string {
 }
 
 // ReadConfig ...
-func ReadConfig() {
+func ReadConfig(verbose bool) {
 	usr, err := user.Current()
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
-	configPath := usr.HomeDir + "/.gokube"
-	configFile := "config"
-	configFilePath := configPath + "/config.yaml"
+	configPath := usr.HomeDir + string(os.PathSeparator) + ".gokube"
+	if verbose {
+		fmt.Printf("Checking %s...\n", configPath)
+	}
 	if _, existDirErr := os.Stat(configPath); os.IsNotExist(existDirErr) {
+		fmt.Println("mkdir")
 		createDirErr := os.Mkdir(configPath, os.ModePerm)
 		if createDirErr != nil {
 			fmt.Print(createDirErr)
 			os.Exit(1)
 		}
+	}
+	configFilePath := configPath + string(os.PathSeparator) + "config.yaml"
+	if verbose {
+		fmt.Printf("Checking %s...\n", configFilePath)
 	}
 	if _, existFileErr := os.Stat(configFilePath); os.IsNotExist(existFileErr) {
 		_, createFileErr := os.OpenFile(configFilePath, os.O_RDONLY|os.O_CREATE, 0666)
@@ -67,12 +73,12 @@ func ReadConfig() {
 			os.Exit(1)
 		}
 	}
-	viper.SetConfigName(configFile)
-	viper.AddConfigPath(configPath)
+	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	readConfigErr := viper.ReadInConfig()
-	if readConfigErr != nil {
-		fmt.Println(readConfigErr)
+	viper.AddConfigPath(configPath)
+	err = viper.ReadInConfig()
+	if err != nil {
+		fmt.Printf("WARNING: cannot read gokube configuration file: %s\n", err)
 	}
 }
 

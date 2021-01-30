@@ -30,7 +30,7 @@ var pauseCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(pauseCmd)
+	rootCmd.AddCommand(pauseCmd)
 }
 
 func pauseRun(cmd *cobra.Command, args []string) error {

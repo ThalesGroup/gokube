@@ -52,7 +52,18 @@ func init() {
 	startCmd.Flags().StringVarP(&helmImageVersion, "helm-image-version", "", defaultHelmImageVersion, "The helm image image version")
 	startCmd.Flags().StringVarP(&sternVersion, "stern-version", "", DEFAULT_STERN_VERSION, "The stern version")
 	startCmd.Flags().BoolVarP(&askForUpgrade, "upgrade", "u", false, "Upgrade gokube (download and setup docker, minikube, kubectl and helm)")
-	RootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(startCmd)
+}
+
+func start() error {
+	gokube.ReadConfig(verbose)
+	kubernetesVersionForStart := viper.GetString("kubernetes-version")
+	if len(kubernetesVersionForStart) == 0 {
+		kubernetesVersionForStart = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBERNETES_VERSION)
+	}
+	fmt.Printf("Starting minikube VM with kubernetes %s...\n", kubernetesVersion)
+	minikube.Restart(kubernetesVersion)
+	return nil
 }
 
 func startRun(cmd *cobra.Command, args []string) error {
@@ -65,12 +76,5 @@ func startRun(cmd *cobra.Command, args []string) error {
 		fmt.Println("Installing helm plugins...")
 		installHelmPlugins()
 	}
-	gokube.ReadConfig()
-	kubernetesVersionForStart := viper.GetString("kubernetes-version")
-	if len(kubernetesVersionForStart) == 0 {
-		kubernetesVersionForStart = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBERNETES_VERSION)
-	}
-	fmt.Printf("Starting minikube VM with kubernetes %s...\n", kubernetesVersion)
-	minikube.Restart(kubernetesVersion)
-	return nil
+	return start()
 }

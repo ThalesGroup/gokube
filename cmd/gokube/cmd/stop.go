@@ -36,8 +36,8 @@ func init() {
 	if len(getValueFromEnv("GOKUBE_QUIET", "")) > 0 {
 		defaultGokubeQuiet = true
 	}
-	RootCmd.AddCommand(stopCmd)
 	stopCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before stopping")
+	rootCmd.AddCommand(stopCmd)
 }
 
 func confirmStopCommandExecution() {

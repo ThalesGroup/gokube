@@ -30,7 +30,7 @@ var resumeCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(resumeCmd)
+	rootCmd.AddCommand(resumeCmd)
 }
 
 func resumeRun(cmd *cobra.Command, args []string) error {

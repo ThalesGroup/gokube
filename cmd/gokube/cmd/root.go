@@ -38,7 +38,7 @@ const (
 	DEFAULT_MINIKUBE_MEMORY    = 8192
 	DEFAULT_MINIKUBE_CPUS      = 4
 	DEFAULT_DOCKER_VERSION     = "19.03.14"
-	DEFAULT_HELM_VERSION       = "v3.5.0"
+	DEFAULT_HELM_VERSION       = "v3.5.1"
 	DEFAULT_HELM_SPRAY_VERSION = "v4.0.6"
 	DEFAULT_HELM_SPRAY_URL     = "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
 	DEFAULT_HELM_IMAGE_VERSION = "v1.0.3"
@@ -60,16 +60,14 @@ var helmImageURL string
 var helmImageVersion string
 var sternVersion string
 var askForUpgrade bool
-var debug bool
+var verbose bool
 var quiet bool
 
-// RootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &cobra.Command{
 	Use:   "gokube",
 	Short: `gokube is a nice installer to provide an environment for developing day-to-day with kubernetes & helm on your laptop.`,
 	Long:  `gokube is a nice installer to provide an environment for developing day-to-day with kubernetes & helm on your laptop.`,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-	},
 }
 
 func installHelmPlugins() {
@@ -95,10 +93,14 @@ func upgrade() {
 	stern.DownloadExecutable(gokube.GetBinDir(), sternVersion)
 }
 
+func init() {
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Activate verbose logging")
+}
+
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	if err := RootCmd.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }

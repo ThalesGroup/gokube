@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/gemalto/gokube/pkg/virtualbox"
+	"github.com/spf13/viper"
 	"os"
 	"strconv"
 	"strings"
@@ -96,9 +97,8 @@ func init() {
 	initCmd.Flags().StringVarP(&miniappsRepo, "miniapps-repo", "", DEFAULT_MINIAPPS_REPO, "Helm repository for miniapps")
 	initCmd.Flags().BoolVarP(&dnsProxy, "dns-proxy", "", false, "Use Virtualbox NAT DNS proxy (could be instable)")
 	initCmd.Flags().BoolVarP(&hostDNSResolver, "host-dns-resolver", "", false, "Use Virtualbox NAT DNS host resolver (could be instable)")
-	initCmd.Flags().BoolVarP(&debug, "debug", "", false, "Activate debug logging")
 	initCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before initializing")
-	RootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(initCmd)
 }
 
 func getValueFromEnv(envVar string, defaultValue string) string {
@@ -150,7 +150,7 @@ func resetVBLease() {
 	var err error
 	for n := 1; n < 3; n++ {
 		time.Sleep(5 * time.Second)
-		err = virtualbox.ResetHostOnlyNetworkLeases("192.168.99.1/24", debug)
+		err = virtualbox.ResetHostOnlyNetworkLeases("192.168.99.1/24", verbose)
 		if err == nil {
 			break
 		} else {
@@ -258,6 +258,12 @@ func initRun(cmd *cobra.Command, args []string) error {
 
 	if ipCheckNeeded {
 		resetVBLease()
+	}
+
+	gokube.ReadConfig(verbose)
+	gokubeVersion = viper.GetString("gokube-version")
+	if len(gokubeVersion) == 0 {
+		gokubeVersion = "0.0.0"
 	}
 
 	// Force clean & upgrade if persisted gokube-version is lower than the current one

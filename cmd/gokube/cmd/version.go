@@ -18,17 +18,15 @@ import (
 	"fmt"
 	"github.com/cvila84/go-latest"
 	"github.com/gemalto/gokube/pkg/docker"
-	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/helm"
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"time"
 )
 
 const (
-	GOKUBE_VERSION = "1.16.1"
+	GOKUBE_VERSION = "1.16.2"
 )
 
 var gokubeVersion string
@@ -39,6 +37,8 @@ var (
 		Repository: "gokube",
 	}
 )
+
+var allVersions bool
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
@@ -64,12 +64,8 @@ func checkLatestVersion() {
 }
 
 func init() {
-	RootCmd.AddCommand(versionCmd)
-	gokube.ReadConfig()
-	gokubeVersion = viper.GetString("gokube-version")
-	if len(gokubeVersion) == 0 {
-		gokubeVersion = "0.0.0"
-	}
+	versionCmd.Flags().BoolVarP(&allVersions, "all", "a", false, "Also display all third parties versions")
+	rootCmd.AddCommand(versionCmd)
 }
 
 func versionRun(cmd *cobra.Command, args []string) error {
@@ -78,10 +74,12 @@ func versionRun(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Println("gokube version: v" + GOKUBE_VERSION)
 	checkLatestVersion()
-	minikube.Version()
-	docker.Version()
-	kubectl.Version()
-	helm.Version()
-	helm.PluginsVersion()
+	if allVersions {
+		minikube.Version()
+		docker.Version()
+		kubectl.Version()
+		helm.Version()
+		helm.PluginsVersion()
+	}
 	return nil
 }

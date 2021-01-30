@@ -23,8 +23,8 @@ func init() {
 	if len(getValueFromEnv("GOKUBE_QUIET", "")) > 0 {
 		defaultGokubeQuiet = true
 	}
-	RootCmd.AddCommand(resetCmd)
 	resetCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before resetting")
+	rootCmd.AddCommand(resetCmd)
 }
 
 func confirmResetCommandExecution() {
@@ -44,10 +44,16 @@ func resetRun(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return cmd.Usage()
 	}
-	fmt.Println("Stopping minikube VM...")
-	err := minikube.Stop()
+	running, err := virtualbox.IsRunning()
 	if err != nil {
 		return err
+	}
+	if running {
+		fmt.Println("Stopping minikube VM...")
+		err := minikube.Stop()
+		if err != nil {
+			return err
+		}
 	}
 	fmt.Println("Resetting minikube VM from snapshot...")
 	return virtualbox.RestoreSnapshot("gokube")
