@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.16.2 - 01/31/2021
+* Bump to helm v3.5.1
+
 ## Version 1.16.1 - 01/25/2021
 * Bump to K8S v1.18.15
 * Revert to docker 19.03.14 (because of issue with docker login on Win7)
