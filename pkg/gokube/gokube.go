@@ -55,7 +55,6 @@ func ReadConfig(verbose bool) {
 		fmt.Printf("Checking %s...\n", configPath)
 	}
 	if _, existDirErr := os.Stat(configPath); os.IsNotExist(existDirErr) {
-		fmt.Println("mkdir")
 		createDirErr := os.Mkdir(configPath, os.ModePerm)
 		if createDirErr != nil {
 			fmt.Print(createDirErr)
