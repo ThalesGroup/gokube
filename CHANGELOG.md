@@ -1,7 +1,7 @@
 # GoKube Release Notes
 
-## Version 1.16.2 - 01/31/2021
-* Bump to helm v3.5.1
+## Version 1.17.0 - 02/02/2021
+* Bump to minikube v1.17.1, helm v3.5.1, helm-image v1.0.4
 
 ## Version 1.16.1 - 01/25/2021
 * Bump to K8S v1.18.15
