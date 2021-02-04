@@ -1,5 +1,9 @@
 # GoKube Release Notes
 
+## Version 1.17.1 - 02/04/2021
+* Bump to helm-spray v4.0.7
+* Implicit upgrade will be applied again if last VM creation did not fully succeed (to ensure helm plugins will always be installed) 
+
 ## Version 1.17.0 - 02/02/2021
 * Bump to minikube v1.17.1, helm v3.5.1, helm-image v1.0.4
 

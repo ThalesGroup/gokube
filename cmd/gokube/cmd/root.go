@@ -39,7 +39,7 @@ const (
 	DEFAULT_MINIKUBE_CPUS      = 4
 	DEFAULT_DOCKER_VERSION     = "19.03.14"
 	DEFAULT_HELM_VERSION       = "v3.5.1"
-	DEFAULT_HELM_SPRAY_VERSION = "v4.0.6"
+	DEFAULT_HELM_SPRAY_VERSION = "v4.0.7"
 	DEFAULT_HELM_SPRAY_URL     = "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
 	DEFAULT_HELM_IMAGE_VERSION = "v1.0.4"
 	DEFAULT_HELM_IMAGE_URL     = "https://github.com/cvila84/helm-image/releases/download/%s/helm-image-windows-amd64.tar.gz"

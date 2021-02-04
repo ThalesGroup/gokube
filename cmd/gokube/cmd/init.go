@@ -284,9 +284,6 @@ func initRun(cmd *cobra.Command, args []string) error {
 		upgrade()
 	}
 
-	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for (re)start command
-	gokube.WriteConfig(gokubeVersion, kubernetesVersion)
-
 	// Disable notification for updates
 	minikube.ConfigSet("WantUpdateNotification", "false")
 
@@ -316,6 +313,9 @@ func initRun(cmd *cobra.Command, args []string) error {
 	// Patch kubernetes-dashboard to expose it on nodePort 30000
 	fmt.Print("Exposing kubernetes dashboard to nodeport 30000...")
 	exposeDashboard(30000)
+
+	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for (re)start command
+	gokube.WriteConfig(gokubeVersion, kubernetesVersion)
 
 	fmt.Println("\ngokube has been installed.")
 	return nil
