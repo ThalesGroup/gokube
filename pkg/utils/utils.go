@@ -216,6 +216,11 @@ func GetAppDataHome() string {
 	return os.Getenv("APPDATA")
 }
 
+// GetTempHome ...
+func GetTempHome() string {
+	return os.Getenv("TEMP")
+}
+
 // GetUserHome ...
 func GetUserHome() string {
 	user, err := user.Current()

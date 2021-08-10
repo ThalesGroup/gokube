@@ -123,10 +123,11 @@ func InitWorkingDirectory() {
 	newFile, err := os.Create(configJsonPath)
 	if err != nil {
 		fmt.Printf("Error while creating %s\n", configJsonPath)
+		return
 	}
-	newFile.WriteString("{}")
-	newFile.Sync()
-	newFile.Close()
+	_, _ = newFile.WriteString("{}")
+	_ = newFile.Sync()
+	_ = newFile.Close()
 }
 
 // DeleteWorkingDirectory ...

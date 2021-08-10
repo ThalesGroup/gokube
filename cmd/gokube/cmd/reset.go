@@ -45,6 +45,7 @@ func resetRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("Minikube VM has successfully been reset from snapshot")
 	if running {
 		return start()
 	} else {

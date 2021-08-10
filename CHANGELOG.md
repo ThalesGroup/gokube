@@ -1,5 +1,11 @@
 # GoKube Release Notes
 
+## Version 1.22.0 - 07/08/2021
+* Bump to minikube v1.22.0, K8S v1.20.9, helm v3.6.3, helm-image v1.0.5, helm-spray v4.0.9
+* Increased timeout for chartmuseum availability  
+* Smarter implicit upgrade
+* Multi snapshot management
+
 ## Version 1.17.1 - 02/04/2021
 * Bump to helm-spray v4.0.7
 * Implicit upgrade will be applied again if last VM creation did not fully succeed (to ensure helm plugins will always be installed) 

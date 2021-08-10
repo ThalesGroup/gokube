@@ -123,6 +123,12 @@ func DeleteExecutable() {
 
 // DeleteWorkingDirectory ...
 func DeleteWorkingDirectory() {
-	utils.CleanDir(utils.GetUserHome() + "/.helm")
 	utils.RemoveDir(utils.GetAppDataHome() + "/helm")
+	utils.RemoveDir(utils.GetTempHome() + "/helm")
+}
+
+// ResetWorkingDirectory ...
+func ResetWorkingDirectory() {
+	utils.RemoveFile(utils.GetAppDataHome() + "/helm/repositories.yaml")
+	utils.RemoveFile(utils.GetAppDataHome() + "/helm/repositories.lock")
 }

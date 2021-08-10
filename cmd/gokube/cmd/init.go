@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/gemalto/gokube/internal/util"
 	"github.com/gemalto/gokube/pkg/virtualbox"
 	"github.com/spf13/viper"
 	"os"
@@ -185,8 +186,9 @@ func exposeDashboard(port int) {
 }
 
 func waitChartMuseum() {
-	for n := 1; n <= 12; n++ {
-		readyReplicas := kubectl.Get("kube-system", "deploy", "chartmuseum-chartmuseum", "{.status.readyReplicas}")
+	retries := 18
+	for n := 1; n <= retries; n++ {
+		readyReplicas := kubectl.Get("kube-system", "deploy", "chartmuseum", "{.status.readyReplicas}")
 		var ready int
 		if len(readyReplicas) > 0 {
 			n, err := strconv.Atoi(readyReplicas)
@@ -201,8 +203,8 @@ func waitChartMuseum() {
 			break
 		} else {
 			fmt.Print(".")
-			if n == 12 {
-				fmt.Printf("\nWARNING: chartmuseum is not ready after 60s, which probably means its installation failed\n")
+			if n == retries {
+				fmt.Printf("\nWARNING: chartmuseum is not ready after 90s, which probably means its installation failed\n")
 			} else {
 				time.Sleep(5 * time.Second)
 			}
@@ -232,11 +234,14 @@ func checkMinikubeIP() {
 
 func clean() {
 	minikube.DeleteWorkingDirectory()
-	helm.DeleteWorkingDirectory()
 	kubectl.DeleteWorkingDirectory()
 	docker.DeleteWorkingDirectory()
 	docker.InitWorkingDirectory()
+	helm.DeleteWorkingDirectory()
 }
+
+// TODO manage vbox time sync
+// VBoxManage guestproperty set default "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold" 1000
 
 func initRun(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
@@ -252,6 +257,8 @@ func initRun(cmd *cobra.Command, args []string) error {
 	if ipCheckNeeded && !quiet {
 		confirmInitCommandExecution()
 	}
+
+	startTime := time.Now()
 
 	fmt.Println("Deleting previous minikube VM...")
 	minikube.Delete()
@@ -278,6 +285,7 @@ func initRun(cmd *cobra.Command, args []string) error {
 		fmt.Println("Deleting gokube dependencies working directory...")
 		clean()
 	}
+	helm.ResetWorkingDirectory()
 
 	if askForUpgrade {
 		fmt.Println("Downloading gokube dependencies...")
@@ -317,6 +325,6 @@ func initRun(cmd *cobra.Command, args []string) error {
 	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for (re)start command
 	gokube.WriteConfig(gokubeVersion, kubernetesVersion)
 
-	fmt.Println("\ngokube has been installed.")
+	fmt.Printf("\ngokube setup completed in %s\n", util.Duration(time.Since(startTime)))
 	return nil
 }
