@@ -47,6 +47,7 @@ var askForClean bool
 var miniappsRepo string
 var dnsProxy bool
 var hostDNSResolver bool
+var keepVM bool
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -99,6 +100,7 @@ func init() {
 	initCmd.Flags().BoolVarP(&dnsProxy, "dns-proxy", "", false, "Use Virtualbox NAT DNS proxy (could be instable)")
 	initCmd.Flags().BoolVarP(&hostDNSResolver, "host-dns-resolver", "", false, "Use Virtualbox NAT DNS host resolver (could be instable)")
 	initCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before initializing")
+	initCmd.Flags().BoolVar(&keepVM, "keep-vm", false, "Keep minikube VM as it is (don't delete/recreate)")
 	rootCmd.AddCommand(initCmd)
 }
 
@@ -131,7 +133,7 @@ func checkMinimumRequirements() {
 }
 
 func confirmInitCommandExecution() {
-	fmt.Println("WARNING: Your Virtualbox GUI shall not be open and no other VM shall be currently running")
+	fmt.Println("WARNING: your Virtualbox GUI shall not be open and no other VM shall be currently running")
 	fmt.Print("Press <CTRL+C> within the next 10s it you need to check this or press <ENTER> now to continue...")
 	enter := make(chan bool, 1)
 	go gokube.WaitEnter(enter)
@@ -187,6 +189,7 @@ func exposeDashboard(port int) {
 
 func waitChartMuseum() {
 	retries := 18
+	waitBeforeRetry := 5
 	for n := 1; n <= retries; n++ {
 		readyReplicas := kubectl.Get("kube-system", "deploy", "chartmuseum", "{.status.readyReplicas}")
 		var ready int
@@ -204,9 +207,9 @@ func waitChartMuseum() {
 		} else {
 			fmt.Print(".")
 			if n == retries {
-				fmt.Printf("\nWARNING: chartmuseum is not ready after 90s, which probably means its installation failed\n")
+				fmt.Printf("\nWARNING: chartmuseum is not ready after %ds, which probably means its installation failed\n", retries*waitBeforeRetry)
 			} else {
-				time.Sleep(5 * time.Second)
+				time.Sleep(time.Duration(waitBeforeRetry) * time.Second)
 			}
 		}
 	}
@@ -233,7 +236,9 @@ func checkMinikubeIP() {
 }
 
 func clean() {
-	minikube.DeleteWorkingDirectory()
+	if !keepVM {
+		minikube.DeleteWorkingDirectory()
+	}
 	kubectl.DeleteWorkingDirectory()
 	docker.DeleteWorkingDirectory()
 	docker.InitWorkingDirectory()
@@ -254,17 +259,18 @@ func initRun(cmd *cobra.Command, args []string) error {
 	ipCheckNeeded = strings.Compare("0.0.0.0", checkIP) != 0
 
 	// Warn user with pre-requisites
-	if ipCheckNeeded && !quiet {
+	if ipCheckNeeded && !quiet && !keepVM {
 		confirmInitCommandExecution()
 	}
 
 	startTime := time.Now()
 
-	fmt.Println("Deleting previous minikube VM...")
-	minikube.Delete()
-
-	if ipCheckNeeded {
-		resetVBLease()
+	if !keepVM {
+		fmt.Println("Deleting previous minikube VM...")
+		minikube.Delete()
+		if ipCheckNeeded {
+			resetVBLease()
+		}
 	}
 
 	gokube.ReadConfig(verbose)
@@ -296,8 +302,10 @@ func initRun(cmd *cobra.Command, args []string) error {
 	minikube.ConfigSet("WantUpdateNotification", "false")
 
 	// Create virtual machine (minikube)
-	fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
-	minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver)
+	if !keepVM {
+		fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
+		minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver)
+	}
 
 	// Enable dashboard
 	minikube.AddonsEnable("dashboard")

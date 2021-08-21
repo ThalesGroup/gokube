@@ -1,15 +1,14 @@
 module github.com/gemalto/gokube
 
-go 1.15
+go 1.16
 
 require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/cvila84/go-latest v0.1.2
-	github.com/mattn/go-colorable v0.1.4 // indirect
-	github.com/mattn/go-isatty v0.0.10 // indirect
-	github.com/spf13/cobra v0.0.5
-	github.com/spf13/viper v1.4.0
-	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
+	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/spf13/cobra v1.2.1
+	github.com/spf13/viper v1.8.1
+	golang.org/x/sys v0.0.0-20210510120138-977fb7262007
 	gopkg.in/VividCortex/ewma.v1 v1.1.1 // indirect
 	gopkg.in/cheggaaa/pb.v2 v2.0.7
 	gopkg.in/fatih/color.v1 v1.7.0 // indirect

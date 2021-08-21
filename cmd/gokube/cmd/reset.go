@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var resetSnapshotName string
+
 // resetCmd represents the pause command
 var resetCmd = &cobra.Command{
 	Use:          "reset",
@@ -22,6 +24,7 @@ func init() {
 		defaultGokubeQuiet = true
 	}
 	resetCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before resetting")
+	resetCmd.Flags().StringVarP(&resetSnapshotName, "name", "n", "gokube", "The snapshot name")
 	rootCmd.AddCommand(resetCmd)
 }
 
@@ -40,12 +43,12 @@ func resetRun(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	fmt.Println("Resetting minikube VM from snapshot...")
-	err = virtualbox.RestoreSnapshot("gokube")
+	fmt.Printf("Resetting minikube VM from snapshot '%s'...\n", resetSnapshotName)
+	err = virtualbox.RestoreSnapshot(resetSnapshotName)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Minikube VM has successfully been reset from snapshot")
+	fmt.Printf("Minikube VM has successfully been reset from snapshot '%s'\n", resetSnapshotName)
 	if running {
 		return start()
 	} else {

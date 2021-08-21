@@ -41,7 +41,7 @@ func init() {
 }
 
 func confirmStopCommandExecution() {
-	fmt.Println("WARNING: You should not stop a VM with a lot of running pods as the restart will be unstable")
+	fmt.Println("WARNING: you should not stop a VM with a lot of running pods as the restart will be unstable")
 	fmt.Print("Press <CTRL+C> within the next 10s it you need to perform some clean or press <ENTER> now to continue...")
 	enter := make(chan bool, 1)
 	go gokube.WaitEnter(enter)

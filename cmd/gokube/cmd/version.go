@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	GOKUBE_VERSION = "1.22.0"
+	GOKUBE_VERSION = "1.22.1-beta.1"
 )
 
 var gokubeVersion string
@@ -52,13 +52,13 @@ var versionCmd = &cobra.Command{
 func checkLatestVersion() {
 	res, _ := latest.Check(githubTag, GOKUBE_VERSION, 5*time.Second)
 	if res == nil {
-		fmt.Printf("WARNING: Cannot find gokube latest release, please check your connection\n")
+		fmt.Printf("WARNING: cannot find gokube latest release, please check your connection\n")
 	}
 	if res != nil {
 		if res.Outdated {
-			fmt.Printf("WARNING: This version of gokube is outdated, please download the newest one on https://github.com/ThalesGroup/gokube/releases/tag/v%s\n", res.Current)
+			fmt.Printf("WARNING: this version of gokube is outdated, please download the newest one on https://github.com/ThalesGroup/gokube/releases/tag/v%s\n", res.Current)
 		} else if res.New {
-			fmt.Printf("WARNING: This version of gokube has not yet been published, use it at your own risk !\n")
+			fmt.Printf("WARNING: this version of gokube has not yet been published, use it at your own risk !\n")
 		}
 	}
 }

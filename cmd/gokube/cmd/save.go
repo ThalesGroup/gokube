@@ -10,6 +10,7 @@ import (
 )
 
 var live bool
+var savedSnapshotName string
 
 // saveCmd represents the pause command
 var saveCmd = &cobra.Command{
@@ -27,11 +28,12 @@ func init() {
 	}
 	saveCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before snapshotting")
 	saveCmd.Flags().BoolVarP(&live, "live", "l", false, "Don't stop VM before taking snapshot")
+	saveCmd.Flags().StringVarP(&savedSnapshotName, "name", "n", "gokube", "The snapshot name")
 	rootCmd.AddCommand(saveCmd)
 }
 
 func confirmSnapshotCommandExecution() {
-	fmt.Println("WARNING: You should not snapshot a running VM as the process can be long and take more space on disk")
+	fmt.Println("WARNING: you should not snapshot a running VM as the process can be long and take more space on disk")
 	fmt.Print("Press <CTRL+C> within the next 10s it you want to stop VM first or press <ENTER> now to continue...")
 	enter := make(chan bool, 1)
 	go gokube.WaitEnter(enter)
@@ -64,9 +66,9 @@ func saveRun(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	fmt.Println("Taking snapshot of minikube VM...")
-	_ = virtualbox.DeleteSnapshot("gokube")
-	err = virtualbox.TakeSnapshot("gokube")
+	fmt.Printf("Taking snapshot '%s' of minikube VM...\n", savedSnapshotName)
+	_ = virtualbox.DeleteSnapshot(savedSnapshotName)
+	err = virtualbox.TakeSnapshot(savedSnapshotName)
 	if err != nil {
 		return err
 	}
