@@ -22,9 +22,9 @@ jobs:
           cd ${{ github.workspace }}/src/github.com/gemalto/gokube
           GOOS=windows GOARCH=amd64 go get -t -v ./...
           cd cmd/gokube
-          GOOS=windows GOARCH=amd64 go build -o bin/gokube-windows-amd64.exe
+          GOOS=windows GOARCH=amd64 go build -o ${{ github.workspace }}/bin/gokube-windows-amd64.exe
       - name: Publish release
         uses: softprops/action-gh-release@v1
         with:
           prerelease: true
-          files: ${{ github.workspace }}/src/github.com/gemalto/gokube/bin/gokube*
+          files: ${{ github.workspace }}/bin/gokube*
