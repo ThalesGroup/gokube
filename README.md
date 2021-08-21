@@ -30,7 +30,7 @@ These charts are optimized in term of memory and cpu for minikube and very usefu
 ## Continuous Integration & Delivery 
 [![Build Status](https://api.travis-ci.org/thalesgroup/gokube.svg?branch=master)](https://travis-ci.org/thalesgroup/gokube)
 
-gokube is building and delivering under Travis. 
+gokube is building and delivering under Travis and Github Actions.
 
 ## How to upgrade gokube?
 
