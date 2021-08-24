@@ -1,7 +1,7 @@
 # GoKube Release Notes
 
-## Version 1.22.1 - ?
-* Bump to helm-image v1.0.6
+## Version 1.22.1 - 08/24/2021
+* Bump to K8S v1.20.10, helm-image v1.0.6, helm-spray v4.0.10
 * Added --keep-vm flag for init command  
 * Multi snapshot management (finalized)
 
