@@ -1,5 +1,12 @@
 # GoKube Release Notes
 
+## Version 1.25.1 - 02/16/2022
+* Bump to minikube v1.25.1, K8S v1.20.15
+
+Please note latest minikube versions integrates new host-only networking constraints from VirtualBox, which means it *may* be mandatory to upgrade VirtualBox (to at least 6.1.28)
+
+Please note helm 3.6 branch is kept by default for now because of incompatibility between helm-push plugin and newly introduced OCI push command in helm 3.7+
+
 ## Version 1.22.1 - 08/24/2021
 * Bump to K8S v1.20.10, helm-image v1.0.6, helm-spray v4.0.10
 * Added --keep-vm flag for init command  

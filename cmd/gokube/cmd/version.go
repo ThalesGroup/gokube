@@ -22,11 +22,12 @@ import (
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
+	"strings"
 	"time"
 )
 
 const (
-	GOKUBE_VERSION = "1.23.2-beta.1"
+	GOKUBE_VERSION = "1.25.1"
 )
 
 var gokubeVersion string
@@ -35,6 +36,13 @@ var (
 	githubTag = &latest.GithubTag{
 		Owner:      "ThalesGroup",
 		Repository: "gokube",
+		TagFilterFunc: func(release string) bool {
+			if strings.ContainsRune(release, '-') {
+				return false
+			} else {
+				return true
+			}
+		},
 	}
 )
 
