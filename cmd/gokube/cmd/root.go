@@ -33,7 +33,7 @@ import (
 const (
 	DEFAULT_KUBERNETES_VERSION = "v1.20.15"
 	DEFAULT_KUBECTL_VERSION    = "v1.20.15"
-	DEFAULT_MINIKUBE_VERSION   = "v1.25.1"
+	DEFAULT_MINIKUBE_VERSION   = "v1.25.2"
 	DEFAULT_MINIKUBE_URL       = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
 	DEFAULT_MINIKUBE_MEMORY    = 8192
 	DEFAULT_MINIKUBE_CPUS      = 4

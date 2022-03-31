@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.25.2 - 03/31/2022
+* Bump to minikube v1.25.2
+
 ## Version 1.25.1 - 02/16/2022
 * Bump to minikube v1.25.1, K8S v1.20.15
 
