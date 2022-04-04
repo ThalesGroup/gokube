@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.25.3 - 04/04/2022
+* Bump to helm-image v1.0.7, docker 20.10.14
+
 ## Version 1.25.2 - 03/31/2022
 * Bump to minikube v1.25.2
 
