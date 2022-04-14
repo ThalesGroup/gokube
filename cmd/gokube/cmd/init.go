@@ -48,6 +48,7 @@ var miniappsRepo string
 var dnsProxy bool
 var hostDNSResolver bool
 var keepVM bool
+var dnsDomain string
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -63,6 +64,7 @@ func init() {
 	var defaultKubectlVersion = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBECTL_VERSION)
 	var defaultMinikubeUrl = getValueFromEnv("MINIKUBE_URL", DEFAULT_MINIKUBE_URL)
 	var defaultMinikubeVersion = getValueFromEnv("MINIKUBE_VERSION", DEFAULT_MINIKUBE_VERSION)
+	var defaultDNSDomain = getValueFromEnv("MINIKUBE_DNS_DOMAIN", DEFAULT_MINIKUBE_DNS_DOMAIN)
 	var defaultDockerVersion = getValueFromEnv("DOCKER_VERSION", DEFAULT_DOCKER_VERSION)
 	var defaultHelmVersion = getValueFromEnv("HELM_VERSION", DEFAULT_HELM_VERSION)
 	var defaultHelmSprayUrl = getValueFromEnv("HELM_SPRAY_URL", DEFAULT_HELM_SPRAY_URL)
@@ -97,6 +99,7 @@ func init() {
 	initCmd.Flags().StringVarP(&httpsProxy, "https-proxy", "", os.Getenv("HTTPS_PROXY"), "HTTPS proxy variable for docker engine in minikube VM")
 	initCmd.Flags().StringVarP(&noProxy, "no-proxy", "", os.Getenv("NO_PROXY"), "No proxy variable for docker engine in minikube VM")
 	initCmd.Flags().StringVarP(&miniappsRepo, "miniapps-repo", "", DEFAULT_MINIAPPS_REPO, "Helm repository for miniapps")
+	initCmd.Flags().StringVarP(&dnsDomain, "dns-domain", "", defaultDNSDomain, "Minikube cluster DNS domain name")
 	initCmd.Flags().BoolVarP(&dnsProxy, "dns-proxy", "", false, "Use Virtualbox NAT DNS proxy (could be instable)")
 	initCmd.Flags().BoolVarP(&hostDNSResolver, "host-dns-resolver", "", false, "Use Virtualbox NAT DNS host resolver (could be instable)")
 	initCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before initializing")
@@ -304,7 +307,7 @@ func initRun(cmd *cobra.Command, args []string) error {
 	// Create virtual machine (minikube)
 	if !keepVM {
 		fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
-		minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver)
+		minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain)
 	}
 
 	// Enable dashboard

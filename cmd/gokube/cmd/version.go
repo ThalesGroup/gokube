@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	GOKUBE_VERSION = "1.25.3"
+	GOKUBE_VERSION = "1.25.4"
 )
 
 var gokubeVersion string

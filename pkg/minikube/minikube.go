@@ -29,7 +29,7 @@ import (
 )
 
 // Start ...
-func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool) {
+func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool, dnsDomain string) {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--driver=virtualbox", "--host-only-cidr=192.168.99.1/24"}
 	//patchStartArgs(args, kubernetesVersion)
 	if len(httpProxy) > 0 {
@@ -49,6 +49,9 @@ func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsPro
 	}
 	if !hostDNSResolver {
 		args = append(args, "--host-dns-resolver=false")
+	}
+	if len(dnsDomain) > 0 {
+		args = append(args, "--dns-domain="+dnsDomain)
 	}
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
