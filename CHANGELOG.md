@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.25.5 - 06/22/2022
+* Bump to K8S v1.22.11
+
 ## Version 1.25.4 - 04/14/2022
 * Added --dns-domain flag to choose cluster DNS domain
 
