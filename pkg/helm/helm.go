@@ -123,8 +123,8 @@ func DeleteExecutable() {
 
 // DeleteWorkingDirectory ...
 func DeleteWorkingDirectory() {
+	// This directory contains helm plugins and repo definitions and caches
 	utils.RemoveDir(utils.GetAppDataHome() + "/helm")
-	utils.RemoveDir(utils.GetTempHome() + "/helm")
 }
 
 // ResetWorkingDirectory ...

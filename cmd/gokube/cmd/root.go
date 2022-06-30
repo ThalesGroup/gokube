@@ -33,7 +33,7 @@ import (
 const (
 	DEFAULT_KUBERNETES_VERSION  = "v1.22.11"
 	DEFAULT_KUBECTL_VERSION     = "v1.22.11"
-	DEFAULT_MINIKUBE_VERSION    = "v1.25.2"
+	DEFAULT_MINIKUBE_VERSION    = "v1.26.0"
 	DEFAULT_MINIKUBE_URL        = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
 	DEFAULT_MINIKUBE_MEMORY     = 8192
 	DEFAULT_MINIKUBE_CPUS       = 4
@@ -59,6 +59,7 @@ var helmSprayURL string
 var helmSprayVersion string
 var helmImageURL string
 var helmImageVersion string
+var helmPushVersion string
 var sternVersion string
 var askForUpgrade bool
 var verbose bool
@@ -71,17 +72,17 @@ var rootCmd = &cobra.Command{
 	Long:  `gokube is a nice installer to provide an environment for developing day-to-day with kubernetes & helm on your laptop.`,
 }
 
-func installHelmPlugins() {
+func upgradeHelmPlugins() {
 	// TODO rely on helm plugin install
 	helmspray.DeletePlugin()
 	helmspray.InstallPlugin(helmSprayURL, helmSprayVersion)
 	helmimage.DeletePlugin()
 	helmimage.InstallPlugin(helmImageURL, helmImageVersion)
 	helmpush.DeletePlugin()
-	helmpush.InstallPlugin(DEFAULT_HELM_PUSH_URL, DEFAULT_HELM_PUSH_VERSION)
+	helmpush.InstallPlugin(DEFAULT_HELM_PUSH_URL, helmPushVersion)
 }
 
-func upgrade() {
+func upgradeDependencies() {
 	minikube.DeleteExecutable()
 	minikube.DownloadExecutable(gokube.GetBinDir(), minikubeURL, minikubeVersion)
 	helm.DeleteExecutable()

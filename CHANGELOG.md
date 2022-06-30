@@ -1,5 +1,9 @@
 # GoKube Release Notes
 
+## Version 1.26.0 - 06/30/2022
+* Bump to minikube v1.26.0
+* Prepare support of helm 3.7+ (helm-push plugin management is different before and after v0.9.0)
+
 ## Version 1.25.5 - 06/22/2022
 * Bump to K8S v1.22.11
 

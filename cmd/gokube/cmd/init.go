@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/gemalto/gokube/internal/util"
+	"github.com/gemalto/gokube/pkg/docker"
 	"github.com/gemalto/gokube/pkg/virtualbox"
 	"github.com/spf13/viper"
 	"os"
@@ -25,7 +26,6 @@ import (
 	"time"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/gemalto/gokube/pkg/docker"
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/helm"
 	"github.com/gemalto/gokube/pkg/kubectl"
@@ -71,6 +71,7 @@ func init() {
 	var defaultHelmSprayVersion = getValueFromEnv("HELM_SPRAY_VERSION", DEFAULT_HELM_SPRAY_VERSION)
 	var defaultHelmImageUrl = getValueFromEnv("HELM_IMAGE_URL", DEFAULT_HELM_IMAGE_URL)
 	var defaultHelmImageVersion = getValueFromEnv("HELM_IMAGE_VERSION", DEFAULT_HELM_IMAGE_VERSION)
+	var defaultHelmPushVersion = getValueFromEnv("HELM_PUSH_VERSION", DEFAULT_HELM_PUSH_VERSION)
 	defaultVMMemory, _ := strconv.Atoi(getValueFromEnv("MINIKUBE_MEMORY", strconv.Itoa(DEFAULT_MINIKUBE_MEMORY)))
 	defaultVMCPUs, _ := strconv.Atoi(getValueFromEnv("MINIKUBE_CPUS", strconv.Itoa(DEFAULT_MINIKUBE_CPUS)))
 	defaultGokubeQuiet := false
@@ -86,7 +87,8 @@ func init() {
 	initCmd.Flags().StringVarP(&helmSprayURL, "helm-spray-url", "", defaultHelmSprayUrl, "The URL to download helm spray plugin")
 	initCmd.Flags().StringVarP(&helmSprayVersion, "helm-spray-version", "", defaultHelmSprayVersion, "The helm spray plugin version")
 	initCmd.Flags().StringVarP(&helmImageURL, "helm-image-url", "", defaultHelmImageUrl, "The URL to download helm image plugin")
-	initCmd.Flags().StringVarP(&helmImageVersion, "helm-image-version", "", defaultHelmImageVersion, "The helm image image version")
+	initCmd.Flags().StringVarP(&helmImageVersion, "helm-image-version", "", defaultHelmImageVersion, "The helm image plugin version")
+	initCmd.Flags().StringVarP(&helmPushVersion, "helm-push-version", "", defaultHelmPushVersion, "The helm push plugin version")
 	initCmd.Flags().StringVarP(&sternVersion, "stern-version", "", DEFAULT_STERN_VERSION, "The stern version")
 	initCmd.Flags().BoolVarP(&askForUpgrade, "upgrade", "u", false, "Upgrade gokube (download and setup docker, minikube, kubectl and helm)")
 	initCmd.Flags().BoolVarP(&askForClean, "clean", "c", false, "Clean gokube (remove docker, minikube, kubectl and helm working directories)")
@@ -115,8 +117,14 @@ func getValueFromEnv(envVar string, defaultValue string) string {
 	return value
 }
 
+func checkFlagsConsistency() {
+	if askForClean && keepVM {
+		fmt.Println("FATAL: Cannot keep VM while cleaning gokube")
+		os.Exit(1)
+	}
+}
+
 func checkMinimumRequirements() {
-	// Check minimum requirements
 	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.8.0")) < 0 {
 		fmt.Println("FATAL: This gokube version is only compatible with kubernetes version >= 1.8.0")
 		os.Exit(1)
@@ -218,12 +226,13 @@ func waitChartMuseum() {
 	}
 }
 
-func configureHelm(localRepoIp string) {
-	// Add helm chartmuseum and miniapps repository
+func configureHelmRepositories() {
 	helm.RepoAdd("chartmuseum", "https://chartmuseum.github.io/charts")
 	helm.RepoAdd("miniapps", miniappsRepo)
 	helm.RepoUpdate()
-	// Install chartmuseum
+}
+
+func installChartMuseum(localRepoIp string) {
 	helm.Upgrade("chartmuseum/chartmuseum", "", "chartmuseum", "kube-system", "env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
 	fmt.Printf("Waiting for chartmuseum...")
 	waitChartMuseum()
@@ -238,16 +247,6 @@ func checkMinikubeIP() {
 	}
 }
 
-func clean() {
-	if !keepVM {
-		minikube.DeleteWorkingDirectory()
-	}
-	kubectl.DeleteWorkingDirectory()
-	docker.DeleteWorkingDirectory()
-	docker.InitWorkingDirectory()
-	helm.DeleteWorkingDirectory()
-}
-
 // TODO manage vbox time sync
 // VBoxManage guestproperty set default "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold" 1000
 
@@ -259,7 +258,23 @@ func initRun(cmd *cobra.Command, args []string) error {
 	checkMinimumRequirements()
 	checkLatestVersion()
 
+	gokube.ReadConfig(verbose)
+	gokubeVersion = viper.GetString("gokube-version")
+	if len(gokubeVersion) == 0 {
+		gokubeVersion = "0.0.0"
+	}
+
+	// Force clean & upgradeDependencies if persisted gokube-version is lower than the current one
+	if semver.New(gokubeVersion).Compare(*semver.New(GOKUBE_VERSION)) < 0 {
+		fmt.Println("WARNING: this version of gokube is launched for the first time, forcing clean & upgradeDependencies...")
+		gokubeVersion = GOKUBE_VERSION
+		askForClean = true
+		askForUpgrade = true
+	}
+
 	ipCheckNeeded = strings.Compare("0.0.0.0", checkIP) != 0
+
+	checkFlagsConsistency()
 
 	// Warn user with pre-requisites
 	if ipCheckNeeded && !quiet && !keepVM {
@@ -276,66 +291,60 @@ func initRun(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	gokube.ReadConfig(verbose)
-	gokubeVersion = viper.GetString("gokube-version")
-	if len(gokubeVersion) == 0 {
-		gokubeVersion = "0.0.0"
-	}
-
-	// Force clean & upgrade if persisted gokube-version is lower than the current one
-	if semver.New(gokubeVersion).Compare(*semver.New(GOKUBE_VERSION)) < 0 {
-		fmt.Println("This version of gokube is launched for the first time, forcing clean & upgrade...")
-		gokubeVersion = GOKUBE_VERSION
-		askForClean = true
-		askForUpgrade = true
-	}
-
 	if askForClean {
 		fmt.Println("Deleting gokube dependencies working directory...")
-		clean()
+		minikube.DeleteWorkingDirectory()
+		kubectl.DeleteWorkingDirectory()
+		docker.DeleteWorkingDirectory()
+		docker.InitWorkingDirectory()
+		helm.DeleteWorkingDirectory()
+	} else if !keepVM {
+		helm.ResetWorkingDirectory()
 	}
-	helm.ResetWorkingDirectory()
 
 	if askForUpgrade {
-		fmt.Println("Downloading gokube dependencies...")
-		upgrade()
+		fmt.Println("Upgrading gokube dependencies...")
+		upgradeDependencies()
 	}
 
-	// Disable notification for updates
-	minikube.ConfigSet("WantUpdateNotification", "false")
-
-	// Create virtual machine (minikube)
 	if !keepVM {
+		// Disable notification for updates
+		minikube.ConfigSet("WantUpdateNotification", "false")
+
+		// Create virtual machine (minikube)
 		fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
 		minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain)
+
+		// Enable dashboard
+		minikube.AddonsEnable("dashboard")
+
+		// Checks minikube IP
+		if ipCheckNeeded {
+			checkMinikubeIP()
+		}
+
+		// Switch context to minikube for kubectl and helm
+		kubectl.ConfigUseContext("minikube")
+
+		fmt.Println("Configuring helm repositories...")
+		configureHelmRepositories()
+
+		fmt.Println("Installing ChartMuseum...")
+		installChartMuseum(minikube.Ip())
+
+		// Patch kubernetes-dashboard to expose it on nodePort 30000
+		fmt.Print("Exposing kubernetes dashboard to nodeport 30000...")
+		exposeDashboard(30000)
 	}
 
-	// Enable dashboard
-	minikube.AddonsEnable("dashboard")
-
-	// Checks minikube IP
-	if ipCheckNeeded {
-		checkMinikubeIP()
-	}
-
-	// Switch context to minikube for kubectl and helm
-	kubectl.ConfigUseContext("minikube")
-
-	// Install helm
-	fmt.Println("Configuring helm...")
-	configureHelm(minikube.Ip())
 	if askForUpgrade {
-		fmt.Println("Installing helm plugins...")
-		installHelmPlugins()
+		fmt.Println("Upgrading helm plugins...")
+		upgradeHelmPlugins()
 	}
-
-	// Patch kubernetes-dashboard to expose it on nodePort 30000
-	fmt.Print("Exposing kubernetes dashboard to nodeport 30000...")
-	exposeDashboard(30000)
 
 	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for (re)start command
 	gokube.WriteConfig(gokubeVersion, kubernetesVersion)
 
-	fmt.Printf("\ngokube setup completed in %s\n", util.Duration(time.Since(startTime)))
+	fmt.Printf("\ngokube init completed in %s\n", util.Duration(time.Since(startTime)))
 	return nil
 }
