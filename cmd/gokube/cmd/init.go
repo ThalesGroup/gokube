@@ -264,9 +264,9 @@ func initRun(cmd *cobra.Command, args []string) error {
 		gokubeVersion = "0.0.0"
 	}
 
-	// Force clean & upgradeDependencies if persisted gokube-version is lower than the current one
+	// Force clean & upgrade if persisted gokube-version is lower than the current one
 	if semver.New(gokubeVersion).Compare(*semver.New(GOKUBE_VERSION)) < 0 {
-		fmt.Println("WARNING: this version of gokube is launched for the first time, forcing clean & upgradeDependencies...")
+		fmt.Println("WARNING: this version of gokube is launched for the first time, forcing clean & upgrade...")
 		gokubeVersion = GOKUBE_VERSION
 		askForClean = true
 		askForUpgrade = true

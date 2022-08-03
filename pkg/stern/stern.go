@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	URL = "https://github.com/wercker/stern/releases/download/%s/stern_windows_amd64.exe"
+	URL = "https://github.com/stern/stern/releases/download/v%s/stern_%s_windows_amd64.tar.gz"
 )
 
 // Version ...
@@ -41,7 +41,7 @@ func Version() {
 func DownloadExecutable(dst string, sternVersion string) {
 	if _, err := os.Stat(gokube.GetBinDir() + "/stern.exe"); os.IsNotExist(err) {
 		download.FromUrl("stern v"+sternVersion, URL, sternVersion)
-		utils.MoveFile(gokube.GetTempDir()+"/stern_windows_amd64.exe", dst+"/stern.exe")
+		utils.MoveFile(gokube.GetTempDir()+"/stern.exe", dst+"/stern.exe")
 		utils.RemoveDir(gokube.GetTempDir())
 	}
 }
