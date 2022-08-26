@@ -39,7 +39,7 @@ const (
 	DEFAULT_MINIKUBE_CPUS       = 4
 	DEFAULT_MINIKUBE_DNS_DOMAIN = "cluster.local"
 	DEFAULT_DOCKER_VERSION      = "20.10.14"
-	DEFAULT_HELM_VERSION        = "v3.9.2"
+	DEFAULT_HELM_VERSION        = "v3.9.4"
 	DEFAULT_HELM_SPRAY_VERSION  = "v4.0.10"
 	DEFAULT_HELM_SPRAY_URL      = "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
 	DEFAULT_HELM_IMAGE_VERSION  = "v1.0.7"

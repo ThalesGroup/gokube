@@ -33,7 +33,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var kubernetesVersion string
+var kubernetesVersionForInit string
 var memory int16
 var cpus int16
 var disk string
@@ -81,7 +81,7 @@ func init() {
 	initCmd.Flags().StringVarP(&minikubeURL, "minikube-url", "", defaultMinikubeUrl, "The URL to download minikube")
 	initCmd.Flags().StringVarP(&minikubeVersion, "minikube-version", "", defaultMinikubeVersion, "The minikube version")
 	initCmd.Flags().StringVarP(&dockerVersion, "docker-version", "", defaultDockerVersion, "The docker version")
-	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", defaultKubernetesVersion, "The kubernetes version")
+	initCmd.Flags().StringVarP(&kubernetesVersionForInit, "kubernetes-version", "", defaultKubernetesVersion, "The kubernetes version")
 	initCmd.Flags().StringVarP(&kubectlVersion, "kubectl-version", "", defaultKubectlVersion, "The kubectl version")
 	initCmd.Flags().StringVarP(&helmVersion, "helm-version", "", defaultHelmVersion, "The helm version")
 	initCmd.Flags().StringVarP(&helmSprayURL, "helm-spray-url", "", defaultHelmSprayUrl, "The URL to download helm spray plugin")
@@ -125,7 +125,7 @@ func checkFlagsConsistency() {
 }
 
 func checkMinimumRequirements() {
-	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.8.0")) < 0 {
+	if semver.New(kubernetesVersionForInit[1:]).Compare(*semver.New("1.8.0")) < 0 {
 		fmt.Println("FATAL: This gokube version is only compatible with kubernetes version >= 1.8.0")
 		os.Exit(1)
 	}
@@ -312,8 +312,8 @@ func initRun(cmd *cobra.Command, args []string) error {
 		minikube.ConfigSet("WantUpdateNotification", "false")
 
 		// Create virtual machine (minikube)
-		fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
-		minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain)
+		fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersionForInit)
+		minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersionForInit, true, dnsProxy, hostDNSResolver, dnsDomain)
 
 		// Enable dashboard
 		minikube.AddonsEnable("dashboard")
@@ -343,7 +343,7 @@ func initRun(cmd *cobra.Command, args []string) error {
 	}
 
 	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for (re)start command
-	gokube.WriteConfig(gokubeVersion, kubernetesVersion)
+	gokube.WriteConfig(gokubeVersion, kubernetesVersionForInit)
 
 	fmt.Printf("\ngokube init completed in %s\n", util.Duration(time.Since(startTime)))
 	return nil

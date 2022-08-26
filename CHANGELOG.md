@@ -3,11 +3,7 @@
 ## Version 1.26.1 - 08/03/2022
 **NOTE: Starting from this version, gokube is only compatible with helm 3.7+ (major change is chart push plugin command name is now 'cm-push' to not clash with new helm 3.7+ OCI 'push' command)**
 
-* Bump to minikube v1.26.1, K8S v1.22.12, helm v3.9.2, helm-push v0.10.3
-
-## Version 1.26.0 - 06/30/2022
-* Bump to minikube v1.26.0
-* Prepare support of helm 3.7+ (helm-push plugin management is different before and after v0.9.0)
+* Bump to minikube v1.26.1, K8S v1.22.12, helm v3.9.4, helm-push v0.10.3, stern 1.21.0
 
 ## Version 1.25.5 - 06/22/2022
 * Bump to K8S v1.22.11

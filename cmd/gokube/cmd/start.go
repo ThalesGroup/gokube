@@ -63,8 +63,8 @@ func start() error {
 	if len(kubernetesVersionForStart) == 0 {
 		kubernetesVersionForStart = getValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBERNETES_VERSION)
 	}
-	fmt.Printf("Starting minikube VM with kubernetes %s...\n", kubernetesVersion)
-	minikube.Restart(kubernetesVersion)
+	fmt.Printf("Starting minikube VM with kubernetes %s...\n", kubernetesVersionForStart)
+	minikube.Restart(kubernetesVersionForStart)
 	return nil
 }
 

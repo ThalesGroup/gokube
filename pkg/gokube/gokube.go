@@ -76,6 +76,9 @@ func ReadConfig(verbose bool) {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(configPath)
 	err = viper.ReadInConfig()
+	if verbose {
+		fmt.Printf("Found following keys in %s: %v\n", configFilePath, viper.AllKeys())
+	}
 	if err != nil {
 		fmt.Printf("WARNING: cannot read gokube configuration file: %s\n", err)
 	}
