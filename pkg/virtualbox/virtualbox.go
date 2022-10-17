@@ -93,8 +93,8 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, verbose bool) error {
 		return errors.New("not able to list host-only network interfaces")
 	}
 	if verbose {
-		for k := range nets {
-			fmt.Printf("\nResetHostOnlyNetworkLeases: listHostOnlyAdapters: %s", k)
+		for _, v := range nets {
+			fmt.Printf("\nResetHostOnlyNetworkLeases: listHostOnlyAdapters: %+v", v)
 		}
 	}
 	ip, network, err := parseAndValidateCIDR(hostOnlyCIDR)

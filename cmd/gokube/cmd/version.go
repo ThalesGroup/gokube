@@ -21,13 +21,14 @@ import (
 	"github.com/gemalto/gokube/pkg/helm"
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
+	"github.com/gemalto/gokube/pkg/stern"
 	"github.com/spf13/cobra"
 	"strings"
 	"time"
 )
 
 const (
-	GOKUBE_VERSION = "1.26.1-beta.2"
+	GOKUBE_VERSION = "1.27.1-beta.1"
 )
 
 var gokubeVersion string
@@ -60,13 +61,13 @@ var versionCmd = &cobra.Command{
 func checkLatestVersion() {
 	res, _ := latest.Check(githubTag, GOKUBE_VERSION, 5*time.Second)
 	if res == nil {
-		fmt.Printf("WARNING: cannot find gokube latest release, please check your connection\n")
+		fmt.Println("Warning: cannot find gokube latest release, please check your connection")
 	}
 	if res != nil {
 		if res.Outdated {
-			fmt.Printf("WARNING: this version of gokube is outdated, please download the newest one on https://github.com/ThalesGroup/gokube/releases/tag/v%s\n", res.Current)
+			fmt.Printf("Warning: this version of gokube is outdated, please download the newest one on https://github.com/ThalesGroup/gokube/releases/tag/v%s\n", res.Current)
 		} else if res.New {
-			fmt.Printf("WARNING: this version of gokube has not yet been published, use it at your own risk !\n")
+			fmt.Println("Warning: this version of gokube has not yet been published, use it at your own risk !")
 		}
 	}
 }
@@ -76,18 +77,34 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 }
 
+func getDockerVersion() error {
+	dockerC := make(chan error, 1)
+	go func() {
+		dockerC <- docker.Version()
+	}()
+	select {
+	case <-time.After(3 * time.Second):
+		return nil
+	case result := <-dockerC:
+		return result
+	}
+}
+
 func versionRun(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return cmd.Usage()
 	}
-	fmt.Println("gokube version: v" + GOKUBE_VERSION)
+
 	checkLatestVersion()
+
+	fmt.Println("gokube version: v" + GOKUBE_VERSION)
 	if allVersions {
-		minikube.Version()
-		docker.Version()
-		kubectl.Version()
-		helm.Version()
-		helm.PluginsVersion()
+		_ = minikube.Version()
+		_ = helm.Version()
+		_ = helm.PluginsVersion()
+		_ = stern.Version()
+		_ = getDockerVersion()
+		_ = kubectl.Version()
 	}
 	return nil
 }

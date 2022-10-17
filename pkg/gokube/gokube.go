@@ -17,95 +17,92 @@ package gokube
 import (
 	"bufio"
 	"fmt"
+	"github.com/gemalto/gokube/pkg/docker"
+	"github.com/gemalto/gokube/pkg/helm"
+	"github.com/gemalto/gokube/pkg/helmimage"
+	"github.com/gemalto/gokube/pkg/helmpush"
+	"github.com/gemalto/gokube/pkg/helmspray"
+	"github.com/gemalto/gokube/pkg/kubectl"
+	"github.com/gemalto/gokube/pkg/minikube"
+	"github.com/gemalto/gokube/pkg/stern"
+	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/spf13/viper"
 	"os"
-	"os/exec"
-	"os/user"
-	"strings"
+	"time"
 )
 
-// GetBinDir ...
-func GetBinDir() string {
-	path, err := exec.LookPath("gokube")
-	if err != nil {
-		panic(err)
-	}
-	if path == "gokube.exe" {
-		path = whereAmI()
-	} else {
-		path = strings.TrimSuffix(path, "\\gokube.exe")
-	}
-	return path
+type HelmPlugins struct {
+	SprayURL     string
+	SprayVersion string
+	ImageURL     string
+	ImageVersion string
+	PushURL      string
+	PushVersion  string
 }
 
-// GetTempDir ...
-func GetTempDir() string {
-	return GetBinDir() + "/tmp"
+type Dependencies struct {
+	MinikubeURL     string
+	MinikubeVersion string
+	HelmURL         string
+	HelmVersion     string
+	DockerURL       string
+	DockerVersion   string
+	KubectlURL      string
+	KubectlVersion  string
+	SternURL        string
+	SternVersion    string
 }
 
 // ReadConfig ...
-func ReadConfig(verbose bool) {
-	usr, err := user.Current()
-	if err != nil {
-		fmt.Print(err)
-		os.Exit(1)
-	}
-	configPath := usr.HomeDir + string(os.PathSeparator) + ".gokube"
+func ReadConfig(verbose bool) error {
+	configPath := utils.GetUserHome() + string(os.PathSeparator) + ".gokube"
 	if verbose {
-		fmt.Printf("Checking %s...\n", configPath)
+		fmt.Printf("Reading %s...\n", configPath)
 	}
-	if _, existDirErr := os.Stat(configPath); os.IsNotExist(existDirErr) {
-		createDirErr := os.Mkdir(configPath, os.ModePerm)
-		if createDirErr != nil {
-			fmt.Print(createDirErr)
-			os.Exit(1)
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		err = os.Mkdir(configPath, os.ModePerm)
+		if err != nil {
+			return err
 		}
 	}
 	configFilePath := configPath + string(os.PathSeparator) + "config.yaml"
 	if verbose {
-		fmt.Printf("Checking %s...\n", configFilePath)
+		fmt.Printf("Reading %s...\n", configFilePath)
 	}
-	if _, existFileErr := os.Stat(configFilePath); os.IsNotExist(existFileErr) {
-		_, createFileErr := os.OpenFile(configFilePath, os.O_RDONLY|os.O_CREATE, 0666)
-		if createFileErr != nil {
-			fmt.Print(createFileErr)
-			os.Exit(1)
+	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+		_, err = os.OpenFile(configFilePath, os.O_RDONLY|os.O_CREATE, 0666)
+		if err != nil {
+			return err
 		}
 	}
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(configPath)
-	err = viper.ReadInConfig()
+	err := viper.ReadInConfig()
 	if verbose {
-		fmt.Printf("Found following keys in %s: %v\n", configFilePath, viper.AllKeys())
+		fmt.Printf("Read settings: %+v\n", viper.AllSettings())
 	}
 	if err != nil {
-		fmt.Printf("WARNING: cannot read gokube configuration file: %s\n", err)
+		return err
 	}
+	return nil
 }
 
 // WriteConfig ...
-func WriteConfig(gokubeVersion string, kubernetesVersion string) {
-	usr, err := user.Current()
-	if err != nil {
-		fmt.Print(err)
-		os.Exit(1)
-	}
-	configPath := usr.HomeDir + "/.gokube"
+func WriteConfig(gokubeVersion string, kubernetesVersion string) error {
+	configPath := utils.GetUserHome() + string(os.PathSeparator) + ".gokube"
 	configFile := "config"
-	configFilePath := configPath + "/config.yaml"
-	if _, existDirErr := os.Stat(configPath); os.IsNotExist(existDirErr) {
-		createDirErr := os.Mkdir(configPath, os.ModePerm)
-		if createDirErr != nil {
-			fmt.Print(createDirErr)
-			os.Exit(1)
+	configFilePath := configPath + string(os.PathSeparator) + "config.yaml"
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		err = os.Mkdir(configPath, os.ModePerm)
+		if err != nil {
+			return err
 		}
 	}
-	if _, existFileErr := os.Stat(configFilePath); os.IsNotExist(existFileErr) {
-		_, createFileErr := os.OpenFile(configFilePath, os.O_RDONLY|os.O_CREATE, 0666)
-		if createFileErr != nil {
-			fmt.Print(createFileErr)
-			os.Exit(1)
+	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+		_, err = os.OpenFile(configFilePath, os.O_RDONLY|os.O_CREATE, 0666)
+		if err != nil {
+			return err
 		}
 	}
 	viper.SetConfigName(configFile)
@@ -113,26 +110,102 @@ func WriteConfig(gokubeVersion string, kubernetesVersion string) {
 	viper.SetConfigType("yaml")
 	viper.Set("gokube-version", gokubeVersion)
 	viper.Set("kubernetes-version", kubernetesVersion)
-	err = viper.WriteConfig()
+	err := viper.WriteConfig()
 	if err != nil {
-		fmt.Print(err)
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
-// WaitEnter...
-func WaitEnter(enter chan<- bool) {
+func UpgradeHelmPlugins(plugins *HelmPlugins) error {
+	// TODO rely on helm plugin install
+	_ = helmspray.DeletePlugin()
+	err := helmspray.InstallPlugin(plugins.SprayURL, plugins.SprayVersion)
+	if err != nil {
+		return fmt.Errorf("cannot install helm-spray plugin: %w", err)
+	}
+	_ = helmimage.DeletePlugin()
+	err = helmimage.InstallPlugin(plugins.ImageURL, plugins.ImageVersion)
+	if err != nil {
+		return fmt.Errorf("cannot install helm-image plugin: %w", err)
+	}
+	_ = helmpush.DeletePlugin()
+	err = helmpush.InstallPlugin(plugins.PushURL, plugins.PushVersion)
+	if err != nil {
+		return fmt.Errorf("cannot install helm-push plugin: %w", err)
+	}
+	return nil
+}
+
+func UpgradeDependencies(dependencies *Dependencies) error {
+	_ = minikube.DeleteExecutable()
+	err := minikube.DownloadExecutable(dependencies.MinikubeURL, dependencies.MinikubeVersion)
+	if err != nil {
+		return fmt.Errorf("cannot download or upgrade minikube: %w", err)
+	}
+	_ = helm.DeleteExecutable()
+	err = helm.DownloadExecutable(dependencies.HelmURL, dependencies.HelmVersion)
+	if err != nil {
+		return fmt.Errorf("cannot download or upgrade helm: %w", err)
+	}
+	_ = docker.DeleteExecutable()
+	err = docker.DownloadExecutable(dependencies.DockerURL, dependencies.DockerVersion)
+	if err != nil {
+		return fmt.Errorf("cannot download or upgrade docker: %w", err)
+	}
+	_ = kubectl.DeleteExecutable()
+	err = kubectl.DownloadExecutable(dependencies.KubectlURL, dependencies.KubectlVersion)
+	if err != nil {
+		return fmt.Errorf("cannot download or upgrade kubectl: %w", err)
+	}
+	_ = stern.DeleteExecutable()
+	err = stern.DownloadExecutable(dependencies.SternURL, dependencies.SternVersion)
+	if err != nil {
+		return fmt.Errorf("cannot download or upgrade stern: %w", err)
+	}
+	return nil
+}
+
+func ConfirmInitCommandExecution() {
+	fmt.Println("Warning: your Virtualbox GUI shall not be open and no other VM shall be currently running")
+	fmt.Print("Press <CTRL+C> within the next 10s it you need to check this or press <ENTER> now to continue...")
+	enter := make(chan bool, 1)
+	go waitEnter(enter)
+	select {
+	case <-enter:
+	case <-time.After(10 * time.Second):
+		fmt.Println()
+	}
+	time.Sleep(200 * time.Millisecond)
+}
+
+func ConfirmSnapshotCommandExecution() {
+	fmt.Println("Warning: you should not snapshot a running VM as the process can be long and take more space on disk")
+	fmt.Print("Press <CTRL+C> within the next 10s it you want to stop VM first or press <ENTER> now to continue...")
+	enter := make(chan bool, 1)
+	go waitEnter(enter)
+	select {
+	case <-enter:
+	case <-time.After(10 * time.Second):
+		fmt.Println()
+	}
+	time.Sleep(200 * time.Millisecond)
+}
+
+func ConfirmStopCommandExecution() {
+	fmt.Println("Warning: you should not stop a VM with a lot of running pods as the restart will be unstable")
+	fmt.Print("Press <CTRL+C> within the next 10s it you need to perform some clean or press <ENTER> now to continue...")
+	enter := make(chan bool, 1)
+	go waitEnter(enter)
+	select {
+	case <-enter:
+	case <-time.After(10 * time.Second):
+		fmt.Println()
+	}
+	time.Sleep(200 * time.Millisecond)
+}
+
+func waitEnter(enter chan<- bool) {
 	_, _, _ = bufio.NewReader(os.Stdin).ReadLine()
 	enter <- true
-}
-
-// WhereAmI returns a string containing the file name, function name
-// and the line number of a specified entry on the call stack
-func whereAmI() string {
-	dir, err := os.Getwd()
-	if err != nil {
-		fmt.Print(err)
-		os.Exit(1)
-	}
-	return dir
 }

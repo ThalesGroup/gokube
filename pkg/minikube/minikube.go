@@ -15,21 +15,23 @@ limitations under the License.
 package minikube
 
 import (
-	"bufio"
-	"fmt"
-	"github.com/coreos/go-semver/semver"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/gemalto/gokube/pkg/download"
-	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/utils"
 )
 
+const (
+	DEFAULT_URL           = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
+	LOCAL_EXECUTABLE_NAME = "minikube.exe"
+)
+
 // Start ...
-func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool, dnsDomain string) {
+func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool, dnsDomain string, verbose bool) error {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--driver=virtualbox", "--host-only-cidr=192.168.99.1/24"}
 	//patchStartArgs(args, kubernetesVersion)
 	if len(httpProxy) > 0 {
@@ -53,26 +55,23 @@ func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsPro
 	if len(dnsDomain) > 0 {
 		args = append(args, "--dns-domain="+dnsDomain)
 	}
+	if verbose {
+		args = append(args, "--alsologtostderr", "--v=1")
+	}
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		panic(err)
-	}
+	return cmd.Run()
 }
 
 // Restart ...
-func Restart(kubernetesVersion string) {
+func Restart(kubernetesVersion string) error {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion}
 	//patchStartArgs(args, kubernetesVersion)
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		panic(err)
-	}
+	return cmd.Run()
 }
 
 // Stop ...
@@ -84,114 +83,66 @@ func Stop() error {
 }
 
 // Delete ...
-func Delete() {
+func Delete() error {
 	cmd := exec.Command("minikube", "delete")
 	//	cmd.Stdout = os.Stdout
 	//	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// Cache ...
-func Cache(image string) {
-	cmd := exec.Command("minikube", "cache", "add", image)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
 // AddonsEnable ...
-func AddonsEnable(addon string) {
+func AddonsEnable(addon string) error {
 	cmd := exec.Command("minikube", "addons", "enable", addon)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
 // ConfigSet ...
-func ConfigSet(key string, value string) {
+func ConfigSet(key string, value string) error {
 	cmd := exec.Command("minikube", "config", "set", key, value)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
 // Version ...
-func Version() {
+func Version() error {
 	cmd := exec.Command("minikube", "version")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
-// DockerEnv ...
-func DockerEnv() []utils.EnvVar {
-	out, err := exec.Command("minikube", "docker-env").Output()
-	if err != nil {
-		fmt.Print(err)
-		os.Exit(1)
-	}
-	scanner := bufio.NewScanner(strings.NewReader(string(out)))
-	var envVar []utils.EnvVar
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "export ") {
-			tokens := strings.Split(strings.TrimPrefix(line, "export "), "=")
-			envVar = append(envVar, utils.EnvVar{
-				Name:  tokens[0],
-				Value: trimQuotes(tokens[1]),
-			})
-		}
-		if strings.HasPrefix(line, "SET ") {
-			tokens := strings.Split(strings.TrimPrefix(line, "SET "), "=")
-			envVar = append(envVar, utils.EnvVar{
-				Name:  tokens[0],
-				Value: trimQuotes(tokens[1]),
-			})
-		}
-	}
-	return envVar
-}
-
-// IP...
-func Ip() string {
+// Ip ...
+func Ip() (string, error) {
 	out, err := exec.Command("minikube", "ip").Output()
 	if err != nil {
-		fmt.Print(err)
-		os.Exit(1)
+		return "", err
 	}
-	return strings.TrimRight(string(out), "\r\n")
+	return strings.TrimRight(string(out), "\r\n"), nil
 }
 
 // DownloadExecutable ...
-func DownloadExecutable(dst string, minikubeURI string, minikubeVersion string) {
-	if _, err := os.Stat(dst + "/minikube.exe"); os.IsNotExist(err) {
-		download.FromUrl("minikube "+minikubeVersion, minikubeURI, minikubeVersion)
-		utils.MoveFile(gokube.GetTempDir()+"/minikube-windows-amd64.exe", dst+"/minikube.exe")
-		utils.RemoveDir(gokube.GetTempDir())
+func DownloadExecutable(minikubeURL string, minikubeVersion string) error {
+	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	if _, err := os.Stat(localFile); os.IsNotExist(err) {
+		fileMap := &download.FileMap{Src: "minikube-windows-amd64.exe", Dst: LOCAL_EXECUTABLE_NAME}
+		_, err = download.FromUrl(minikubeURL, minikubeVersion, "minikube", []*download.FileMap{fileMap}, filepath.Dir(localFile))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // DeleteExecutable ...
-func DeleteExecutable() {
-	utils.RemoveFile(gokube.GetBinDir() + "/minikube.exe")
+func DeleteExecutable() error {
+	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	return os.RemoveAll(localFile)
 }
 
 // DeleteWorkingDirectory ...
-func DeleteWorkingDirectory() {
-	utils.CleanDir(utils.GetUserHome() + "/.minikube")
-}
-
-func patchStartArgs(args []string, kubernetesVersion string) {
-	if semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.16.0")) >= 0 && semver.New(kubernetesVersion[1:]).Compare(*semver.New("1.18.0")) < 0 {
-		args = append(args, "--extra-config=apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true")
-	}
-}
-
-func trimQuotes(s string) string {
-	if len(s) >= 2 {
-		if s[0] == '"' && s[len(s)-1] == '"' {
-			return s[1 : len(s)-1]
-		}
-	}
-	return s
+func DeleteWorkingDirectory() error {
+	return utils.CleanDir(utils.GetUserHome() + string(os.PathSeparator) + ".minikube")
 }

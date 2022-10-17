@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/minikube"
+	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/gemalto/gokube/pkg/virtualbox"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 var live bool
@@ -23,7 +23,7 @@ var saveCmd = &cobra.Command{
 
 func init() {
 	defaultGokubeQuiet := false
-	if len(getValueFromEnv("GOKUBE_QUIET", "")) > 0 {
+	if len(utils.GetValueFromEnv("GOKUBE_QUIET", "")) > 0 {
 		defaultGokubeQuiet = true
 	}
 	saveCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before snapshotting")
@@ -32,45 +32,38 @@ func init() {
 	rootCmd.AddCommand(saveCmd)
 }
 
-func confirmSnapshotCommandExecution() {
-	fmt.Println("WARNING: you should not snapshot a running VM as the process can be long and take more space on disk")
-	fmt.Print("Press <CTRL+C> within the next 10s it you want to stop VM first or press <ENTER> now to continue...")
-	enter := make(chan bool, 1)
-	go gokube.WaitEnter(enter)
-	select {
-	case <-enter:
-	case <-time.After(10 * time.Second):
-		fmt.Println()
-	}
-	time.Sleep(200 * time.Millisecond)
-}
-
 func saveRun(cmd *cobra.Command, args []string) error {
-	var running bool
-	var err error
 	if len(args) > 0 {
 		return cmd.Usage()
 	}
+
+	checkLatestVersion()
+
+	running := false
 	if live && !quiet {
-		confirmSnapshotCommandExecution()
+		gokube.ConfirmSnapshotCommandExecution()
 	} else if !live {
+		var err error
 		running, err = virtualbox.IsRunning()
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot check if minikube VM is running: %w", err)
 		}
 		if running {
 			fmt.Println("Stopping minikube VM...")
 			err = minikube.Stop()
 			if err != nil {
-				return err
+				return fmt.Errorf("cannot stop minikube VM: %w", err)
 			}
 		}
 	}
 	fmt.Printf("Taking snapshot '%s' of minikube VM...\n", savedSnapshotName)
-	_ = virtualbox.DeleteSnapshot(savedSnapshotName)
+	err := virtualbox.DeleteSnapshot(savedSnapshotName)
+	if err != nil {
+		return fmt.Errorf("cannot delete minikube VM snapshot %s: %w", savedSnapshotName, err)
+	}
 	err = virtualbox.TakeSnapshot(savedSnapshotName)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot take minikube VM snapshot %s: %w", savedSnapshotName, err)
 	}
 	if running {
 		return start()

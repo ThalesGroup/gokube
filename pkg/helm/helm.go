@@ -19,17 +19,18 @@ import (
 	"github.com/gemalto/gokube/pkg/download"
 	"os"
 	"os/exec"
+	"path/filepath"
 
-	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/utils"
 )
 
 const (
-	URL = "https://get.helm.sh/helm-%s-windows-amd64.zip"
+	DEFAULT_URL           = "https://get.helm.sh/helm-%s-windows-amd64.zip"
+	LOCAL_EXECUTABLE_NAME = "helm.exe"
 )
 
 // Upgrade ...
-func Upgrade(chart string, version string, release string, namespace string, configuration string, valuesFile string) {
+func Upgrade(chart string, version string, release string, namespace string, configuration string, valuesFile string) error {
 	var args = []string{"upgrade", "--install", "--devel", release, chart}
 	if len(version) > 0 {
 		args = append(args, "--version", version)
@@ -46,89 +47,77 @@ func Upgrade(chart string, version string, release string, namespace string, con
 	fmt.Println("Starting " + chart + " components...")
 	cmd := exec.Command("helm", args...)
 	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// Delete ...
-func Delete(release string) {
-	fmt.Println("Deleting " + release + " components...")
-	cmd := exec.Command("helm", "delete", release)
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// List ...
-func List() {
-	cmd := exec.Command("helm", "list")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
 // RepoAdd ...
-func RepoAdd(name string, repo string) {
+func RepoAdd(name string, repo string) error {
 	cmd := exec.Command("helm", "repo", "add", name, repo)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
-//RepoUpdate ...
-func RepoUpdate() {
+// RepoUpdate ...
+func RepoUpdate() error {
 	cmd := exec.Command("helm", "repo", "update")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
-// RepoRemove ...
-func RepoRemove(name string) {
-	cmd := exec.Command("helm", "repo", "remove", name)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-//Version ...
-func Version() {
+// Version ...
+func Version() error {
 	fmt.Print("helm version: ")
 	cmd := exec.Command("helm", "version", "--client", "--short")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
-//Version ...
-func PluginsVersion() {
-	fmt.Print("helm plugins version:\n")
+// PluginsVersion ...
+func PluginsVersion() error {
+	fmt.Println("helm plugins version:")
 	cmd := exec.Command("helm", "plugin", "list")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
 // DownloadExecutable ...
-func DownloadExecutable(dst string, helmVersion string) {
-	if _, err := os.Stat(gokube.GetBinDir() + "/helm.exe"); os.IsNotExist(err) {
-		download.FromUrl("helm "+helmVersion, URL, helmVersion)
-		utils.MoveFile(gokube.GetTempDir()+"/windows-amd64/helm.exe", dst+"/helm.exe")
-		utils.RemoveDir(gokube.GetTempDir())
+func DownloadExecutable(helmURL string, helmVersion string) error {
+	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	if _, err := os.Stat(localFile); os.IsNotExist(err) {
+		fileMap := &download.FileMap{Src: "windows-amd64" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
+		_, err = download.FromUrl(helmURL, helmVersion, "helm", []*download.FileMap{fileMap}, filepath.Dir(localFile))
+		if err != nil {
+			return nil
+		}
 	}
+	return nil
 }
 
 // DeleteExecutable ...
-func DeleteExecutable() {
-	utils.RemoveFile(gokube.GetBinDir() + "/helm.exe")
+func DeleteExecutable() error {
+	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	return os.RemoveAll(localFile)
 }
 
 // DeleteWorkingDirectory ...
-func DeleteWorkingDirectory() {
+func DeleteWorkingDirectory() error {
 	// This directory contains helm plugins and repo definitions and caches
-	utils.RemoveDir(utils.GetAppDataHome() + "/helm")
+	return os.RemoveAll(utils.GetAppDataHome() + string(os.PathSeparator) + "helm")
 }
 
 // ResetWorkingDirectory ...
-func ResetWorkingDirectory() {
-	utils.RemoveFile(utils.GetAppDataHome() + "/helm/repositories.yaml")
-	utils.RemoveFile(utils.GetAppDataHome() + "/helm/repositories.lock")
+func ResetWorkingDirectory() error {
+	err := os.RemoveAll(utils.GetAppDataHome() + string(os.PathSeparator) + "helm" + string(os.PathSeparator) + "repositories.yaml")
+	if err != nil {
+		return err
+	}
+	err = os.RemoveAll(utils.GetAppDataHome() + string(os.PathSeparator) + "helm" + string(os.PathSeparator) + "repositories.lock")
+	if err != nil {
+		return err
+	}
+	return nil
 }

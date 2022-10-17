@@ -37,6 +37,13 @@ func resumeRun(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return cmd.Usage()
 	}
+
+	checkLatestVersion()
+
 	fmt.Println("Resuming minikube VM...")
-	return virtualbox.Resume()
+	err := virtualbox.Resume()
+	if err != nil {
+		return fmt.Errorf("cannot resume minikube VM: %w", err)
+	}
+	return nil
 }

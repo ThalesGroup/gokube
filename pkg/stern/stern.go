@@ -16,37 +16,43 @@ package stern
 
 import (
 	"fmt"
+	"github.com/gemalto/gokube/pkg/utils"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/gemalto/gokube/pkg/download"
-	"github.com/gemalto/gokube/pkg/gokube"
-	"github.com/gemalto/gokube/pkg/utils"
 )
 
 const (
-	URL = "https://github.com/stern/stern/releases/download/v%s/stern_%s_windows_amd64.tar.gz"
+	DEFAULT_URL           = "https://github.com/stern/stern/releases/download/v%s/stern_%s_windows_amd64.tar.gz"
+	LOCAL_EXECUTABLE_NAME = "stern.exe"
 )
 
 // Version ...
-func Version() {
+func Version() error {
 	fmt.Println("stern version: ")
-	cmd := exec.Command("stern", "version")
+	cmd := exec.Command("stern", "-v")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
 // DownloadExecutable ...
-func DownloadExecutable(dst string, sternVersion string) {
-	if _, err := os.Stat(gokube.GetBinDir() + "/stern.exe"); os.IsNotExist(err) {
-		download.FromUrl("stern v"+sternVersion, URL, sternVersion)
-		utils.MoveFile(gokube.GetTempDir()+"/stern.exe", dst+"/stern.exe")
-		utils.RemoveDir(gokube.GetTempDir())
+func DownloadExecutable(sternURL string, sternVersion string) error {
+	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	if _, err := os.Stat(localFile); os.IsNotExist(err) {
+		fileMap := &download.FileMap{Src: LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
+		_, err = download.FromUrl(sternURL, sternVersion, "stern", []*download.FileMap{fileMap}, filepath.Dir(localFile))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // DeleteExecutable ...
-func DeleteExecutable() {
-	utils.RemoveFile(gokube.GetBinDir() + "/stern.exe")
+func DeleteExecutable() error {
+	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	return os.RemoveAll(localFile)
 }

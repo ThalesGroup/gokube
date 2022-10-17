@@ -16,27 +16,39 @@ package helmspray
 
 import (
 	"github.com/gemalto/gokube/pkg/download"
-	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/utils"
 	"os"
+	"path/filepath"
+)
+
+const (
+	DEFAULT_URL           = "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
+	LOCAL_EXECUTABLE_NAME = "helm-spray.exe"
 )
 
 // InstallPlugin ...
-func InstallPlugin(helmSprayURI string, helmSprayVersion string) {
-	var helm3PluginHome = utils.GetAppDataHome() + "/helm/plugins/helm-spray"
-	if _, err := os.Stat(helm3PluginHome + "/bin/helm-spray.exe"); os.IsNotExist(err) {
-		download.FromUrl("helm-spray "+helmSprayVersion, helmSprayURI, helmSprayVersion)
-		utils.CreateDirs(helm3PluginHome + "/bin")
-		utils.MoveFile(gokube.GetTempDir()+"/bin/helm-spray.exe", helm3PluginHome+"/bin/helm-spray.exe")
-		utils.MoveFile(gokube.GetTempDir()+"/plugin.yaml", helm3PluginHome+"/plugin.yaml")
-		utils.RemoveDir(gokube.GetTempDir())
+func InstallPlugin(helmSprayURI string, helmSprayVersion string) error {
+	localFile := utils.GetAppDataHome() + string(os.PathSeparator) +
+		"helm" + string(os.PathSeparator) +
+		"plugins" + string(os.PathSeparator) +
+		"helm-spray" + string(os.PathSeparator) +
+		LOCAL_EXECUTABLE_NAME
+	if _, err := os.Stat(localFile); os.IsNotExist(err) {
+		fileMap1 := &download.FileMap{Src: "bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: "bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME}
+		fileMap2 := &download.FileMap{Src: "plugin.yaml", Dst: "plugin.yaml"}
+		_, err = download.FromUrl(helmSprayURI, helmSprayVersion, "helm-spray", []*download.FileMap{fileMap1, fileMap2}, filepath.Dir(localFile))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // DeletePlugin ...
-func DeletePlugin() {
-	var helm2PluginHome = utils.GetUserHome() + "/.helm/plugins/helm-spray"
-	var helm3PluginHome = utils.GetAppDataHome() + "/helm/plugins/helm-spray"
-	utils.RemoveDir(helm2PluginHome)
-	utils.RemoveDir(helm3PluginHome)
+func DeletePlugin() error {
+	localDir := utils.GetAppDataHome() + string(os.PathSeparator) +
+		"helm" + string(os.PathSeparator) +
+		"plugins" + string(os.PathSeparator) +
+		"helm-spray" + string(os.PathSeparator)
+	return os.RemoveAll(localDir)
 }

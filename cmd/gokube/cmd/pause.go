@@ -37,6 +37,13 @@ func pauseRun(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return cmd.Usage()
 	}
+
+	checkLatestVersion()
+
 	fmt.Println("Pausing minikube VM...")
-	return virtualbox.Pause()
+	err := virtualbox.Pause()
+	if err != nil {
+		return fmt.Errorf("cannot pause minikube VM: %w", err)
+	}
+	return nil
 }

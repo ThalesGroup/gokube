@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/minikube"
+	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 // stopCmd represents the stop command
@@ -33,32 +33,22 @@ var stopCmd = &cobra.Command{
 
 func init() {
 	defaultGokubeQuiet := false
-	if len(getValueFromEnv("GOKUBE_QUIET", "")) > 0 {
+	if len(utils.GetValueFromEnv("GOKUBE_QUIET", "")) > 0 {
 		defaultGokubeQuiet = true
 	}
 	stopCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before stopping")
 	rootCmd.AddCommand(stopCmd)
 }
 
-func confirmStopCommandExecution() {
-	fmt.Println("WARNING: you should not stop a VM with a lot of running pods as the restart will be unstable")
-	fmt.Print("Press <CTRL+C> within the next 10s it you need to perform some clean or press <ENTER> now to continue...")
-	enter := make(chan bool, 1)
-	go gokube.WaitEnter(enter)
-	select {
-	case <-enter:
-	case <-time.After(10 * time.Second):
-		fmt.Println()
-	}
-	time.Sleep(200 * time.Millisecond)
-}
-
 func stopRun(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return cmd.Usage()
 	}
+
+	checkLatestVersion()
+
 	if !quiet {
-		confirmStopCommandExecution()
+		gokube.ConfirmStopCommandExecution()
 	}
 	fmt.Println("Stopping minikube VM...")
 	return minikube.Stop()

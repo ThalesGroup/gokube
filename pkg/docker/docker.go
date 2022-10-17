@@ -17,121 +17,72 @@ package docker
 import (
 	"fmt"
 	"github.com/gemalto/gokube/pkg/download"
-	"io/ioutil"
+	"github.com/gemalto/gokube/pkg/utils"
 	"os"
 	"os/exec"
 	"path/filepath"
-
-	"github.com/gemalto/gokube/pkg/gokube"
-	"github.com/gemalto/gokube/pkg/utils"
 )
 
 const (
-	URL = "https://github.com/cvila84/docker-cli-builder/releases/download/%s/docker.exe"
+	DEFAULT_URL           = "https://github.com/cvila84/docker-cli-builder/releases/download/%s/docker.exe"
+	LOCAL_EXECUTABLE_NAME = "docker.exe"
 )
 
-// LoadImages ...
-func LoadImages(imagesDir string, envVars []utils.EnvVar) {
-	fileList := []string{}
-	err := filepath.Walk(imagesDir, func(path string, f os.FileInfo, err error) error {
-		if err != nil {
-			fmt.Printf("Error while parsing %s: %v\n", path, err)
-		} else {
-			if f != nil && !f.IsDir() {
-				fileList = append(fileList, path)
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		fmt.Printf("Error while parsing %s: %v\n", imagesDir, err)
-	}
-	for _, file := range fileList {
-
-		LoadImage(file, envVars)
-	}
-}
-
-// LoadImage ...
-func LoadImage(image string, envVars []utils.EnvVar) {
-	cmd := exec.Command("docker", "load", "-i", image)
-	cmd.Env = append(os.Environ())
-	for _, element := range envVars {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", element.Name, element.Value))
-	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// TagImage ...
-func TagImage(image string, tag string, envVars []utils.EnvVar) {
-	cmd := exec.Command("docker", "tag", image, tag)
-	cmd.Env = append(os.Environ())
-	for _, element := range envVars {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", element.Name, element.Value))
-	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-// RemoveImage ...
-func RemoveImage(image string, envVars []utils.EnvVar) {
-	cmd := exec.Command("docker", "rmi", image)
-	cmd.Env = append(os.Environ())
-	for _, element := range envVars {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", element.Name, element.Value))
-	}
-	cmd.Stdout = ioutil.Discard
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
 // Version ...
-func Version() {
-	fmt.Println("docker version: ")
+func Version() error {
+	fmt.Println("docker version:")
 	cmd := exec.Command("docker", "version")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
 // DownloadExecutable ...
-func DownloadExecutable(dst string, version string) {
-	if _, err := os.Stat(gokube.GetBinDir() + "/docker.exe"); os.IsNotExist(err) {
-		download.FromUrl("docker v"+version, URL, version)
-		utils.MoveFile(gokube.GetTempDir()+"/docker.exe", dst+"/docker.exe")
-		utils.RemoveDir(gokube.GetTempDir())
+func DownloadExecutable(dockerURL string, dockerVersion string) error {
+	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	if _, err := os.Stat(localFile); os.IsNotExist(err) {
+		fileMap := &download.FileMap{Src: LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
+		_, err = download.FromUrl(dockerURL, dockerVersion, "docker", []*download.FileMap{fileMap}, filepath.Dir(localFile))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // DeleteExecutable ...
-func DeleteExecutable() {
-	utils.RemoveFile(gokube.GetBinDir() + "/docker.exe")
+func DeleteExecutable() error {
+	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	return os.RemoveAll(localFile)
 }
 
 // InitWorkingDirectory ...
-func InitWorkingDirectory() {
-	var dockerHome = utils.GetUserHome() + "/.docker"
-	var configJsonPath = dockerHome + "/config.json"
+func InitWorkingDirectory() error {
+	var dockerHome = utils.GetUserHome() + string(os.PathSeparator) + ".docker"
+	var configJsonPath = dockerHome + string(os.PathSeparator) + "config.json"
 	_, err := os.Stat(configJsonPath)
 	if err == nil {
-		return
+		return nil
 	}
-	utils.CreateDirs(dockerHome)
-	newFile, err := os.Create(configJsonPath)
+	err = utils.CreateDirs(dockerHome)
 	if err != nil {
-		fmt.Printf("Error while creating %s\n", configJsonPath)
-		return
+		return err
 	}
-	_, _ = newFile.WriteString("{}")
-	_ = newFile.Sync()
-	_ = newFile.Close()
+	configFile, err := os.Create(configJsonPath)
+	defer utils.CloseFile(configFile)
+	if err != nil {
+		return err
+	}
+	_, _ = configFile.WriteString("{}")
+	err = configFile.Sync()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // DeleteWorkingDirectory ...
-func DeleteWorkingDirectory() {
+func DeleteWorkingDirectory() error {
 	// Delete and recreate will not work if .docker is a symlink !
-	utils.CleanDir(utils.GetUserHome() + "/.docker")
+	return utils.CleanDir(utils.GetUserHome() + string(os.PathSeparator) + ".docker")
 }
