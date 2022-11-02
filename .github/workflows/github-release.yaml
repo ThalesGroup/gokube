@@ -26,5 +26,5 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v1
         with:
-          prerelease: true
+          prerelease: false
           files: ${{ github.workspace }}/bin/gokube*
