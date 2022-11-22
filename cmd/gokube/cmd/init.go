@@ -111,18 +111,10 @@ func resetVBLease(hostOnlyCIDR string) error {
 	}
 }
 
-func configureHelmRepositories(localRepoIp string) error {
-	err := helm.RepoAdd("chartmuseum", "https://chartmuseum.github.io/charts")
-	if err != nil {
-		return fmt.Errorf("cannot add chartmuseum repo: %w", err)
-	}
-	err = helm.RepoAdd("miniapps", miniappsRepo)
+func setupMiniappsHelmRepository() error {
+	err := helm.RepoAdd("miniapps", miniappsRepo)
 	if err != nil {
 		return fmt.Errorf("cannot add miniapps repo: %w", err)
-	}
-	err = helm.RepoAdd("minikube", "http://"+localRepoIp+":32767")
-	if err != nil {
-		fmt.Printf("Warning: cannot add minikube repo: %s\n", err)
 	}
 	err = helm.RepoUpdate()
 	if err != nil {
@@ -131,8 +123,16 @@ func configureHelmRepositories(localRepoIp string) error {
 	return nil
 }
 
-func installChartMuseum() error {
-	err := helm.Upgrade("chartmuseum/chartmuseum", "", "chartmuseum", "kube-system", "env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
+func installChartMuseum(localRepoIp string) error {
+	err := helm.RepoAdd("chartmuseum", "https://chartmuseum.github.io/charts")
+	if err != nil {
+		return fmt.Errorf("cannot add chartmuseum repo: %w", err)
+	}
+	err = helm.RepoUpdate()
+	if err != nil {
+		return fmt.Errorf("cannot update helm repositories: %w", err)
+	}
+	err = helm.Upgrade("chartmuseum/chartmuseum", "", "chartmuseum", "kube-system", "env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
 	if err != nil {
 		return fmt.Errorf("cannot install chartmuseum: %w", err)
 	}
@@ -163,6 +163,14 @@ func installChartMuseum() error {
 				time.Sleep(time.Duration(waitBeforeRetry) * time.Second)
 			}
 		}
+	}
+	err = helm.RepoAdd("minikube", "http://"+localRepoIp+":32767")
+	if err != nil {
+		fmt.Printf("Warning: cannot add minikube repo: %s\n", err)
+	}
+	err = helm.RepoUpdate()
+	if err != nil {
+		return fmt.Errorf("cannot update helm repositories: %w", err)
 	}
 	return nil
 }
@@ -300,14 +308,14 @@ func initRun(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("cannot switch K8S context to minikube: %w", err)
 		}
 
-		fmt.Println("Configuring helm repositories...")
-		err = configureHelmRepositories(minikubeIP)
+		fmt.Println("Installing ChartMuseum...")
+		err = installChartMuseum(minikubeIP)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("Installing ChartMuseum...")
-		err = installChartMuseum()
+		fmt.Println("Configuring miniapps repository...")
+		err = setupMiniappsHelmRepository()
 		if err != nil {
 			return err
 		}

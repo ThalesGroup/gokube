@@ -1,5 +1,10 @@
 # GoKube Release Notes
 
+## Version 1.28.0 - 11/16/2022
+* Bump to minikube v1.28.0, K8S v1.24.8, helm v3.10.2
+
+Please note v1.27.1 is not mounting Windows user directory inside minikube VM (because of a minikube [issue](https://github.com/kubernetes/minikube/issues/14465))
+
 ## Version 1.27.1 - 10/17/2022
 **NOTE: Starting from this version, gokube is only compatible with helm 3.7+ (major change is chart push plugin command name is now 'cm-push' to not clash with new helm 3.7+ OCI 'push' command)**
 
