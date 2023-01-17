@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.28.1 - 01/17/2023
+* Fixed save command when snapshot did not exist previously [#26](https://github.com/gemalto/gokube/pull/26)
+
 ## Version 1.28.0 - 11/16/2022
 * Bump to minikube v1.28.0, K8S v1.24.8, helm v3.10.2
 
