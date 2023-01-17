@@ -18,6 +18,7 @@ const (
 	retryCountOnObjectNotReadyError = 5
 	objectNotReady                  = "error: The object is not ready"
 	retryDelay                      = 100 * time.Millisecond
+	snapshotNotExist                = "Could not find a snapshot named"
 )
 
 var (
@@ -26,10 +27,10 @@ var (
 	reEqualQuoteLine  = regexp.MustCompile(`"(.+)"="(.*)"`)
 	reMachineNotFound = regexp.MustCompile(`Could not find a registered machine named '(.+)'`)
 
-	ErrMachineNotExist = errors.New("machine does not exist")
-	ErrVBMNotFound     = errors.New("VBoxManage not found. Make sure VirtualBox is installed and VBoxManage is in the path")
-
-	vboxManageCmd = detectVBoxManageCmd()
+	ErrMachineNotExist     = errors.New("machine does not exist")
+	ErrVBMNotFound         = errors.New("VBoxManage not found. Make sure VirtualBox is installed and VBoxManage is in the path")
+	ErrVBMSnapshotNotFound = errors.New("snapshot does not exist")
+	vboxManageCmd          = detectVBoxManageCmd()
 )
 
 // VBoxManager defines the interface to communicate to VirtualBox.
@@ -80,6 +81,10 @@ func (v *VBoxCmdManager) vbmOutErrRetry(retry int, args ...string) (string, stri
 		if ee, ok := err.(*exec.Error); ok && ee.Err == exec.ErrNotFound {
 			err = ErrVBMNotFound
 		}
+	}
+
+	if strings.Contains(stderrStr, snapshotNotExist) {
+		err = ErrVBMSnapshotNotFound
 	}
 
 	// Sometimes, we just need to retry...

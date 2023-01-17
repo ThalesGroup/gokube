@@ -65,6 +65,7 @@ func saveRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("cannot take minikube VM snapshot %s: %w", savedSnapshotName, err)
 	}
+	fmt.Printf("Snapshot '%s' created of minikube VM...\n", savedSnapshotName)
 	if running {
 		return start()
 	} else {

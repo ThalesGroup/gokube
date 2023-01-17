@@ -136,6 +136,10 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, verbose bool) error {
 func DeleteSnapshot(name string) error {
 	err := vboxManager.vbm("snapshot", "minikube", "delete", name)
 	if err != nil {
+		if err == ErrVBMSnapshotNotFound {
+			fmt.Printf("Existing snapshot '%s' not found, no delete required...\n", name)
+			return nil
+		}
 		return errors.New("not able to delete VM snapshot")
 	}
 	return nil
