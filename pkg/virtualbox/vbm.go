@@ -19,6 +19,7 @@ const (
 	objectNotReady                  = "error: The object is not ready"
 	retryDelay                      = 100 * time.Millisecond
 	snapshotNotExist                = "Could not find a snapshot named"
+	noSnapshots                     = "This machine does not have any snapshots"
 )
 
 var (
@@ -83,7 +84,7 @@ func (v *VBoxCmdManager) vbmOutErrRetry(retry int, args ...string) (string, stri
 		}
 	}
 
-	if strings.Contains(stderrStr, snapshotNotExist) {
+	if strings.Contains(stderrStr, snapshotNotExist) || strings.Contains(stderrStr, noSnapshots) {
 		err = ErrVBMSnapshotNotFound
 	}
 
