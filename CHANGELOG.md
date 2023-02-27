@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.28.2 - 02/27/2023
+* Fix to create snapshots when no snapshots exist [#28](https://github.com/gemalto/gokube/pull/28)
+
 ## Version 1.28.1 - 01/17/2023
 * Fixed save command when snapshot did not exist previously [#26](https://github.com/gemalto/gokube/pull/26)
 
