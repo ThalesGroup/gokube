@@ -7,7 +7,7 @@ require (
 	github.com/cvila84/go-latest v0.1.2
 	github.com/spf13/cobra v1.6.0
 	github.com/spf13/viper v1.13.0
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	gopkg.in/cheggaaa/pb.v2 v2.0.7
 )
 
@@ -30,7 +30,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	gopkg.in/VividCortex/ewma.v1 v1.1.1 // indirect
 	gopkg.in/fatih/color.v1 v1.7.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
