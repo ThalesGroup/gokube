@@ -31,9 +31,8 @@ const (
 )
 
 // Start ...
-func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool, dnsDomain string, verbose bool) error {
+func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool, dnsDomain string, containerRuntime string, verbose bool) error {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--driver=virtualbox", "--host-only-cidr=192.168.99.1/24"}
-	//patchStartArgs(args, kubernetesVersion)
 	if len(httpProxy) > 0 {
 		args = append(args, "--docker-env=http_proxy="+httpProxy)
 	}
@@ -55,6 +54,9 @@ func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsPro
 	if len(dnsDomain) > 0 {
 		args = append(args, "--dns-domain="+dnsDomain)
 	}
+	if len(containerRuntime) > 0 {
+		args = append(args, "--container-runtime="+containerRuntime)
+	}
 	if verbose {
 		args = append(args, "--alsologtostderr", "--v=1")
 	}
@@ -65,9 +67,11 @@ func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsPro
 }
 
 // Restart ...
-func Restart(kubernetesVersion string) error {
+func Restart(kubernetesVersion string, containerRuntime string) error {
 	var args = []string{"start", "--kubernetes-version", kubernetesVersion}
-	//patchStartArgs(args, kubernetesVersion)
+	if len(containerRuntime) > 0 {
+		args = append(args, "--container-runtime="+containerRuntime)
+	}
 	cmd := exec.Command("minikube", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

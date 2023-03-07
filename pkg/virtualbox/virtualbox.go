@@ -29,7 +29,6 @@ import (
 
 const (
 	buggyNetmask = "0f000000"
-	dhcpPrefix   = "HostInterfaceNetworking-"
 )
 
 // Host-only network.
@@ -44,22 +43,16 @@ type hostOnlyNetwork struct {
 	NetworkName string // referenced in DHCP.NetworkName
 }
 
-// DHCP server info.
-type dhcpServer struct {
-	NetworkName string
-	IPv4        net.IPNet
-	LowerIP     net.IP
-	UpperIP     net.IP
-	Enabled     bool
-}
+var (
+	ErrNetworkAddrCidr = errors.New("host-only CIDR must be specified with a host address, not a network address")
 
-var ErrNetworkAddrCidr = errors.New("host-only CIDR must be specified with a host address, not a network address")
-var vboxManager = NewVBoxManager()
+	vboxManager = NewVBoxManager()
+)
 
 func IsRunning() (bool, error) {
 	info, err := vboxManager.vbmOut("showvminfo", "minikube")
 	if err != nil {
-		return false, errors.New("not able to get VM info")
+		return false, fmt.Errorf("not able to get VM info: %w", err)
 	}
 	re := regexp.MustCompile("(?m)^State:( *)(.*)$")
 	rem := re.FindStringSubmatch(info)
@@ -74,7 +67,7 @@ func IsRunning() (bool, error) {
 func Pause() error {
 	err := vboxManager.vbm("controlvm", "minikube", "pause")
 	if err != nil {
-		return errors.New("not able to pause VM")
+		return fmt.Errorf("not able to pause VM: %w", err)
 	}
 	return nil
 }
@@ -82,7 +75,43 @@ func Pause() error {
 func Resume() error {
 	err := vboxManager.vbm("controlvm", "minikube", "resume")
 	if err != nil {
-		return errors.New("not able to resume VM")
+		return fmt.Errorf("not able to resume VM: %w", err)
+	}
+	return nil
+}
+
+func Update(args ...string) error {
+	err := vboxManager.vbm(append([]string{"modifyvm", "minikube"}, args...)...)
+	if err != nil {
+		return fmt.Errorf("not able to update VM: %w", err)
+	}
+	return nil
+}
+
+func DeleteSnapshot(name string) error {
+	_, stderr, err := vboxManager.vbmOutErr("snapshot", "minikube", "delete", name)
+	if err != nil {
+		if reSnapshotNotFound.FindString(stderr) != "" || reNoSnapshotFound.FindString(stderr) != "" {
+			return ErrSnapshotNotExist
+		} else {
+			return fmt.Errorf("not able to delete VM snapshot: %w", err)
+		}
+	}
+	return nil
+}
+
+func TakeSnapshot(name string) error {
+	err := vboxManager.vbm("snapshot", "minikube", "take", name)
+	if err != nil {
+		return fmt.Errorf("not able to take VM snapshot: %w", err)
+	}
+	return nil
+}
+
+func RestoreSnapshot(name string) error {
+	err := vboxManager.vbm("snapshot", "minikube", "restore", name)
+	if err != nil {
+		return fmt.Errorf("not able to restore VM snapshot: %w", err)
 	}
 	return nil
 }
@@ -90,7 +119,7 @@ func Resume() error {
 func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, verbose bool) error {
 	nets, err := listHostOnlyAdapters(vboxManager)
 	if err != nil {
-		return errors.New("not able to list host-only network interfaces")
+		return fmt.Errorf("not able to list host-only network interfaces: %w", err)
 	}
 	if verbose {
 		for _, v := range nets {
@@ -99,7 +128,7 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, verbose bool) error {
 	}
 	ip, network, err := parseAndValidateCIDR(hostOnlyCIDR)
 	if err != nil {
-		return errors.New("not able to parse CIDR to find host-only network interface")
+		return fmt.Errorf("not able to parse CIDR to find host-only network interface: %w", err)
 	}
 	if verbose {
 		fmt.Printf("\nResetHostOnlyNetworkLeases: parseAndValidateCIDR: %s,%s", ip.String(), network.String())
@@ -117,46 +146,18 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, verbose bool) error {
 	filesPattern := utils.GetUserHome() + "/.VirtualBox/" + hostOnlyNet.NetworkName + "*"
 	files, err := filepath.Glob(filesPattern)
 	if err != nil {
-		return errors.New("not able to get host-only network interface DHCP leases files")
+		return fmt.Errorf("not able to get host-only network interface DHCP leases files: %w", err)
 	}
 	for _, f := range files {
 		if verbose {
 			fmt.Printf("\nResetHostOnlyNetworkLeases: deleting lease file %s...", f)
 		}
 		if err := os.Remove(f); err != nil {
-			return errors.New(fmt.Sprintf("not able to delete lease file %s\n", f))
+			return fmt.Errorf("not able to delete lease file %s: %w", f, err)
 		}
 		if verbose {
 			fmt.Printf("\nResetHostOnlyNetworkLeases: deleted lease file %s", f)
 		}
-	}
-	return nil
-}
-
-func DeleteSnapshot(name string) error {
-	err := vboxManager.vbm("snapshot", "minikube", "delete", name)
-	if err != nil {
-		if err == ErrVBMSnapshotNotFound {
-			fmt.Printf("Existing snapshot '%s' not found, no delete required...\n", name)
-			return nil
-		}
-		return errors.New("not able to delete VM snapshot")
-	}
-	return nil
-}
-
-func TakeSnapshot(name string) error {
-	err := vboxManager.vbm("snapshot", "minikube", "take", name)
-	if err != nil {
-		return errors.New("not able to take VM snapshot")
-	}
-	return nil
-}
-
-func RestoreSnapshot(name string) error {
-	err := vboxManager.vbm("snapshot", "minikube", "restore", name)
-	if err != nil {
-		return errors.New("not able to restore VM snapshot")
 	}
 	return nil
 }
@@ -232,42 +233,6 @@ func getHostOnlyAdapter(nets map[string]*hostOnlyNetwork, hostIP net.IP, netmask
 	}
 
 	return nil
-}
-
-func listDHCPServers(vbox VBoxManager) (map[string]*dhcpServer, error) {
-	out, err := vbox.vbmOut("list", "dhcpservers")
-	if err != nil {
-		return nil, err
-	}
-
-	m := map[string]*dhcpServer{}
-	dhcp := &dhcpServer{}
-
-	err = parseKeyValues(out, reColonLine, func(key, val string) error {
-		switch key {
-		case "NetworkName":
-			dhcp = &dhcpServer{}
-			m[val] = dhcp
-			dhcp.NetworkName = val
-		case "IP":
-			dhcp.IPv4.IP = net.ParseIP(val)
-		case "upperIPAddress":
-			dhcp.UpperIP = net.ParseIP(val)
-		case "lowerIPAddress":
-			dhcp.LowerIP = net.ParseIP(val)
-		case "NetworkMask":
-			dhcp.IPv4.Mask = parseIPv4Mask(val)
-		case "Enabled":
-			dhcp.Enabled = (val == "Yes")
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return m, nil
 }
 
 func parseAndValidateCIDR(hostOnlyCIDR string) (net.IP, *net.IPNet, error) {

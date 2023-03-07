@@ -5,14 +5,14 @@ go 1.19
 require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/cvila84/go-latest v0.1.2
-	github.com/spf13/cobra v1.6.0
-	github.com/spf13/viper v1.13.0
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
+	github.com/spf13/cobra v1.6.1
+	github.com/spf13/viper v1.14.0
+	golang.org/x/sys v0.4.0
 	gopkg.in/cheggaaa/pb.v2 v2.0.7
 )
 
 require (
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/google/go-github v17.0.0+incompatible // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.2.0 // indirect
@@ -24,13 +24,13 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
-	github.com/spf13/afero v1.8.2 // indirect
+	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
-	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/net v0.0.0-20221014081412-f15817d10f9b // indirect
+	golang.org/x/text v0.4.0 // indirect
 	gopkg.in/VividCortex/ewma.v1 v1.1.1 // indirect
 	gopkg.in/fatih/color.v1 v1.7.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

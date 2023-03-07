@@ -34,25 +34,27 @@ import (
 )
 
 const (
-	DEFAULT_KUBERNETES_VERSION  = "v1.24.8"
-	DEFAULT_KUBECTL_VERSION     = "v1.24.8"
-	DEFAULT_MINIKUBE_VERSION    = "v1.28.0"
-	DEFAULT_MINIKUBE_MEMORY     = 8192
-	DEFAULT_MINIKUBE_CPUS       = 4
-	DEFAULT_MINIKUBE_DISK       = "20g"
-	DEFAULT_MINIKUBE_DNS_DOMAIN = "cluster.local"
-	DEFAULT_DOCKER_VERSION      = "20.10.14"
-	DEFAULT_HELM_VERSION        = "v3.10.2"
-	DEFAULT_HELM_SPRAY_VERSION  = "v4.0.10"
-	DEFAULT_HELM_IMAGE_VERSION  = "v1.0.7"
-	DEFAULT_HELM_PUSH_VERSION   = "0.10.3"
-	DEFAULT_STERN_VERSION       = "1.22.0"
-	DEFAULT_MINIAPPS_REPO       = "https://thalesgroup.github.io/miniapps"
-	DEFAULT_GOKUBE_CHECK_IP     = "192.168.99.100"
-	DEFAULT_GOKUBE_CIDR         = "192.168.99.1/24"
+	DEFAULT_KUBERNETES_VERSION         = "v1.24.10"
+	DEFAULT_KUBECTL_VERSION            = "v1.24.10"
+	DEFAULT_MINIKUBE_VERSION           = "v1.29.0"
+	DEFAULT_MINIKUBE_MEMORY            = 12288
+	DEFAULT_MINIKUBE_CPUS              = 6
+	DEFAULT_MINIKUBE_DISK              = "20g"
+	DEFAULT_MINIKUBE_DNS_DOMAIN        = "cluster.local"
+	DEFAULT_MINIKUBE_CONTAINER_RUNTIME = "docker"
+	DEFAULT_DOCKER_VERSION             = "20.10.14"
+	DEFAULT_HELM_VERSION               = "v3.11.1"
+	DEFAULT_HELM_SPRAY_VERSION         = "v4.0.10"
+	DEFAULT_HELM_IMAGE_VERSION         = "v1.0.7"
+	DEFAULT_HELM_PUSH_VERSION          = "0.10.3"
+	DEFAULT_STERN_VERSION              = "1.23.0"
+	DEFAULT_MINIAPPS_REPO              = "https://thalesgroup.github.io/miniapps"
+	DEFAULT_GOKUBE_CHECK_IP            = "192.168.99.100"
+	DEFAULT_GOKUBE_CIDR                = "192.168.99.1/24"
 )
 
 var kubernetesVersion string
+var containerRuntime string
 var kubectlURL string
 var kubectlVersion string
 var minikubeURL string
@@ -70,6 +72,7 @@ var helmPushVersion string
 var sternURL string
 var sternVersion string
 var askForUpgrade bool
+var snapshotName string
 var verbose bool
 var quiet bool
 

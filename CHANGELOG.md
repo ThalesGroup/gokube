@@ -1,5 +1,11 @@
 # GoKube Release Notes
 
+## Version 1.29.0 - 03/07/2023
+* Bump to minikube v1.29.0, K8S v1.24.10, helm v3.11.1
+* Added configuration for container runtime (to prepare switch to containerd)
+
+Note: containerd is currently not working for insecure registry set as CIDR and behind HTTP proxy (see https://github.com/kubernetes/minikube/issues/15596 and https://github.com/kubernetes/minikube/issues/15597)
+
 ## Version 1.28.2 - 02/27/2023
 * Fix to create snapshots when no snapshots exist [#28](https://github.com/gemalto/gokube/pull/28)
 

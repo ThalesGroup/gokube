@@ -19,6 +19,7 @@ import (
 	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/gemalto/gokube/pkg/utils"
+	"github.com/gemalto/gokube/pkg/virtualbox"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -47,8 +48,16 @@ func start() error {
 	if len(kubernetesVersionForStart) == 0 {
 		kubernetesVersionForStart = utils.GetValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBERNETES_VERSION)
 	}
-	fmt.Printf("Starting minikube VM with kubernetes %s...\n", kubernetesVersionForStart)
-	err = minikube.Restart(kubernetesVersionForStart)
+	containerRuntimeForStart := viper.GetString("container-runtime")
+	if len(containerRuntimeForStart) == 0 {
+		containerRuntimeForStart = utils.GetValueFromEnv("MINIKUBE_CONTAINER_RUNTIME", DEFAULT_MINIKUBE_CONTAINER_RUNTIME)
+	}
+	vb7workaround := utils.GetValueFromEnv("VB7_WORKAROUND", "")
+	if len(vb7workaround) > 0 {
+		virtualbox.Update("--nat-localhostreachable1=on")
+	}
+	fmt.Printf("Starting minikube VM with kubernetes %s and container runtime %q...\n", kubernetesVersionForStart, containerRuntimeForStart)
+	err = minikube.Restart(kubernetesVersionForStart, containerRuntimeForStart)
 	if err != nil {
 		return fmt.Errorf("cannot restart minikube VM: %w", err)
 	}

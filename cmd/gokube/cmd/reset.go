@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var resetSnapshotName string
+var clean bool
 
 // resetCmd represents the pause command
 var resetCmd = &cobra.Command{
@@ -25,7 +25,8 @@ func init() {
 		defaultGokubeQuiet = true
 	}
 	resetCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before resetting")
-	resetCmd.Flags().StringVarP(&resetSnapshotName, "name", "n", "gokube", "The snapshot name")
+	resetCmd.Flags().StringVarP(&snapshotName, "name", "n", "gokube", "The snapshot name")
+	resetCmd.Flags().BoolVarP(&clean, "clean", "c", false, "Clean snapshot after reset")
 	rootCmd.AddCommand(resetCmd)
 }
 
@@ -47,12 +48,16 @@ func resetRun(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("cannot stop minikube VM: %w", err)
 		}
 	}
-	fmt.Printf("Resetting minikube VM from snapshot '%s'...\n", resetSnapshotName)
-	err = virtualbox.RestoreSnapshot(resetSnapshotName)
+	fmt.Printf("Resetting minikube VM from snapshot '%s'...\n", snapshotName)
+	err = virtualbox.RestoreSnapshot(snapshotName)
 	if err != nil {
-		return fmt.Errorf("cannot restore minikube VM snapshot %s: %w", resetSnapshotName, err)
+		return fmt.Errorf("cannot restore minikube VM snapshot %s: %w", snapshotName, err)
 	}
-	fmt.Printf("Minikube VM has successfully been reset from snapshot '%s'\n", resetSnapshotName)
+	err = virtualbox.DeleteSnapshot(snapshotName)
+	if err != nil && err != virtualbox.ErrSnapshotNotExist {
+		return fmt.Errorf("cannot delete minikube VM snapshot %s: %w", snapshotName, err)
+	}
+	fmt.Printf("Minikube VM has successfully been reset from snapshot '%s'\n", snapshotName)
 	if running {
 		return start()
 	} else {

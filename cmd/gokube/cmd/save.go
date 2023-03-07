@@ -10,7 +10,6 @@ import (
 )
 
 var live bool
-var savedSnapshotName string
 
 // saveCmd represents the pause command
 var saveCmd = &cobra.Command{
@@ -28,7 +27,7 @@ func init() {
 	}
 	saveCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before snapshotting")
 	saveCmd.Flags().BoolVarP(&live, "live", "l", false, "Don't stop VM before taking snapshot")
-	saveCmd.Flags().StringVarP(&savedSnapshotName, "name", "n", "gokube", "The snapshot name")
+	saveCmd.Flags().StringVarP(&snapshotName, "name", "n", "gokube", "The snapshot name")
 	rootCmd.AddCommand(saveCmd)
 }
 
@@ -56,16 +55,17 @@ func saveRun(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	fmt.Printf("Taking snapshot '%s' of minikube VM...\n", savedSnapshotName)
-	err := virtualbox.DeleteSnapshot(savedSnapshotName)
-	if err != nil {
-		return fmt.Errorf("cannot delete minikube VM snapshot %s: %w", savedSnapshotName, err)
+	fmt.Printf("Taking snapshot '%s' of minikube VM...\n", snapshotName)
+	err := virtualbox.DeleteSnapshot(snapshotName)
+	if err != nil && err != virtualbox.ErrSnapshotNotExist {
+		return fmt.Errorf("cannot delete minikube VM snapshot %s: %w", snapshotName, err)
 	}
-	err = virtualbox.TakeSnapshot(savedSnapshotName)
+	err = virtualbox.TakeSnapshot(snapshotName)
 	if err != nil {
-		return fmt.Errorf("cannot take minikube VM snapshot %s: %w", savedSnapshotName, err)
+		return fmt.Errorf("cannot take minikube VM snapshot %s: %w", snapshotName, err)
 	}
-	fmt.Printf("Snapshot '%s' created of minikube VM...\n", savedSnapshotName)
+	fmt.Printf("Minikube VM has successfully been saved to snapshot '%s'\n", snapshotName)
+	fmt.Printf("Snapshot '%s' created of minikube VM...\n", snapshotName)
 	if running {
 		return start()
 	} else {

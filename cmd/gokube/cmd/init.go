@@ -70,6 +70,7 @@ func init() {
 	}
 	loadURLVersionsFromEnv()
 	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", utils.GetValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBERNETES_VERSION), "The kubernetes version")
+	initCmd.Flags().StringVarP(&containerRuntime, "container-runtime", "", utils.GetValueFromEnv("MINIKUBE_CONTAINER_RUNTIME", DEFAULT_MINIKUBE_CONTAINER_RUNTIME), "Minikube container runtime (docker, cri-o, containerd)")
 	initCmd.Flags().BoolVarP(&askForUpgrade, "upgrade", "u", false, "Upgrade gokube (download and setup docker, minikube, kubectl and helm)")
 	initCmd.Flags().BoolVarP(&askForClean, "clean", "c", false, "Clean gokube (remove docker, minikube, kubectl and helm working directories)")
 	initCmd.Flags().Int16VarP(&memory, "memory", "", int16(defaultVMMemory), "Amount of RAM allocated to the minikube VM in MB")
@@ -206,7 +207,6 @@ func initRun(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	}
 
-	checkMinimumRequirements()
 	checkLatestVersion()
 
 	err := gokube.ReadConfig(verbose)
@@ -224,6 +224,10 @@ func initRun(cmd *cobra.Command, args []string) error {
 		gokubeVersion = GOKUBE_VERSION
 		askForClean = true
 		askForUpgrade = true
+	}
+
+	if !askForUpgrade {
+		checkMinimumRequirements()
 	}
 
 	ipCheckNeeded = strings.Compare("0.0.0.0", checkIP) != 0
@@ -279,7 +283,7 @@ func initRun(cmd *cobra.Command, args []string) error {
 
 		// Create virtual machine (minikube)
 		fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
-		err := minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain, false)
+		err := minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain, containerRuntime, false)
 		if err != nil {
 			return fmt.Errorf("cannot start minikube VM: %w", err)
 		}
@@ -337,7 +341,7 @@ func initRun(cmd *cobra.Command, args []string) error {
 	}
 
 	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for (re)start command
-	err = gokube.WriteConfig(gokubeVersion, kubernetesVersion)
+	err = gokube.WriteConfig(gokubeVersion, kubernetesVersion, containerRuntime)
 	if err != nil {
 		return fmt.Errorf("cannot write gokube configuration: %w", err)
 	}

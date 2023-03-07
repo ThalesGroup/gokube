@@ -18,20 +18,21 @@ const (
 	retryCountOnObjectNotReadyError = 5
 	objectNotReady                  = "error: The object is not ready"
 	retryDelay                      = 100 * time.Millisecond
-	snapshotNotExist                = "Could not find a snapshot named"
-	noSnapshots                     = "This machine does not have any snapshots"
 )
 
 var (
-	reColonLine       = regexp.MustCompile(`(.+):\s+(.*)`)
-	reEqualLine       = regexp.MustCompile(`(.+)=(.*)`)
-	reEqualQuoteLine  = regexp.MustCompile(`"(.+)"="(.*)"`)
-	reMachineNotFound = regexp.MustCompile(`Could not find a registered machine named '(.+)'`)
+	reColonLine        = regexp.MustCompile(`(.+):\s+(.*)`)
+	reEqualLine        = regexp.MustCompile(`(.+)=(.*)`)
+	reEqualQuoteLine   = regexp.MustCompile(`"(.+)"="(.*)"`)
+	reMachineNotFound  = regexp.MustCompile(`Could not find a registered machine named '(.+)'`)
+	reSnapshotNotFound = regexp.MustCompile(`Could not find a snapshot named '(.+)'`)
+	reNoSnapshotFound  = regexp.MustCompile("This machine does not have any snapshots")
 
-	ErrMachineNotExist     = errors.New("machine does not exist")
-	ErrVBMNotFound         = errors.New("VBoxManage not found. Make sure VirtualBox is installed and VBoxManage is in the path")
-	ErrVBMSnapshotNotFound = errors.New("snapshot does not exist")
-	vboxManageCmd          = detectVBoxManageCmd()
+	ErrMachineNotExist  = errors.New("machine does not exist")
+	ErrSnapshotNotExist = errors.New("snapshot does not exist")
+	ErrVBMNotFound      = errors.New("VBoxManage not found. Make sure VirtualBox is installed and VBoxManage is in the path")
+
+	vboxManageCmd = detectVBoxManageCmd()
 )
 
 // VBoxManager defines the interface to communicate to VirtualBox.
@@ -82,10 +83,6 @@ func (v *VBoxCmdManager) vbmOutErrRetry(retry int, args ...string) (string, stri
 		if ee, ok := err.(*exec.Error); ok && ee.Err == exec.ErrNotFound {
 			err = ErrVBMNotFound
 		}
-	}
-
-	if strings.Contains(stderrStr, snapshotNotExist) || strings.Contains(stderrStr, noSnapshots) {
-		err = ErrVBMSnapshotNotFound
 	}
 
 	// Sometimes, we just need to retry...

@@ -265,7 +265,9 @@ func Unzip(src string, dest string) error {
 // GetValueFromEnv ...
 func GetValueFromEnv(envVar string, defaultValue string) string {
 	var value = os.Getenv(envVar)
-	if len(value) == 0 {
+	if len(value) > 0 {
+		fmt.Printf("Using environment variable %s=%s\n", envVar, value)
+	} else {
 		value = defaultValue
 	}
 	return value
