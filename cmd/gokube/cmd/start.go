@@ -36,6 +36,7 @@ var startCmd = &cobra.Command{
 func init() {
 	loadURLVersionsFromEnv()
 	startCmd.Flags().BoolVarP(&askForUpgrade, "upgrade", "u", false, "Upgrade gokube (download and setup docker, minikube, kubectl and helm)")
+	startCmd.Flags().BoolVar(&force, "force", false, "Force minikube to perform possibly dangerous operations")
 	rootCmd.AddCommand(startCmd)
 }
 
@@ -57,7 +58,7 @@ func start() error {
 		virtualbox.Update("--nat-localhostreachable1=on")
 	}
 	fmt.Printf("Starting minikube VM with kubernetes %s and container runtime %q...\n", kubernetesVersionForStart, containerRuntimeForStart)
-	err = minikube.Restart(kubernetesVersionForStart, containerRuntimeForStart)
+	err = minikube.Restart(kubernetesVersionForStart, containerRuntimeForStart, force, verbose)
 	if err != nil {
 		return fmt.Errorf("cannot restart minikube VM: %w", err)
 	}

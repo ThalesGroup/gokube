@@ -75,6 +75,7 @@ var askForUpgrade bool
 var snapshotName string
 var verbose bool
 var quiet bool
+var force bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{

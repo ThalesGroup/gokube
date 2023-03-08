@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.29.1 - 03/08/2023
+* Added --force to avoid SSH check issues when starting VM
+
 ## Version 1.29.0 - 03/07/2023
 * Bump to minikube v1.29.0, K8S v1.24.10, helm v3.11.1
 * Added configuration for container runtime (to prepare switch to containerd)

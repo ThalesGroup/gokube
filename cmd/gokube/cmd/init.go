@@ -86,6 +86,7 @@ func init() {
 	initCmd.Flags().BoolVarP(&hostDNSResolver, "host-dns-resolver", "", false, "Use Virtualbox NAT DNS host resolver (could be instable)")
 	initCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before initializing")
 	initCmd.Flags().BoolVar(&keepVM, "keep-vm", false, "Keep minikube VM as it is (don't delete/recreate)")
+	initCmd.Flags().BoolVar(&force, "force", false, "Force minikube to perform possibly dangerous operations")
 	rootCmd.AddCommand(initCmd)
 }
 
@@ -283,7 +284,7 @@ func initRun(cmd *cobra.Command, args []string) error {
 
 		// Create virtual machine (minikube)
 		fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
-		err := minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain, containerRuntime, false)
+		err := minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain, containerRuntime, force, verbose)
 		if err != nil {
 			return fmt.Errorf("cannot start minikube VM: %w", err)
 		}
