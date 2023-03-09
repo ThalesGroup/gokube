@@ -43,7 +43,7 @@ const (
 	DEFAULT_MINIKUBE_DNS_DOMAIN        = "cluster.local"
 	DEFAULT_MINIKUBE_CONTAINER_RUNTIME = "docker"
 	DEFAULT_DOCKER_VERSION             = "20.10.14"
-	DEFAULT_HELM_VERSION               = "v3.11.1"
+	DEFAULT_HELM_VERSION               = "v3.11.2"
 	DEFAULT_HELM_SPRAY_VERSION         = "v4.0.10"
 	DEFAULT_HELM_IMAGE_VERSION         = "v1.0.7"
 	DEFAULT_HELM_PUSH_VERSION          = "0.10.3"

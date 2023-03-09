@@ -53,9 +53,11 @@ func resetRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("cannot restore minikube VM snapshot %s: %w", snapshotName, err)
 	}
-	err = virtualbox.DeleteSnapshot(snapshotName)
-	if err != nil && err != virtualbox.ErrSnapshotNotExist {
-		return fmt.Errorf("cannot delete minikube VM snapshot %s: %w", snapshotName, err)
+	if clean {
+		err = virtualbox.DeleteSnapshot(snapshotName)
+		if err != nil && err != virtualbox.ErrSnapshotNotExist {
+			return fmt.Errorf("cannot delete minikube VM snapshot %s: %w", snapshotName, err)
+		}
 	}
 	fmt.Printf("Minikube VM has successfully been reset from snapshot '%s'\n", snapshotName)
 	if running {

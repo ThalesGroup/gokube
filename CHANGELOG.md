@@ -1,5 +1,9 @@
 # GoKube Release Notes
 
+## Version 1.29.2 - 03/09/2023
+* Bump to helm v3.11.2
+* Fixed snapshot that were always removed after reset
+
 ## Version 1.29.1 - 03/08/2023
 * Added --force to avoid SSH check issues when starting VM
 
