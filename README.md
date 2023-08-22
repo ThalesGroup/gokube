@@ -133,19 +133,19 @@ Creating minikube VM with kubernetes v1.17.3...
     > preloaded-images-k8s-v1-v1.17.3-docker-overlay2.tar.lz4: 499.26 MiB / 499
 * Creating virtualbox VM (CPUs=4, Memory=8192MB, Disk=20000MB) ...
 * Found network options:
-  - HTTP_PROXY=http://10.43.216.8:8080
-  - HTTPS_PROXY=http://10.43.216.8:8080
-  - NO_PROXY=minikube,dockerhub.gemalto.com,r-buildggs.gemalto.com,nexusfreel1-emea-proxy.gemalto.com,127.0.0.1,192.168.99.100
-  - http_proxy=http://10.43.216.8:8080
-  - https_proxy=http://10.43.216.8:8080
-  - no_proxy=minikube,dockerhub.gemalto.com,r-buildggs.gemalto.com,nexusfreel1-emea-proxy.gemalto.com,127.0.0.1,192.168.99.100
+  - HTTP_PROXY=http://<proxy>:8080
+  - HTTPS_PROXY=http://<proxy>:8080
+  - NO_PROXY=minikube,127.0.0.1,192.168.99.100
+  - http_proxy=http://<proxy>:8080
+  - https_proxy=http://<proxy>:8080
+  - no_proxy=minikube,127.0.0.1,192.168.99.100
 * Preparing Kubernetes v1.17.3 on Docker 19.03.6 ...
-  - env HTTP_PROXY=http://10.43.216.8:8080
-  - env HTTPS_PROXY=http://10.43.216.8:8080
-  - env NO_PROXY=minikube,dockerhub.gemalto.com,r-buildggs.gemalto.com,nexusfreel1-emea-proxy.gemalto.com,127.0.0.1,192.168.99.100
-  - env HTTP_PROXY=http://10.43.216.8:8080
-  - env HTTPS_PROXY=http://10.43.216.8:8080
-  - env NO_PROXY=minikube,dockerhub.gemalto.com,r-buildggs.gemalto.com,nexusfreel1-emea-proxy.gemalto.com,127.0.0.1,192.168.99.100
+  - env HTTP_PROXY=http://<proxy>:8080
+  - env HTTPS_PROXY=http://<proxy>:8080
+  - env NO_PROXY=minikube,127.0.0.1,192.168.99.100
+  - env HTTP_PROXY=http://<proxy>:8080
+  - env HTTPS_PROXY=http://<proxy>:8080
+  - env NO_PROXY=minikube,127.0.0.1,192.168.99.100
   - apiserver.runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true
 * Launching Kubernetes ...
 * Enabling addons: default-storageclass, storage-provisioner
