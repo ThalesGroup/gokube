@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.31.0 - 10/07/2023
+* Bump to minikube v1.31.2, K8S v1.27.4, helm v3.12.3
+
 ## Version 1.29.2 - 03/09/2023
 * Bump to helm v3.11.2
 * Fixed snapshot that were always removed after reset
