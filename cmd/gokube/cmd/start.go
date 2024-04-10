@@ -22,6 +22,7 @@ import (
 	"github.com/gemalto/gokube/pkg/virtualbox"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"os/exec"
 )
 
 // startCmd represents the start command
@@ -62,6 +63,16 @@ func start() error {
 	if err != nil {
 		return fmt.Errorf("cannot restart minikube VM: %w", err)
 	}
+
+	// Add swap to Minikube VM
+	if enableSwap {
+        fmt.Println("Enabling swap drive in minikube VM...")
+        err = addSwapToMinikubeDuringStart()
+        if err != nil {
+    	    fmt.Printf("Warning: cannot enable swap drive in minikube VM - start: %s\n", err)
+        }
+    }
+
 	return nil
 }
 
@@ -84,5 +95,40 @@ func startRun(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	return start()
+	// Start minikube
+	err := start()
+	if err != nil {
+		return err
+	}
+
+	// Add swap to Minikube VM
+	if enableSwap {
+        fmt.Println("Enabling swap drive in minikube VM...")
+        err = addSwapToMinikubeDuringStart()
+        if err != nil {
+    	    fmt.Printf("Warning: cannot enable swap drive in minikube VM - start: %s\n", err)
+        }
+    }
+
+	return nil
+}
+
+func addSwapToMinikubeDuringStart() error {
+
+	// Add swap file commands
+	swapCmds := []string{
+		"sudo swapon /dev/sdb",
+		"echo '/dev/sdb none swap defaults 0 0' | sudo tee -a /etc/fstab",
+	}
+
+	// Execute each command
+	for _, cmd := range swapCmds {
+		sshCmd := exec.Command("minikube", "ssh", cmd)
+		err := sshCmd.Run()
+		if err != nil {
+			return fmt.Errorf("error running command '%s': %w", cmd, err)
+		}
+	}
+
+	return nil
 }

@@ -1,5 +1,9 @@
 # GoKube Release Notes
 
+## Version 1.32.0 - 04/05/2024
+* Bump to minikube v1.32.0, K8S v1.28.3, helm v3.14.3
+* Added swap memory option MINIKUBE_SWAP. Disabled by default (0).
+
 ## Version 1.31.0 - 10/07/2023
 * Bump to minikube v1.31.2, K8S v1.27.4, helm v3.12.3
 

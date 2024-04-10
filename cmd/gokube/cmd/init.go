@@ -34,10 +34,13 @@ import (
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
+	"os/exec"
 )
 
 var memory int16
 var cpus int16
+var swap int16
+var enableSwap bool
 var disk string
 var checkIP string
 var ipCheckNeeded bool
@@ -64,6 +67,11 @@ var initCmd = &cobra.Command{
 func init() {
 	defaultVMMemory, _ := strconv.Atoi(utils.GetValueFromEnv("MINIKUBE_MEMORY", strconv.Itoa(DEFAULT_MINIKUBE_MEMORY)))
 	defaultVMCPUs, _ := strconv.Atoi(utils.GetValueFromEnv("MINIKUBE_CPUS", strconv.Itoa(DEFAULT_MINIKUBE_CPUS)))
+	defaultVMSwap, _ := strconv.Atoi(utils.GetValueFromEnv("MINIKUBE_SWAP", strconv.Itoa(DEFAULT_MINIKUBE_SWAP)))
+	enableSwap = false
+	if defaultVMSwap != 0 {
+		enableSwap = true
+	}
 	defaultGokubeQuiet := false
 	if len(utils.GetValueFromEnv("GOKUBE_QUIET", "")) > 0 {
 		defaultGokubeQuiet = true
@@ -75,6 +83,7 @@ func init() {
 	initCmd.Flags().BoolVarP(&askForClean, "clean", "c", false, "Clean gokube (remove docker, minikube, kubectl and helm working directories)")
 	initCmd.Flags().Int16VarP(&memory, "memory", "", int16(defaultVMMemory), "Amount of RAM allocated to the minikube VM in MB")
 	initCmd.Flags().Int16VarP(&cpus, "cpus", "", int16(defaultVMCPUs), "Number of CPUs allocated to the minikube VM")
+	initCmd.Flags().Int16VarP(&swap, "swap", "", int16(defaultVMSwap), "Amount of SWAP allocated to the minikube VM in MB")
 	initCmd.Flags().StringVarP(&disk, "disk", "", utils.GetValueFromEnv("MINIKUBE_DISK", DEFAULT_MINIKUBE_DISK), "Disk size allocated to the minikube VM. Format: <number>[<unit>], where unit = b, k, m or g")
 	initCmd.Flags().StringVarP(&checkIP, "check-ip", "", utils.GetValueFromEnv("GOKUBE_CHECK_IP", DEFAULT_GOKUBE_CHECK_IP), "Checks if minikube VM allocated IP matches the provided one (0.0.0.0 means no check)")
 	initCmd.Flags().StringVarP(&insecureRegistry, "insecure-registry", "", os.Getenv("INSECURE_REGISTRY"), "Insecure Docker registries to pass to the Docker daemon. The default service CIDR range will automatically be added.")
@@ -289,6 +298,16 @@ func initRun(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("cannot start minikube VM: %w", err)
 		}
 
+        // Create & attach swap drive to minikube
+        if enableSwap {
+            fmt.Println("Creating & attaching swap drive to minikube VM...")
+            vboxManager := virtualbox.NewVBoxManager()
+            err = vboxManager.AddSwapDisk(swap)
+            if err != nil {
+                fmt.Printf("Warning: cannot create & attach swap drive to minikube VM: %s\n", err)
+            }
+        }
+
 		// Enable dashboard
 		err = minikube.AddonsEnable("dashboard")
 		if err != nil {
@@ -331,6 +350,7 @@ func initRun(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+
 	}
 
 	if askForUpgrade {
@@ -347,6 +367,36 @@ func initRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("cannot write gokube configuration: %w", err)
 	}
 
+    // Format & enable swap drive in minikube VM
+    if enableSwap {
+        fmt.Println("Formatting & enabling swap drive in minikube VM...")
+	    err = addSwapToMinikube()
+	    if err != nil {
+		    fmt.Printf("Warning: cannot format/enable swap drive in minikube VM: %s\n", err)
+	    }
+    }
+
 	fmt.Printf("\ngokube init completed in %s\n", util.Duration(time.Since(startTime)))
+	return nil
+}
+
+func addSwapToMinikube() error {
+
+	// Add swap file commands
+	swapCmds := []string{
+		"sudo mkswap /dev/sdb",
+		"sudo swapon /dev/sdb",
+		"echo '/dev/sdb none swap defaults 0 0' | sudo tee -a /etc/fstab",
+	}
+
+	// Execute each command
+	for _, cmd := range swapCmds {
+		sshCmd := exec.Command("minikube", "ssh", cmd)
+		err := sshCmd.Run()
+		if err != nil {
+			return fmt.Errorf("error running command '%s': %w", cmd, err)
+		}
+	}
+
 	return nil
 }
