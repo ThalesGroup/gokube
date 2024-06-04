@@ -1,5 +1,9 @@
 # GoKube Release Notes
 
+## Version 1.33.0 - 06/03/2024
+* Bump to minikube v1.33.1, K8S v1.30.0, helm v3.15.1
+* Fixed issue when adding swap memory and disk already exists, skip the creation.
+
 ## Version 1.32.0 - 04/05/2024
 * Bump to minikube v1.32.0, K8S v1.28.3, helm v3.14.3
 * Added swap memory option MINIKUBE_SWAP. Disabled by default (0).

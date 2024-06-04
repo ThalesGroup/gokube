@@ -60,6 +60,15 @@ func NewVBoxManager() *VBoxCmdManager {
 
 // CreateDisk create a disk in VBox to be used as swap
 func (v *VBoxCmdManager) CreateDisk(sizeInMB int16, filePath string) error {
+	// Check if the disk already exists
+	if _, err := os.Stat(filePath); err == nil {
+		// Disk already exists, skip the creation
+		return nil
+	} else if !os.IsNotExist(err) {
+		// Some other error occurred while trying to get the file info
+		return err
+	}
+
 	size := fmt.Sprintf("--size=%d", sizeInMB)
 	command := []string{"createmedium", "disk", "--filename", filePath, size, "--format", "VDI"}
 	return v.vbm(command...)
