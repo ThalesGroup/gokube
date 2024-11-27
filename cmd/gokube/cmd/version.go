@@ -22,13 +22,14 @@ import (
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/gemalto/gokube/pkg/stern"
+	"github.com/gemalto/gokube/pkg/k9s"
 	"github.com/spf13/cobra"
 	"strings"
 	"time"
 )
 
 const (
-	GOKUBE_VERSION = "1.33.0"
+	GOKUBE_VERSION = "1.34.0"
 )
 
 var gokubeVersion string
@@ -103,6 +104,7 @@ func versionRun(cmd *cobra.Command, args []string) error {
 		_ = helm.Version()
 		_ = helm.PluginsVersion()
 		_ = stern.Version()
+		_ = k9s.Version()
 		_ = getDockerVersion()
 		_ = kubectl.Version()
 	}

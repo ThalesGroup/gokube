@@ -1,5 +1,9 @@
 # GoKube Release Notes
 
+## Version 1.34.0 - 11/27/2024
+* Bump to minikube v1.34.0, K8S v1.31.0, helm v3.16.3, and stern v1.31.0 
+* Added K9s v0.32.7 to manage and interact with Kubernetes clusters.
+
 ## Version 1.33.0 - 06/03/2024
 * Bump to minikube v1.33.1, K8S v1.30.0, helm v3.15.1
 * Fixed issue when adding swap memory and disk already exists, skip the creation.

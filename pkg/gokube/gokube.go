@@ -25,6 +25,7 @@ import (
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/gemalto/gokube/pkg/stern"
+	"github.com/gemalto/gokube/pkg/k9s"
 	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/spf13/viper"
 	"os"
@@ -51,6 +52,8 @@ type Dependencies struct {
 	KubectlVersion  string
 	SternURL        string
 	SternVersion    string
+	K9sURL          string
+	K9sVersion      string
 }
 
 // ReadConfig ...
@@ -163,6 +166,11 @@ func UpgradeDependencies(dependencies *Dependencies) error {
 	err = stern.DownloadExecutable(dependencies.SternURL, dependencies.SternVersion)
 	if err != nil {
 		return fmt.Errorf("cannot download or upgrade stern: %w", err)
+	}
+	_ = k9s.DeleteExecutable()
+	err = k9s.DownloadExecutable(dependencies.K9sURL, dependencies.K9sVersion)
+	if err != nil {
+		return fmt.Errorf("cannot download or upgrade k9s: %w", err)
 	}
 	return nil
 }

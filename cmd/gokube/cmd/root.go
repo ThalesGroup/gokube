@@ -28,15 +28,16 @@ import (
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/gemalto/gokube/pkg/stern"
+	"github.com/gemalto/gokube/pkg/k9s"
 	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/spf13/cobra"
 	"os"
 )
 
 const (
-	DEFAULT_KUBERNETES_VERSION         = "v1.30.0"
-	DEFAULT_KUBECTL_VERSION            = "v1.30.0"
-	DEFAULT_MINIKUBE_VERSION           = "v1.33.1"
+	DEFAULT_KUBERNETES_VERSION         = "v1.31.0"
+	DEFAULT_KUBECTL_VERSION            = "v1.31.0"
+	DEFAULT_MINIKUBE_VERSION           = "v1.34.0"
 	DEFAULT_MINIKUBE_MEMORY            = 12288
 	DEFAULT_MINIKUBE_CPUS              = 6
 	DEFAULT_MINIKUBE_SWAP              = 0
@@ -44,11 +45,12 @@ const (
 	DEFAULT_MINIKUBE_DNS_DOMAIN        = "cluster.local"
 	DEFAULT_MINIKUBE_CONTAINER_RUNTIME = "docker"
 	DEFAULT_DOCKER_VERSION             = "20.10.14"
-	DEFAULT_HELM_VERSION               = "v3.15.1"
-	DEFAULT_HELM_SPRAY_VERSION         = "v4.0.10"
+	DEFAULT_HELM_VERSION               = "v3.16.3"
+	DEFAULT_HELM_SPRAY_VERSION         = "v4.0.12"
 	DEFAULT_HELM_IMAGE_VERSION         = "v1.0.9"
 	DEFAULT_HELM_PUSH_VERSION          = "0.10.4"
-	DEFAULT_STERN_VERSION              = "1.30.0"
+	DEFAULT_STERN_VERSION              = "1.31.0"
+	DEFAULT_K9S_VERSION                = "0.32.7"
 	DEFAULT_MINIAPPS_REPO              = "https://thalesgroup.github.io/miniapps"
 	DEFAULT_GOKUBE_CHECK_IP            = "192.168.99.100"
 	DEFAULT_GOKUBE_CIDR                = "192.168.99.1/24"
@@ -72,6 +74,8 @@ var helmPushURL string
 var helmPushVersion string
 var sternURL string
 var sternVersion string
+var k9sURL string
+var k9sVersion string
 var askForUpgrade bool
 var snapshotName string
 var verbose bool
@@ -130,6 +134,8 @@ func loadURLVersionsFromEnv() {
 	helmPushVersion = utils.GetValueFromEnv("HELM_PUSH_VERSION", DEFAULT_HELM_PUSH_VERSION)
 	sternURL = utils.GetValueFromEnv("STERN_URL", stern.DEFAULT_URL)
 	sternVersion = utils.GetValueFromEnv("STERN_VERSION", DEFAULT_STERN_VERSION)
+	k9sURL = utils.GetValueFromEnv("K9S_URL", k9s.DEFAULT_URL)
+	k9sVersion = utils.GetValueFromEnv("K9S_VERSION", DEFAULT_K9S_VERSION)
 }
 
 func upgradeDependencies() error {
@@ -144,6 +150,8 @@ func upgradeDependencies() error {
 		KubectlVersion:  kubectlVersion,
 		SternURL:        sternURL,
 		SternVersion:    sternVersion,
+		K9sURL:          k9sURL,
+		K9sVersion:      k9sVersion,
 	})
 }
 

@@ -58,8 +58,8 @@ var dnsDomain string
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:          "init",
-	Short:        "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern and creates a minikube VM",
-	Long:         "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern and creates a minikube VM",
+	Short:        "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern + k9s and creates a minikube VM",
+	Long:         "Initializes gokube. This command downloads dependencies: minikube + helm + kubectl + docker + stern + k9s and creates a minikube VM",
 	RunE:         initRun,
 	SilenceUsage: true,
 }
