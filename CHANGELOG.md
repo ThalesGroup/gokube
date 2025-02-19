@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.35.0 - 02/05/2025
+* Bump to minikube v1.35.0, K8S v1.32.0, helm v3.17.0, and stern v1.32.0
+
 ## Version 1.34.0 - 11/27/2024
 * Bump to minikube v1.34.0, K8S v1.31.0, helm v3.16.3, and stern v1.31.0 
 * Added K9s v0.32.7 to manage and interact with Kubernetes clusters.
