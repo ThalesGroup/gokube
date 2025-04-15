@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	DEFAULT_URL           = "https://github.com/cvila84/docker-cli-builder/releases/download/%s/docker.exe"
+	DEFAULT_URL           = "https://download.docker.com/win/static/stable/x86_64/docker-%s.zip"
 	LOCAL_EXECUTABLE_NAME = "docker.exe"
 )
 
@@ -41,7 +41,7 @@ func Version() error {
 func DownloadExecutable(dockerURL string, dockerVersion string) error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
 	if _, err := os.Stat(localFile); os.IsNotExist(err) {
-		fileMap := &download.FileMap{Src: LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
+		fileMap := &download.FileMap{Src: "docker" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
 		_, err = download.FromUrl(dockerURL, dockerVersion, "docker", []*download.FileMap{fileMap}, filepath.Dir(localFile))
 		if err != nil {
 			return err

@@ -1,6 +1,8 @@
 module github.com/gemalto/gokube
 
-go 1.19
+go 1.23.0
+
+toolchain go1.23.3
 
 require (
 	github.com/coreos/go-semver v0.3.1

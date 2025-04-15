@@ -177,7 +177,7 @@ func UpgradeDependencies(dependencies *Dependencies) error {
 
 func ConfirmInitCommandExecution() {
 	fmt.Println("Warning: your Virtualbox GUI shall not be open and no other VM shall be currently running")
-	fmt.Print("Press <CTRL+C> within the next 10s it you need to check this or press <ENTER> now to continue...")
+	fmt.Print("Press <CTRL+C> within the next 10s if you need to check this or press <ENTER> now to continue...")
 	enter := make(chan bool, 1)
 	go waitEnter(enter)
 	select {
@@ -190,7 +190,7 @@ func ConfirmInitCommandExecution() {
 
 func ConfirmSnapshotCommandExecution() {
 	fmt.Println("Warning: you should not snapshot a running VM as the process can be long and take more space on disk")
-	fmt.Print("Press <CTRL+C> within the next 10s it you want to stop VM first or press <ENTER> now to continue...")
+	fmt.Print("Press <CTRL+C> within the next 10s if you want to stop VM first or press <ENTER> now to continue...")
 	enter := make(chan bool, 1)
 	go waitEnter(enter)
 	select {
@@ -203,7 +203,7 @@ func ConfirmSnapshotCommandExecution() {
 
 func ConfirmStopCommandExecution() {
 	fmt.Println("Warning: you should not stop a VM with a lot of running pods as the restart will be unstable")
-	fmt.Print("Press <CTRL+C> within the next 10s it you need to perform some clean or press <ENTER> now to continue...")
+	fmt.Print("Press <CTRL+C> within the next 10s if you need to perform some clean or press <ENTER> now to continue...")
 	enter := make(chan bool, 1)
 	go waitEnter(enter)
 	select {
