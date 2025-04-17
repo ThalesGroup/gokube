@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"net/http"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/gemalto/gokube/pkg/gokube"
@@ -143,38 +144,35 @@ func installChartMuseum(localRepoIp string) error {
 	if err != nil {
 		return fmt.Errorf("cannot update helm repositories: %w", err)
 	}
-	err = helm.Upgrade("chartmuseum/chartmuseum", "", "chartmuseum", "kube-system", "env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
+
+	// Install or Upgrade the ChartMuseum
+	err = helm.Upgrade("chartmuseum/chartmuseum", "", "chartmuseum", "kube-system",
+		"env.open.DISABLE_API=false,env.open.ALLOW_OVERWRITE=true,service.type=NodePort,service.nodePort=32767", "")
 	if err != nil {
 		return fmt.Errorf("cannot install chartmuseum: %w", err)
 	}
-	fmt.Printf("Waiting for chartmuseum...")
-	retries := 18
+
+	fmt.Printf("Waiting for chartmuseum to be ready...\n")
+
+	retries := 50
 	waitBeforeRetry := 5
+
 	for n := 1; n <= retries; n++ {
-		readyReplicas, err := kubectl.Get("kube-system", "deploy", "chartmuseum", "{.status.readyReplicas}")
-		if err != nil {
-			return fmt.Errorf("cannot get K8S chartmuseum deployment: %w", err)
-		}
-		var ready int
-		if len(readyReplicas) > 0 {
-			n, err := strconv.Atoi(readyReplicas)
-			if err != nil {
-				return fmt.Errorf("cannot check chartmuseum readiness: %w", err)
-			}
-			ready = n
-		}
-		if ready > 0 {
-			fmt.Println()
+		// Check if ChartMuseum service is ready
+		ready, err := isChartMuseumReady(localRepoIp, 32767)
+		if err == nil && ready {
+			fmt.Println("ChartMuseum is ready.")
 			break
 		} else {
 			fmt.Print(".")
 			if n == retries {
-				fmt.Printf("\nWarning: chartmuseum is not ready after %ds, which probably means its installation failed\n", retries*waitBeforeRetry)
+				fmt.Printf("\nWarning: chartmuseum is not ready after %ds, which likely means its installation failed\n", retries*waitBeforeRetry)
 			} else {
 				time.Sleep(time.Duration(waitBeforeRetry) * time.Second)
 			}
 		}
 	}
+
 	err = helm.RepoAdd("minikube", "http://"+localRepoIp+":32767")
 	if err != nil {
 		fmt.Printf("Warning: cannot add minikube repo: %s\n", err)
@@ -184,6 +182,18 @@ func installChartMuseum(localRepoIp string) error {
 		return fmt.Errorf("cannot update helm repositories: %w", err)
 	}
 	return nil
+}
+
+// Function to check if ChartMuseum is ready
+func isChartMuseumReady(ip string, port int) (bool, error) {
+	url := fmt.Sprintf("http://%s:%d/index.yaml", ip, port)
+	resp, err := http.Get(url)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	return resp.StatusCode == http.StatusOK, nil
 }
 
 func exposeDashboard(port int) error {
