@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	DEFAULT_URL           = "https://github.com/cvila84/helm-image/releases/download/%s/helm-image-windows-amd64.tar.gz"
+	DEFAULT_URL           = "https://github.com/ThalesGroup/helm-image/releases/download/%s/helm-image-windows-amd64.tar.gz"
 	LOCAL_EXECUTABLE_NAME = "helm-image.exe"
 )
 
