@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	DEFAULT_URL           = "https://storage.googleapis.com/kubernetes-release/release/%s/bin/windows/amd64/kubectl.exe"
+	DEFAULT_URL           = "https://dl.k8s.io/%s/bin/windows/amd64/kubectl.exe"
 	LOCAL_EXECUTABLE_NAME = "kubectl.exe"
 )
 
