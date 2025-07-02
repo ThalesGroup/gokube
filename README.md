@@ -1,19 +1,19 @@
 # gokube
-[![Build Status](https://api.travis-ci.org/thalesgroup/gokube.svg?branch=master)](https://travis-ci.org/thalesgroup/gokube)
+[![pages-build-deployment](https://github.com/ThalesGroup/gokube/actions/workflows/pages/pages-build-deployment/badge.svg?branch=master)](https://github.com/ThalesGroup/gokube/actions/workflows/pages/pages-build-deployment) [![Release on github](https://github.com/ThalesGroup/gokube/actions/workflows/github-release.yaml/badge.svg)](https://github.com/ThalesGroup/gokube/actions/workflows/github-release.yaml)
 
 ![gokube](https://thalesgroup.github.io/gokube/logo/gokube_150x150.png)
 
 ## What is gokube?
 
-gokube is a tool that makes it easy developing day-to-day with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
+gokube is a tool that simplifies day-to-day development with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
 
-gokube downloads and installs many dependencies such as:
+gokube downloads and installs several dependencies such as:
 * [minikube](https://github.com/kubernetes/minikube)
 * [docker](https://www.docker.com)
 * [helm](https://github.com/helm/helm)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl)
 
-You will be able to deploy in one click useful helm charts for developing in your kubernetes cluster.
+You will be able to deploy useful helm charts for development in your Kubernetes cluster with one click.
 
 gokube is configured with a dedicated helm repository named [miniapps](https://thalesgroup.github.io/miniapps) which contains the following charts:
 * [cassandra](https://github.com/thalesgroup/miniapps/tree/master/charts/cassandra)
@@ -23,7 +23,7 @@ gokube is configured with a dedicated helm repository named [miniapps](https://t
 * [kibana](https://github.com/thalesgroup/miniapps/tree/master/charts/kibana)
 * [grafana](https://github.com/thalesgroup/miniapps/tree/master/charts/grafana)
 
-These charts are optimized in term of memory and cpu for minikube and very useful for developers.
+These charts are optimized in terms of memory and CPU for minikube and are very useful for developers.
 
 ## How to upgrade gokube?
 
@@ -31,8 +31,8 @@ These charts are optimized in term of memory and cpu for minikube and very usefu
 
 #### Download binary
 
-* The latest release for gokube can be download on the [Releases page](https://github.com/thalesgroup/gokube/releases/latest).
-* Copy executable file to: C:\gokube\bin and replace the previous one.
+* The latest release for gokube can be downloaded on the [Releases page](https://github.com/thalesgroup/gokube/releases/latest).
+* Copy the executable file to: C:\gokube\bin and replace the previous one.
 
 #### Upgrade gokube
 
@@ -47,7 +47,7 @@ $ gokube init
 #### Requirements
 * [VirtualBox](https://www.virtualbox.org/wiki/Downloads) or [Hyper-V](https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#hyperV-driver)
 * VT-x/AMD-v virtualization must be enabled in BIOS
-* Internet connection on first run
+* Internet connection for the first run
 
 #### Assumptions 
 
@@ -56,21 +56,21 @@ You will use C:\gokube\bin to store executable files.
 #### Set up your environment
 
 gokube is aware of HTTP_PROXY, HTTPS_PROXY and NO_PROXY environment variables.
-When these variables are set, they are used to download the gokube dependencies and to configure docker daemon.
-You can define different proxy values for docker daemon in using --http-proxy, --https-proxy and --no-proxy init command flags
+When these variables are set, they are used to download the gokube dependencies and to configure the Docker daemon.
+You can define different proxy values for the Docker daemon in using the --http-proxy, --https-proxy, and --no-proxy init command flags.
 
 #### Set up your directory
 
 You’ll need a place to store the gokube executable:
 * Open Windows Explorer.
-* Create a new folder: C:\gokube, assuming you want gokube on your C drive, although this can go anywhere.
-* Create a subfolder in the gokube folder: C:\gokube\bin
+* Create a new folder: C:\gokube (assuming you want gokube on your C drive, although this can be placed anywhere).
+* Create a subfolder in the gokube folder: C:\gokube\bin.
 
 #### Download binary
 
 * The latest release for gokube can be download on the [Releases page](https://github.com/thalesgroup/gokube/releases/latest).
 * Copy executable file to: C:\gokube\bin
-* The gokube executable will be named as gokube-version-type+platform.arch.exe. Rename the executable to gokube.exe for ease of use.
+* The gokube executable will be named as gokube-<version>-<type>-<platform>.<arch>.exe. Rename the executable to gokube.exe for ease of use.
 
 #### Verify the executable
 
@@ -105,7 +105,7 @@ Use "gokube [command] --help" for more information about a command.
 ```
 If you do, then the installation is complete.
 
-If you don’t, double-check the path that you placed the gokube.exe file in and that you typed that path correctly when you added it to your PATH variable.
+If you don’t, double-check the path that you placed the gokube.exe file in and ensure you correctly added that path to your PATH variable.
 
 #### Install gokube
 
@@ -198,7 +198,7 @@ kubernetes-dashboard   dashboard-metrics-scraper-c5db448b4-rvlxl   0/1     Conta
 kubernetes-dashboard   kubernetes-dashboard-695b96c756-gf76s       1/1     Running   0              7m38s
 ```
 
-We can see that pods are now running and we will now be able to access to gokube:
+We can see that pods are now running, and we will now be able to access gokube:
 
 ```shell
 $ kubectl get pod --all-namespaces
@@ -215,7 +215,7 @@ kubernetes-dashboard   dashboard-metrics-scraper-c5db448b4-rvlxl   1/1     Runni
 kubernetes-dashboard   kubernetes-dashboard-695b96c756-gf76s       1/1     Running   0              7m38s
 ```
 
-We can stop gokube running the following command:
+We can stop gokube with the following command:
 ```shell
 $ gokube stop
 Using environment variable MINIKUBE_MEMORY=12288
@@ -227,7 +227,7 @@ Stopping minikube VM...
 * 1 node stopped.
 ```
 
-We can start gokube running the following command:
+We can start gokube with the following command:
 ```shell
 $ gokube start
 Using environment variable MINIKUBE_MEMORY=12288
