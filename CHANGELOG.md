@@ -1,5 +1,12 @@
 # GoKube Release Notes
 
+## Version 1.36.0 - 07/08/2025
+* Bump to minikube v1.36.0, K8S v1.33.1, helm v3.18.2, docker 28.3.1
+* Change to get docker from download.docker.com
+* ChartMuseum retries incremented and new function to check readiness.
+* Change to get helm-image from ThalesGroup https://github.com/ThalesGroup/helm-image
+* Change to get kubectl from dl.k8s.io
+
 ## Version 1.35.0 - 02/05/2025
 * Bump to minikube v1.35.0, K8S v1.32.0, helm v3.17.0, and stern v1.32.0
 
