@@ -35,22 +35,22 @@ import (
 )
 
 const (
-	DEFAULT_KUBERNETES_VERSION         = "v1.33.1"
-	DEFAULT_KUBECTL_VERSION            = "v1.33.1"
-	DEFAULT_MINIKUBE_VERSION           = "v1.36.0"
+	DEFAULT_KUBERNETES_VERSION         = "v1.34.0"
+	DEFAULT_KUBECTL_VERSION            = "v1.34.0"
+	DEFAULT_MINIKUBE_VERSION           = "v1.37.0"
 	DEFAULT_MINIKUBE_MEMORY            = 12288
 	DEFAULT_MINIKUBE_CPUS              = 6
 	DEFAULT_MINIKUBE_SWAP              = 0
 	DEFAULT_MINIKUBE_DISK              = "20g"
 	DEFAULT_MINIKUBE_DNS_DOMAIN        = "cluster.local"
 	DEFAULT_MINIKUBE_CONTAINER_RUNTIME = "docker"
-	DEFAULT_DOCKER_VERSION             = "28.3.1"
-	DEFAULT_HELM_VERSION               = "v3.18.3"
+	DEFAULT_DOCKER_VERSION             = "28.4.0"
+	DEFAULT_HELM_VERSION               = "v3.19.0"
 	DEFAULT_HELM_SPRAY_VERSION         = "v4.0.13"
 	DEFAULT_HELM_IMAGE_VERSION         = "v1.1.0"
 	DEFAULT_HELM_PUSH_VERSION          = "0.10.4"
-	DEFAULT_STERN_VERSION              = "1.32.0"
-	DEFAULT_K9S_VERSION                = "0.50.7"
+	DEFAULT_STERN_VERSION              = "1.33.0"
+	DEFAULT_K9S_VERSION                = "0.50.13"
 	DEFAULT_MINIAPPS_REPO              = "https://thalesgroup.github.io/miniapps"
 	DEFAULT_GOKUBE_CHECK_IP            = "192.168.99.100"
 	DEFAULT_GOKUBE_CIDR                = "192.168.99.1/24"
