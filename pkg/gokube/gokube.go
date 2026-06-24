@@ -17,7 +17,10 @@ package gokube
 import (
 	"bufio"
 	"fmt"
+	"sync"
+	pb "github.com/cheggaaa/pb/v3"
 	"github.com/gemalto/gokube/pkg/docker"
+	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/helm"
 	"github.com/gemalto/gokube/pkg/helmimage"
 	"github.com/gemalto/gokube/pkg/helmpush"
@@ -92,7 +95,7 @@ func ReadConfig(verbose bool) error {
 }
 
 // WriteConfig ...
-func WriteConfig(gokubeVersion string, kubernetesVersion string, containerRuntime string) error {
+func WriteConfig(gokubeVersion string, kubernetesVersion string, containerRuntime string, driver string, hypervVirtualSwitch string) error {
 	configPath := utils.GetUserHome() + string(os.PathSeparator) + ".gokube"
 	configFile := "config"
 	configFilePath := configPath + string(os.PathSeparator) + "config.yaml"
@@ -114,6 +117,8 @@ func WriteConfig(gokubeVersion string, kubernetesVersion string, containerRuntim
 	viper.Set("gokube-version", gokubeVersion)
 	viper.Set("kubernetes-version", kubernetesVersion)
 	viper.Set("container-runtime", containerRuntime)
+	viper.Set("minikube-driver", driver)
+	viper.Set("hyperv-virtual-switch", hypervVirtualSwitch)
 	err := viper.WriteConfig()
 	if err != nil {
 		return err
@@ -121,58 +126,163 @@ func WriteConfig(gokubeVersion string, kubernetesVersion string, containerRuntim
 	return nil
 }
 
+// DeleteAllExecutables removes all six main tool binaries and their version metadata.
+// Call during a full clean (init -cu) so that UpgradeDependencies re-downloads everything.
+func DeleteAllExecutables() {
+	_ = minikube.DeleteExecutable()
+	_ = helm.DeleteExecutable()
+	_ = docker.DeleteExecutable()
+	_ = kubectl.DeleteExecutable()
+	_ = stern.DeleteExecutable()
+	_ = k9s.DeleteExecutable()
+	_ = download.DeleteAllMetadata()
+}
+
 func UpgradeHelmPlugins(plugins *HelmPlugins) error {
 	// TODO rely on helm plugin install
-	_ = helmspray.DeletePlugin()
-	err := helmspray.InstallPlugin(plugins.SprayURL, plugins.SprayVersion)
-	if err != nil {
-		return fmt.Errorf("cannot install helm-spray plugin: %w", err)
+	names := []string{
+		"helm-spray " + plugins.SprayVersion,
+		"helm-image " + plugins.ImageVersion,
+		"helm-push  " + plugins.PushVersion,
 	}
-	_ = helmimage.DeletePlugin()
-	err = helmimage.InstallPlugin(plugins.ImageURL, plugins.ImageVersion)
-	if err != nil {
-		return fmt.Errorf("cannot install helm-image plugin: %w", err)
+	bars := make([]*pb.ProgressBar, len(names))
+	for i, n := range names {
+		bars[i] = pb.New64(0)
+		bars[i].SetTemplateString(`{{ yellow "` + n + `" }} waiting to start...`)
 	}
-	_ = helmpush.DeletePlugin()
-	err = helmpush.InstallPlugin(plugins.PushURL, plugins.PushVersion)
+	pool, err := pb.StartPool(bars...)
 	if err != nil {
-		return fmt.Errorf("cannot install helm-push plugin: %w", err)
+		return fmt.Errorf("cannot initialize progress bar pool: %w", err)
 	}
-	return nil
+
+	tasks := []func() error{
+		func() error {
+			if err := helmspray.InstallPlugin(plugins.SprayURL, plugins.SprayVersion, bars[0]); err != nil {
+				return fmt.Errorf("cannot install helm-spray plugin: %w", err)
+			}
+			return nil
+		},
+		func() error {
+			if err := helmimage.InstallPlugin(plugins.ImageURL, plugins.ImageVersion, bars[1]); err != nil {
+				return fmt.Errorf("cannot install helm-image plugin: %w", err)
+			}
+			return nil
+		},
+		func() error {
+			if err := helmpush.InstallPlugin(plugins.PushURL, plugins.PushVersion, bars[2]); err != nil {
+				return fmt.Errorf("cannot install helm-push plugin: %w", err)
+			}
+			return nil
+		},
+	}
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var firstErr error
+
+	for _, task := range tasks {
+		wg.Add(1)
+		go func(t func() error) {
+			defer wg.Done()
+			if err := t(); err != nil {
+				mu.Lock()
+				if firstErr == nil {
+					firstErr = err
+				}
+				mu.Unlock()
+			}
+		}(task)
+	}
+
+	wg.Wait()
+	_ = pool.Stop()
+	return firstErr
 }
 
 func UpgradeDependencies(dependencies *Dependencies) error {
-	_ = minikube.DeleteExecutable()
-	err := minikube.DownloadExecutable(dependencies.MinikubeURL, dependencies.MinikubeVersion)
-	if err != nil {
-		return fmt.Errorf("cannot download or upgrade minikube: %w", err)
+	names := []string{
+		"minikube " + dependencies.MinikubeVersion,
+		"helm     " + dependencies.HelmVersion,
+		"docker   " + dependencies.DockerVersion,
+		"kubectl  " + dependencies.KubectlVersion,
+		"stern    " + dependencies.SternVersion,
+		"k9s      " + dependencies.K9sVersion,
 	}
-	_ = helm.DeleteExecutable()
-	err = helm.DownloadExecutable(dependencies.HelmURL, dependencies.HelmVersion)
-	if err != nil {
-		return fmt.Errorf("cannot download or upgrade helm: %w", err)
+	bars := make([]*pb.ProgressBar, len(names))
+	for i, n := range names {
+		bars[i] = pb.New64(0)
+		bars[i].SetTemplateString(`{{ yellow "` + n + `" }} waiting to start...`)
 	}
-	_ = docker.DeleteExecutable()
-	err = docker.DownloadExecutable(dependencies.DockerURL, dependencies.DockerVersion)
+	pool, err := pb.StartPool(bars...)
 	if err != nil {
-		return fmt.Errorf("cannot download or upgrade docker: %w", err)
+		return fmt.Errorf("cannot initialize progress bar pool: %w", err)
 	}
-	_ = kubectl.DeleteExecutable()
-	err = kubectl.DownloadExecutable(dependencies.KubectlURL, dependencies.KubectlVersion)
-	if err != nil {
-		return fmt.Errorf("cannot download or upgrade kubectl: %w", err)
+
+	tasks := []func() error{
+		func() error {
+			if err := minikube.DownloadExecutable(dependencies.MinikubeURL, dependencies.MinikubeVersion, bars[0]); err != nil {
+				return fmt.Errorf("cannot download or upgrade minikube: %w", err)
+			}
+			return nil
+		},
+		func() error {
+			if err := helm.DownloadExecutable(dependencies.HelmURL, dependencies.HelmVersion, bars[1]); err != nil {
+				return fmt.Errorf("cannot download or upgrade helm: %w", err)
+			}
+			return nil
+		},
+		func() error {
+			if err := docker.DownloadExecutable(dependencies.DockerURL, dependencies.DockerVersion, bars[2]); err != nil {
+				return fmt.Errorf("cannot download or upgrade docker: %w", err)
+			}
+			return nil
+		},
+		func() error {
+			if err := kubectl.DownloadExecutable(dependencies.KubectlURL, dependencies.KubectlVersion, bars[3]); err != nil {
+				return fmt.Errorf("cannot download or upgrade kubectl: %w", err)
+			}
+			return nil
+		},
+		func() error {
+			if err := stern.DownloadExecutable(dependencies.SternURL, dependencies.SternVersion, bars[4]); err != nil {
+				return fmt.Errorf("cannot download or upgrade stern: %w", err)
+			}
+			return nil
+		},
+		func() error {
+			if err := k9s.DownloadExecutable(dependencies.K9sURL, dependencies.K9sVersion, bars[5]); err != nil {
+				return fmt.Errorf("cannot download or upgrade k9s: %w", err)
+			}
+			return nil
+		},
 	}
-	_ = stern.DeleteExecutable()
-	err = stern.DownloadExecutable(dependencies.SternURL, dependencies.SternVersion)
-	if err != nil {
-		return fmt.Errorf("cannot download or upgrade stern: %w", err)
+
+	sem := make(chan struct{}, 3)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var firstErr error
+
+	for _, task := range tasks {
+		wg.Add(1)
+		go func(t func() error) {
+			sem <- struct{}{}
+			defer func() {
+				<-sem
+				wg.Done()
+			}()
+			if err := t(); err != nil {
+				mu.Lock()
+				if firstErr == nil {
+					firstErr = err
+				}
+				mu.Unlock()
+			}
+		}(task)
 	}
-	_ = k9s.DeleteExecutable()
-	err = k9s.DownloadExecutable(dependencies.K9sURL, dependencies.K9sVersion)
-	if err != nil {
-		return fmt.Errorf("cannot download or upgrade k9s: %w", err)
-	}
-	return nil
+
+	wg.Wait()
+	_ = pool.Stop()
+	return firstErr
 }
 
 func ConfirmInitCommandExecution() {

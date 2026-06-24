@@ -16,6 +16,7 @@ package docker
 
 import (
 	"fmt"
+	pb "github.com/cheggaaa/pb/v3"
 	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/utils"
 	"os"
@@ -28,31 +29,42 @@ const (
 	LOCAL_EXECUTABLE_NAME = "docker.exe"
 )
 
+func bin() string {
+	return utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+}
+
 // Version ...
 func Version() error {
 	fmt.Println("docker version:")
-	cmd := exec.Command("docker", "version")
+	cmd := exec.Command(bin(), "version")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
 // DownloadExecutable ...
-func DownloadExecutable(dockerURL string, dockerVersion string) error {
+func DownloadExecutable(dockerURL string, dockerVersion string, bar *pb.ProgressBar) error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
-	if _, err := os.Stat(localFile); os.IsNotExist(err) {
-		fileMap := &download.FileMap{Src: "docker" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
-		_, err = download.FromUrl(dockerURL, dockerVersion, "docker", []*download.FileMap{fileMap}, filepath.Dir(localFile))
-		if err != nil {
-			return err
-		}
+	if download.IsCurrentVersion(localFile, dockerVersion) {
+		bar.SetTemplateString(`{{ green "docker" }} ` + dockerVersion + ` already up to date`)
+		bar.SetTotal(1)
+		bar.SetCurrent(1)
+		bar.Finish()
+		return nil
 	}
-	return nil
+	_ = os.RemoveAll(localFile)
+	_ = os.RemoveAll(download.VersionFile(localFile))
+	fileMap := &download.FileMap{Src: "docker" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
+	if _, err := download.FromUrl(dockerURL, dockerVersion, "docker", []*download.FileMap{fileMap}, filepath.Dir(localFile), bar); err != nil {
+		return err
+	}
+	return download.WriteVersion(localFile, dockerVersion)
 }
 
 // DeleteExecutable ...
 func DeleteExecutable() error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	_ = os.RemoveAll(download.VersionFile(localFile))
 	return os.RemoveAll(localFile)
 }
 

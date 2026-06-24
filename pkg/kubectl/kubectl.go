@@ -20,6 +20,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	pb "github.com/cheggaaa/pb/v3"
 	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/utils"
 )
@@ -29,13 +30,17 @@ const (
 	LOCAL_EXECUTABLE_NAME = "kubectl.exe"
 )
 
+func bin() string {
+	return utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+}
+
 // Get ...
 func Get(namespace string, resourceType string, resourceName string, jsonPath string) (string, error) {
 	var args = []string{"--namespace", namespace, "get", resourceType, resourceName}
 	if len(jsonPath) > 0 {
 		args = append(args, "-o", "jsonpath="+jsonPath)
 	}
-	output, err := exec.Command("kubectl", args...).Output()
+	output, err := exec.Command(bin(), args...).Output()
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +49,7 @@ func Get(namespace string, resourceType string, resourceName string, jsonPath st
 
 // ConfigUseContext ...
 func ConfigUseContext(context string) error {
-	cmd := exec.Command("kubectl", "config", "use-context", context)
+	cmd := exec.Command(bin(), "config", "use-context", context)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -52,7 +57,7 @@ func ConfigUseContext(context string) error {
 
 // Patch ...
 func Patch(namespace string, resourceType string, resourceName string, patch string) error {
-	cmd := exec.Command("kubectl", "--namespace", namespace, "patch", resourceType, resourceName, "-p", patch)
+	cmd := exec.Command(bin(), "--namespace", namespace, "patch", resourceType, resourceName, "-p", patch)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -61,28 +66,35 @@ func Patch(namespace string, resourceType string, resourceName string, patch str
 // Version ...
 func Version() error {
 	fmt.Println("kubectl version: ")
-	cmd := exec.Command("kubectl", "version")
+	cmd := exec.Command(bin(), "version")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
 // DownloadExecutable ...
-func DownloadExecutable(kubectlURL string, kubectlVersion string) error {
+func DownloadExecutable(kubectlURL string, kubectlVersion string, bar *pb.ProgressBar) error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
-	if _, err := os.Stat(localFile); os.IsNotExist(err) {
-		fileMap := &download.FileMap{Src: LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
-		_, err = download.FromUrl(kubectlURL, kubectlVersion, "kubectl", []*download.FileMap{fileMap}, filepath.Dir(localFile))
-		if err != nil {
-			return err
-		}
+	if download.IsCurrentVersion(localFile, kubectlVersion) {
+		bar.SetTemplateString(`{{ green "kubectl" }} ` + kubectlVersion + ` already up to date`)
+		bar.SetTotal(1)
+		bar.SetCurrent(1)
+		bar.Finish()
+		return nil
 	}
-	return nil
+	_ = os.RemoveAll(localFile)
+	_ = os.RemoveAll(download.VersionFile(localFile))
+	fileMap := &download.FileMap{Src: LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
+	if _, err := download.FromUrl(kubectlURL, kubectlVersion, "kubectl", []*download.FileMap{fileMap}, filepath.Dir(localFile), bar); err != nil {
+		return err
+	}
+	return download.WriteVersion(localFile, kubectlVersion)
 }
 
 // DeleteExecutable ...
 func DeleteExecutable() error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	_ = os.RemoveAll(download.VersionFile(localFile))
 	return os.RemoveAll(localFile)
 }
 

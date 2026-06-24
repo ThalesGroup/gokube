@@ -49,6 +49,36 @@ $ gokube init
 * VT-x/AMD-v virtualization must be enabled in BIOS
 * Internet connection for the first run
 
+#### Choosing a hypervisor driver (VirtualBox or Hyper-V)
+
+gokube supports two minikube drivers. **VirtualBox is the default**, so existing
+setups keep working with no changes.
+
+| | VirtualBox (default) | Hyper-V |
+|---|---|---|
+| Select with | nothing, or `--driver virtualbox` | `--driver hyperv` |
+| Virtual switch | n/a | `--hyperv-virtual-switch <name>` (optional; omit to use the "Default Switch") |
+| Admin rights | not required | **must run from an elevated ("Run as administrator") shell** |
+| VM IP | fixed `192.168.99.100` (host-only network) | dynamic (assigned by the virtual switch); the `--check-ip` check is disabled automatically |
+| Swap (`--swap`) | supported | experimental |
+
+The chosen driver is persisted to `~/.gokube/config.yaml` (key `minikube-driver`)
+at `init` time, so `start`, `stop`, `pause`, `resume`, `save` and `reset`
+automatically reuse it.
+
+Configuration precedence: persisted config → environment variable
+(`MINIKUBE_DRIVER`, `MINIKUBE_HYPERV_VIRTUAL_SWITCH`) → default (`virtualbox`).
+
+Hyper-V prerequisites:
+* Hyper-V must be enabled: `Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All` (reboot required).
+* Run gokube from an **elevated** shell.
+* VirtualBox and Hyper-V do not coexist well on the same host — pick one.
+
+Example (Hyper-V, from an elevated shell):
+```shell
+$ gokube init --driver hyperv --hyperv-virtual-switch "Default Switch"
+```
+
 #### Assumptions 
 
 You will use C:\gokube\bin to store executable files.

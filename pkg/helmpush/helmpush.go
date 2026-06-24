@@ -15,10 +15,10 @@ limitations under the License.
 package helmpush
 
 import (
+	pb "github.com/cheggaaa/pb/v3"
 	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/utils"
 	"os"
-	"path/filepath"
 )
 
 const (
@@ -27,21 +27,25 @@ const (
 )
 
 // InstallPlugin ...
-func InstallPlugin(helmPushURI string, helmPushVersion string) error {
-	localFile := utils.GetAppDataHome() + string(os.PathSeparator) +
-		"helm" + string(os.PathSeparator) +
-		"plugins" + string(os.PathSeparator) +
-		"helm-push" + string(os.PathSeparator) +
-		LOCAL_EXECUTABLE_NAME
-	if _, err := os.Stat(localFile); os.IsNotExist(err) {
-		fileMap1 := &download.FileMap{Src: "bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: "bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME}
-		fileMap2 := &download.FileMap{Src: "plugin.yaml", Dst: "plugin.yaml"}
-		_, err = download.FromUrl(helmPushURI, helmPushVersion, "helm-push", []*download.FileMap{fileMap1, fileMap2}, filepath.Dir(localFile))
-		if err != nil {
-			return err
-		}
+func InstallPlugin(helmPushURI string, helmPushVersion string, bar *pb.ProgressBar) error {
+	sep := string(os.PathSeparator)
+	pluginDir := utils.GetAppDataHome() + sep + "helm" + sep + "plugins" + sep + "helm-push"
+	installedBinary := pluginDir + sep + "bin" + sep + LOCAL_EXECUTABLE_NAME
+	if download.IsCurrentVersion(installedBinary, helmPushVersion) {
+		bar.SetTemplateString(`{{ green "helm-push" }} ` + helmPushVersion + ` already up to date`)
+		bar.SetTotal(1)
+		bar.SetCurrent(1)
+		bar.Finish()
+		return nil
 	}
-	return nil
+	_ = os.RemoveAll(pluginDir)
+	_ = os.RemoveAll(download.VersionFile(installedBinary))
+	fileMap1 := &download.FileMap{Src: "bin" + sep + LOCAL_EXECUTABLE_NAME, Dst: "bin" + sep + LOCAL_EXECUTABLE_NAME}
+	fileMap2 := &download.FileMap{Src: "plugin.yaml", Dst: "plugin.yaml"}
+	if _, err := download.FromUrl(helmPushURI, helmPushVersion, "helm-push", []*download.FileMap{fileMap1, fileMap2}, pluginDir, bar); err != nil {
+		return err
+	}
+	return download.WriteVersion(installedBinary, helmPushVersion)
 }
 
 // DeletePlugin ...

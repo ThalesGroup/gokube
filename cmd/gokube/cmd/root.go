@@ -31,6 +31,7 @@ import (
 	"github.com/gemalto/gokube/pkg/k9s"
 	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"os"
 )
 
@@ -44,6 +45,7 @@ const (
 	DEFAULT_MINIKUBE_DISK              = "20g"
 	DEFAULT_MINIKUBE_DNS_DOMAIN        = "cluster.local"
 	DEFAULT_MINIKUBE_CONTAINER_RUNTIME = "docker"
+	DEFAULT_MINIKUBE_DRIVER            = "virtualbox"
 	DEFAULT_DOCKER_VERSION             = "29.2.1"
 	DEFAULT_HELM_VERSION               = "v3.20.0"
 	DEFAULT_HELM_SPRAY_VERSION         = "v4.0.13"
@@ -81,6 +83,22 @@ var snapshotName string
 var verbose bool
 var quiet bool
 var force bool
+var driver string
+var hypervVirtualSwitch string
+
+// resolveDriver returns the minikube driver for commands other than init.
+// Precedence: persisted config (which reflects how the VM was actually created)
+// over the MINIKUBE_DRIVER environment variable over the default (virtualbox).
+// gokube.ReadConfig must have been called first so viper is populated.
+func resolveDriver() string {
+	if d := viper.GetString("minikube-driver"); len(d) > 0 {
+		return d
+	}
+	if d := os.Getenv("MINIKUBE_DRIVER"); len(d) > 0 {
+		return d
+	}
+	return DEFAULT_MINIKUBE_DRIVER
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{

@@ -16,6 +16,7 @@ package helm
 
 import (
 	"fmt"
+	pb "github.com/cheggaaa/pb/v3"
 	"github.com/gemalto/gokube/pkg/download"
 	"os"
 	"os/exec"
@@ -28,6 +29,10 @@ const (
 	DEFAULT_URL           = "https://get.helm.sh/helm-%s-windows-amd64.zip"
 	LOCAL_EXECUTABLE_NAME = "helm.exe"
 )
+
+func bin() string {
+	return utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+}
 
 // Upgrade ...
 func Upgrade(chart string, version string, release string, namespace string, configuration string, valuesFile string) error {
@@ -45,14 +50,14 @@ func Upgrade(chart string, version string, release string, namespace string, con
 		args = append(args, "-f", valuesFile)
 	}
 	fmt.Println("Starting " + chart + " components...")
-	cmd := exec.Command("helm", args...)
+	cmd := exec.Command(bin(), args...)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
 // RepoAdd ...
 func RepoAdd(name string, repo string) error {
-	cmd := exec.Command("helm", "repo", "add", name, repo)
+	cmd := exec.Command(bin(), "repo", "add", name, repo)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -60,7 +65,7 @@ func RepoAdd(name string, repo string) error {
 
 // RepoUpdate ...
 func RepoUpdate() error {
-	cmd := exec.Command("helm", "repo", "update")
+	cmd := exec.Command(bin(), "repo", "update")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -69,7 +74,7 @@ func RepoUpdate() error {
 // Version ...
 func Version() error {
 	fmt.Print("helm version: ")
-	cmd := exec.Command("helm", "version", "--client", "--short")
+	cmd := exec.Command(bin(), "version", "--client", "--short")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -78,28 +83,35 @@ func Version() error {
 // PluginsVersion ...
 func PluginsVersion() error {
 	fmt.Println("helm plugins version:")
-	cmd := exec.Command("helm", "plugin", "list")
+	cmd := exec.Command(bin(), "plugin", "list")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
 // DownloadExecutable ...
-func DownloadExecutable(helmURL string, helmVersion string) error {
+func DownloadExecutable(helmURL string, helmVersion string, bar *pb.ProgressBar) error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
-	if _, err := os.Stat(localFile); os.IsNotExist(err) {
-		fileMap := &download.FileMap{Src: "windows-amd64" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
-		_, err = download.FromUrl(helmURL, helmVersion, "helm", []*download.FileMap{fileMap}, filepath.Dir(localFile))
-		if err != nil {
-			return nil
-		}
+	if download.IsCurrentVersion(localFile, helmVersion) {
+		bar.SetTemplateString(`{{ green "helm" }} ` + helmVersion + ` already up to date`)
+		bar.SetTotal(1)
+		bar.SetCurrent(1)
+		bar.Finish()
+		return nil
 	}
-	return nil
+	_ = os.RemoveAll(localFile)
+	_ = os.RemoveAll(download.VersionFile(localFile))
+	fileMap := &download.FileMap{Src: "windows-amd64" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
+	if _, err := download.FromUrl(helmURL, helmVersion, "helm", []*download.FileMap{fileMap}, filepath.Dir(localFile), bar); err != nil {
+		return err
+	}
+	return download.WriteVersion(localFile, helmVersion)
 }
 
 // DeleteExecutable ...
 func DeleteExecutable() error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	_ = os.RemoveAll(download.VersionFile(localFile))
 	return os.RemoveAll(localFile)
 }
 

@@ -16,6 +16,7 @@ package stern
 
 import (
 	"fmt"
+	pb "github.com/cheggaaa/pb/v3"
 	"github.com/gemalto/gokube/pkg/utils"
 	"os"
 	"os/exec"
@@ -29,30 +30,41 @@ const (
 	LOCAL_EXECUTABLE_NAME = "stern.exe"
 )
 
+func bin() string {
+	return utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+}
+
 // Version ...
 func Version() error {
 	fmt.Println("stern version: ")
-	cmd := exec.Command("stern", "-v")
+	cmd := exec.Command(bin(), "-v")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
 // DownloadExecutable ...
-func DownloadExecutable(sternURL string, sternVersion string) error {
+func DownloadExecutable(sternURL string, sternVersion string, bar *pb.ProgressBar) error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
-	if _, err := os.Stat(localFile); os.IsNotExist(err) {
-		fileMap := &download.FileMap{Src: LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
-		_, err = download.FromUrl(sternURL, sternVersion, "stern", []*download.FileMap{fileMap}, filepath.Dir(localFile))
-		if err != nil {
-			return err
-		}
+	if download.IsCurrentVersion(localFile, sternVersion) {
+		bar.SetTemplateString(`{{ green "stern" }} ` + sternVersion + ` already up to date`)
+		bar.SetTotal(1)
+		bar.SetCurrent(1)
+		bar.Finish()
+		return nil
 	}
-	return nil
+	_ = os.RemoveAll(localFile)
+	_ = os.RemoveAll(download.VersionFile(localFile))
+	fileMap := &download.FileMap{Src: LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
+	if _, err := download.FromUrl(sternURL, sternVersion, "stern", []*download.FileMap{fileMap}, filepath.Dir(localFile), bar); err != nil {
+		return err
+	}
+	return download.WriteVersion(localFile, sternVersion)
 }
 
 // DeleteExecutable ...
 func DeleteExecutable() error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	_ = os.RemoveAll(download.VersionFile(localFile))
 	return os.RemoveAll(localFile)
 }

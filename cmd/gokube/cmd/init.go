@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/gemalto/gokube/internal/util"
 	"github.com/gemalto/gokube/pkg/docker"
+	"github.com/gemalto/gokube/pkg/hypervisor"
 	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/gemalto/gokube/pkg/virtualbox"
 	"github.com/spf13/viper"
@@ -35,7 +36,6 @@ import (
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/spf13/cobra"
-	"os/exec"
 )
 
 var memory int16
@@ -97,6 +97,8 @@ func init() {
 	initCmd.Flags().BoolVarP(&quiet, "quiet", "q", defaultGokubeQuiet, "Don't display warning message before initializing")
 	initCmd.Flags().BoolVar(&keepVM, "keep-vm", false, "Keep minikube VM as it is (don't delete/recreate)")
 	initCmd.Flags().BoolVar(&force, "force", false, "Force minikube to perform possibly dangerous operations")
+	initCmd.Flags().StringVarP(&driver, "driver", "", utils.GetValueFromEnv("MINIKUBE_DRIVER", DEFAULT_MINIKUBE_DRIVER), "Minikube driver/hypervisor (virtualbox, hyperv)")
+	initCmd.Flags().StringVarP(&hypervVirtualSwitch, "hyperv-virtual-switch", "", utils.GetValueFromEnv("MINIKUBE_HYPERV_VIRTUAL_SWITCH", ""), "Name of the Hyper-V virtual switch to use (driver=hyperv only; empty lets minikube auto-select the Default Switch)")
 	rootCmd.AddCommand(initCmd)
 }
 
@@ -246,8 +248,24 @@ func initRun(cmd *cobra.Command, args []string) error {
 		askForUpgrade = true
 	}
 
-	if !askForUpgrade {
-		checkMinimumRequirements()
+	checkMinimumRequirements()
+
+	// Resolve the hypervisor for the requested driver and fail fast if the host
+	// is not ready (e.g. Hyper-V not enabled, not running elevated, switch
+	// missing) before performing any destructive VM operation.
+	hv, err := hypervisor.New(driver)
+	if err != nil {
+		return fmt.Errorf("invalid minikube driver %q: %w", driver, err)
+	}
+	if err = hv.Validate(hypervVirtualSwitch); err != nil {
+		return err
+	}
+
+	// Drivers other than virtualbox (hyperv) have no predictable static IP, so
+	// disable the IP check. This single toggle also skips the VirtualBox-only
+	// host-only lease reset and the pre-init VirtualBox GUI warning below.
+	if driver != hypervisor.DriverVirtualBox {
+		checkIP = "0.0.0.0"
 	}
 
 	ipCheckNeeded = strings.Compare("0.0.0.0", checkIP) != 0
@@ -270,7 +288,8 @@ func initRun(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			fmt.Printf("Warning: cannot delete previous minikube VM: %s\n", err)
 		}
-		if ipCheckNeeded {
+		// Host-only DHCP lease reset is VirtualBox-specific.
+		if ipCheckNeeded && driver == hypervisor.DriverVirtualBox {
 			err = resetVBLease(DEFAULT_GOKUBE_CIDR)
 			if err != nil {
 				return fmt.Errorf("cannot delete previous minikube VM: %w", err)
@@ -285,16 +304,24 @@ func initRun(cmd *cobra.Command, args []string) error {
 		_ = docker.DeleteWorkingDirectory()
 		_ = docker.InitWorkingDirectory()
 		_ = helm.DeleteWorkingDirectory()
+		gokube.DeleteAllExecutables()
 	} else if !keepVM {
 		_ = helm.ResetWorkingDirectory()
 	}
 
-	if askForUpgrade {
-		fmt.Println("Upgrading gokube dependencies...")
-		err = upgradeDependencies()
-		if err != nil {
-			return err
-		}
+	fmt.Println("Checking gokube dependencies...")
+	err = upgradeDependencies()
+	if err != nil {
+		return err
+	}
+
+	// Persist gokube-version immediately after downloads succeed.
+	// If any subsequent step (VM creation, ChartMuseum, helm repos) fails and
+	// initRun returns early, the version is already written. The next run will
+	// read "1.38.0", skip the forced-clean path, and serve all tools from cache
+	// instead of wiping metadata and re-downloading everything.
+	if err = gokube.WriteConfig(gokubeVersion, kubernetesVersion, containerRuntime, driver, hypervVirtualSwitch); err != nil {
+		return fmt.Errorf("cannot write gokube configuration: %w", err)
 	}
 
 	if !keepVM {
@@ -303,18 +330,30 @@ func initRun(cmd *cobra.Command, args []string) error {
 
 		// Create virtual machine (minikube)
 		fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
-		err := minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain, containerRuntime, force, verbose)
+		err := minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain, containerRuntime, force, verbose, driver, hypervVirtualSwitch)
 		if err != nil {
 			return fmt.Errorf("cannot start minikube VM: %w", err)
 		}
 
-        // Create & attach swap drive to minikube
+        // Create, attach, detect & enable swap drive in minikube VM.
+        // The in-VM device node is detected (not assumed to be /dev/sdb) so the
+        // logic is correct for both VirtualBox and Hyper-V. Swap on Hyper-V is
+        // experimental (see AddSwapDisk).
         if enableSwap {
             fmt.Println("Creating & attaching swap drive to minikube VM...")
-            vboxManager := virtualbox.NewVBoxManager()
-            err = vboxManager.AddSwapDisk(swap)
+            before, listErr := listMinikubeDisks()
+            err = hv.AddSwapDisk(swap)
             if err != nil {
                 fmt.Printf("Warning: cannot create & attach swap drive to minikube VM: %s\n", err)
+            } else if listErr != nil {
+                fmt.Printf("Warning: cannot list minikube disks to locate swap drive: %s\n", listErr)
+            } else if swapDevice, derr := detectNewSwapDevice(before); derr != nil {
+                fmt.Printf("Warning: cannot locate attached swap drive in minikube VM: %s\n", derr)
+            } else {
+                fmt.Println("Formatting & enabling swap drive in minikube VM...")
+                if ferr := formatAndEnableSwap(swapDevice); ferr != nil {
+                    fmt.Printf("Warning: cannot format/enable swap drive in minikube VM: %s\n", ferr)
+                }
             }
         }
 
@@ -363,50 +402,17 @@ func initRun(cmd *cobra.Command, args []string) error {
 
 	}
 
-	if askForUpgrade {
-		fmt.Println("Upgrading helm plugins...")
-		err := upgradeHelmPlugins()
-		if err != nil {
-			return err
-		}
+	fmt.Println("Checking helm plugins...")
+	if err := upgradeHelmPlugins(); err != nil {
+		return err
 	}
 
 	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for (re)start command
-	err = gokube.WriteConfig(gokubeVersion, kubernetesVersion, containerRuntime)
+	err = gokube.WriteConfig(gokubeVersion, kubernetesVersion, containerRuntime, driver, hypervVirtualSwitch)
 	if err != nil {
 		return fmt.Errorf("cannot write gokube configuration: %w", err)
 	}
 
-    // Format & enable swap drive in minikube VM
-    if enableSwap {
-        fmt.Println("Formatting & enabling swap drive in minikube VM...")
-	    err = addSwapToMinikube()
-	    if err != nil {
-		    fmt.Printf("Warning: cannot format/enable swap drive in minikube VM: %s\n", err)
-	    }
-    }
-
 	fmt.Printf("\ngokube init completed in %s\n", util.Duration(time.Since(startTime)))
-	return nil
-}
-
-func addSwapToMinikube() error {
-
-	// Add swap file commands
-	swapCmds := []string{
-		"sudo mkswap /dev/sdb",
-		"sudo swapon /dev/sdb",
-		"echo '/dev/sdb none swap defaults 0 0' | sudo tee -a /etc/fstab",
-	}
-
-	// Execute each command
-	for _, cmd := range swapCmds {
-		sshCmd := exec.Command("minikube", "ssh", cmd)
-		err := sshCmd.Run()
-		if err != nil {
-			return fmt.Errorf("error running command '%s': %w", cmd, err)
-		}
-	}
-
 	return nil
 }

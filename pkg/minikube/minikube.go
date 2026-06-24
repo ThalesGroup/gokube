@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	pb "github.com/cheggaaa/pb/v3"
 	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/utils"
 )
@@ -30,9 +31,26 @@ const (
 	LOCAL_EXECUTABLE_NAME = "minikube.exe"
 )
 
+func bin() string {
+	return utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+}
+
 // Start ...
-func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool, dnsDomain string, containerRuntime string, force bool, verbose bool) error {
-	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--driver=virtualbox", "--host-only-cidr=192.168.99.1/24"}
+func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool, dnsDomain string, containerRuntime string, force bool, verbose bool, driver string, hypervVirtualSwitch string) error {
+	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize}
+	switch driver {
+	case "hyperv":
+		args = append(args, "--driver=hyperv")
+		// --hyperv-virtual-switch is optional: when empty, minikube auto-selects
+		// a switch (typically the built-in "Default Switch").
+		if len(hypervVirtualSwitch) > 0 {
+			args = append(args, "--hyperv-virtual-switch="+hypervVirtualSwitch)
+		}
+	default:
+		// virtualbox: preserve the original behavior, including the host-only
+		// network used to obtain the expected 192.168.99.100 IP.
+		args = append(args, "--driver=virtualbox", "--host-only-cidr=192.168.99.1/24")
+	}
 	if len(httpProxy) > 0 {
 		args = append(args, "--docker-env=http_proxy="+httpProxy)
 	}
@@ -63,7 +81,7 @@ func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsPro
 	if verbose {
 		args = append(args, "--alsologtostderr", "--v=1")
 	}
-	cmd := exec.Command("minikube", args...)
+	cmd := exec.Command(bin(), args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -81,7 +99,7 @@ func Restart(kubernetesVersion string, containerRuntime string, force bool, verb
 	if verbose {
 		args = append(args, "--alsologtostderr", "--v=1")
 	}
-	cmd := exec.Command("minikube", args...)
+	cmd := exec.Command(bin(), args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -89,7 +107,7 @@ func Restart(kubernetesVersion string, containerRuntime string, force bool, verb
 
 // Stop ...
 func Stop() error {
-	cmd := exec.Command("minikube", "stop")
+	cmd := exec.Command(bin(), "stop")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -97,7 +115,7 @@ func Stop() error {
 
 // Delete ...
 func Delete() error {
-	cmd := exec.Command("minikube", "delete")
+	cmd := exec.Command(bin(), "delete")
 	//	cmd.Stdout = os.Stdout
 	//	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -105,7 +123,7 @@ func Delete() error {
 
 // AddonsEnable ...
 func AddonsEnable(addon string) error {
-	cmd := exec.Command("minikube", "addons", "enable", addon)
+	cmd := exec.Command(bin(), "addons", "enable", addon)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -113,7 +131,7 @@ func AddonsEnable(addon string) error {
 
 // ConfigSet ...
 func ConfigSet(key string, value string) error {
-	cmd := exec.Command("minikube", "config", "set", key, value)
+	cmd := exec.Command(bin(), "config", "set", key, value)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -121,7 +139,7 @@ func ConfigSet(key string, value string) error {
 
 // Version ...
 func Version() error {
-	cmd := exec.Command("minikube", "version")
+	cmd := exec.Command(bin(), "version")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -129,7 +147,7 @@ func Version() error {
 
 // Ip ...
 func Ip() (string, error) {
-	out, err := exec.Command("minikube", "ip").Output()
+	out, err := exec.Command(bin(), "ip").Output()
 	if err != nil {
 		return "", err
 	}
@@ -137,21 +155,28 @@ func Ip() (string, error) {
 }
 
 // DownloadExecutable ...
-func DownloadExecutable(minikubeURL string, minikubeVersion string) error {
+func DownloadExecutable(minikubeURL string, minikubeVersion string, bar *pb.ProgressBar) error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
-	if _, err := os.Stat(localFile); os.IsNotExist(err) {
-		fileMap := &download.FileMap{Src: "minikube-windows-amd64.exe", Dst: LOCAL_EXECUTABLE_NAME}
-		_, err = download.FromUrl(minikubeURL, minikubeVersion, "minikube", []*download.FileMap{fileMap}, filepath.Dir(localFile))
-		if err != nil {
-			return err
-		}
+	if download.IsCurrentVersion(localFile, minikubeVersion) {
+		bar.SetTemplateString(`{{ green "minikube" }} ` + minikubeVersion + ` already up to date`)
+		bar.SetTotal(1)
+		bar.SetCurrent(1)
+		bar.Finish()
+		return nil
 	}
-	return nil
+	_ = os.RemoveAll(localFile)
+	_ = os.RemoveAll(download.VersionFile(localFile))
+	fileMap := &download.FileMap{Src: "minikube-windows-amd64.exe", Dst: LOCAL_EXECUTABLE_NAME}
+	if _, err := download.FromUrl(minikubeURL, minikubeVersion, "minikube", []*download.FileMap{fileMap}, filepath.Dir(localFile), bar); err != nil {
+		return err
+	}
+	return download.WriteVersion(localFile, minikubeVersion)
 }
 
 // DeleteExecutable ...
 func DeleteExecutable() error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
+	_ = os.RemoveAll(download.VersionFile(localFile))
 	return os.RemoveAll(localFile)
 }
 

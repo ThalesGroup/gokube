@@ -16,7 +16,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/gemalto/gokube/pkg/virtualbox"
+	"github.com/gemalto/gokube/pkg/gokube"
+	"github.com/gemalto/gokube/pkg/hypervisor"
 	"github.com/spf13/cobra"
 )
 
@@ -40,9 +41,16 @@ func resumeRun(cmd *cobra.Command, args []string) error {
 
 	checkLatestVersion()
 
-	fmt.Println("Resuming minikube VM...")
-	err := virtualbox.Resume()
+	if err := gokube.ReadConfig(verbose); err != nil {
+		return fmt.Errorf("cannot read gokube configuration file: %w", err)
+	}
+	hv, err := hypervisor.New(resolveDriver())
 	if err != nil {
+		return fmt.Errorf("invalid minikube driver: %w", err)
+	}
+
+	fmt.Println("Resuming minikube VM...")
+	if err := hv.Resume(); err != nil {
 		return fmt.Errorf("cannot resume minikube VM: %w", err)
 	}
 	return nil

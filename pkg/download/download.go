@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/gemalto/gokube/pkg/utils"
-	"gopkg.in/cheggaaa/pb.v2"
+	pb "github.com/cheggaaa/pb/v3"
 )
 
 type FileMap struct {
@@ -32,7 +32,7 @@ type FileMap struct {
 	Dst string
 }
 
-func fromUrl(url string, name string, dir string, fileName string) (int64, error) {
+func fromUrl(url string, name string, dir string, fileName string, bar *pb.ProgressBar) (n int64, retErr error) {
 	file, err := os.Create(dir + string(os.PathSeparator) + fileName)
 	defer utils.CloseFile(file)
 	if err != nil {
@@ -49,15 +49,23 @@ func fromUrl(url string, name string, dir string, fileName string) (int64, error
 	}
 
 	count := int(response.ContentLength)
-	tmpl := `{{ yellow "` + name + `: " }}{{counters . }} {{bar . | green }} {{percent . }} {{speed . }}`
-	bar := pb.ProgressBarTemplate(tmpl).Start(count)
-	defer bar.Finish()
+	tmpl := `{{ yellow "` + name + `: " }}{{counters . }} {{bar . | green }} {{percent . }} {{speed . }} {{etime .}}`
+	bar.SetTemplateString(tmpl)
+	bar.SetTotal(int64(count))
 	bar.SetWidth(100)
+	dlStart := time.Now()
+	defer func() {
+		if retErr == nil {
+			d := time.Since(dlStart).Round(time.Second)
+			bar.SetTemplateString(`{{ green "` + name + `" }} done (` + d.String() + `)`)
+		}
+		bar.Finish()
+	}()
 
 	// create proxy reader
 	reader := bar.NewProxyReader(response.Body)
 	defer utils.ClosePBReader(reader)
-	n, err := io.Copy(file, reader)
+	n, err = io.Copy(file, reader)
 	if err != nil {
 		return -1, err
 	}
@@ -88,8 +96,71 @@ func fromUrl(url string, name string, dir string, fileName string) (int64, error
 	return n, nil
 }
 
+// VersionFile returns the path of the version metadata file for a given binary path.
+// All version files are stored in ~/.gokube/metadata/<toolname>.version.
+func VersionFile(binaryPath string) string {
+	name := strings.TrimSuffix(filepath.Base(binaryPath), ".exe")
+	return filepath.Join(utils.GetUserHome(), ".gokube", "metadata", name+".version")
+}
+
+// IsCurrentVersion returns true when binaryPath exists and its metadata file records version.
+func IsCurrentVersion(binaryPath, version string) bool {
+	if _, err := os.Stat(binaryPath); err != nil {
+		return false
+	}
+	data, err := os.ReadFile(VersionFile(binaryPath))
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(data)) == version
+}
+
+// WriteVersion writes version to the metadata file for binaryPath.
+func WriteVersion(binaryPath, version string) error {
+	vf := VersionFile(binaryPath)
+	if err := os.MkdirAll(filepath.Dir(vf), 0755); err != nil {
+		return err
+	}
+	return os.WriteFile(vf, []byte(version), 0644)
+}
+
+// DeleteAllMetadata removes the entire ~/.gokube/metadata/ directory.
+// Call during a full clean to ensure no stale version records survive.
+func DeleteAllMetadata() error {
+	return os.RemoveAll(filepath.Join(utils.GetUserHome(), ".gokube", "metadata"))
+}
+
+// moveFile moves src to dst, falling back to copy+delete when os.Rename
+// fails across drive boundaries or filesystem boundaries.
+func moveFile(src, dst string) error {
+	if err := os.Rename(src, dst); err == nil {
+		return nil
+	}
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	out, err := os.Create(dst)
+	if err != nil {
+		in.Close()
+		return err
+	}
+	_, err = io.Copy(out, in)
+	in.Close() // must close before os.Remove on Windows — open handles block deletion
+	if err != nil {
+		out.Close()
+		os.Remove(dst)
+		return err
+	}
+	if err = out.Close(); err != nil {
+		os.Remove(dst)
+		return err
+	}
+	return os.Remove(src)
+}
+
 // FromUrl ...
-func FromUrl(urlTpl string, version string, name string, fileMaps []*FileMap, dst string) (int64, error) {
+func FromUrl(urlTpl string, version string, name string, fileMaps []*FileMap, dst string, bar *pb.ProgressBar) (int64, error) {
 
 	url := strings.Replace(urlTpl, "%s", version, -1)
 	if version[0:1] == "v" {
@@ -103,7 +174,7 @@ func FromUrl(urlTpl string, version string, name string, fileMaps []*FileMap, ds
 	tempDir, err := os.MkdirTemp(os.TempDir(), "*")
 	defer utils.DeleteDir(tempDir)
 
-	n, err := fromUrl(url, name, tempDir, urlFileName)
+	n, err := fromUrl(url, name, tempDir, urlFileName, bar)
 	if err != nil {
 		return -1, err
 	}
@@ -116,7 +187,7 @@ func FromUrl(urlTpl string, version string, name string, fileMaps []*FileMap, ds
 			}
 		}
 		fileSrc := tempDir + string(os.PathSeparator) + fileMap.Src
-		err = os.Rename(fileSrc, fileDst)
+		err = moveFile(fileSrc, fileDst)
 		if err != nil {
 			return -1, err
 		}

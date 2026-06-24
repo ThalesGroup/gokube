@@ -1,11 +1,12 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gemalto/gokube/pkg/gokube"
+	"github.com/gemalto/gokube/pkg/hypervisor"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/gemalto/gokube/pkg/utils"
-	"github.com/gemalto/gokube/pkg/virtualbox"
 	"github.com/spf13/cobra"
 )
 
@@ -38,12 +39,19 @@ func saveRun(cmd *cobra.Command, args []string) error {
 
 	checkLatestVersion()
 
+	if err := gokube.ReadConfig(verbose); err != nil {
+		return fmt.Errorf("cannot read gokube configuration file: %w", err)
+	}
+	hv, err := hypervisor.New(resolveDriver())
+	if err != nil {
+		return fmt.Errorf("invalid minikube driver: %w", err)
+	}
+
 	running := false
 	if live && !quiet {
 		gokube.ConfirmSnapshotCommandExecution()
 	} else if !live {
-		var err error
-		running, err = virtualbox.IsRunning()
+		running, err = hv.IsRunning()
 		if err != nil {
 			return fmt.Errorf("cannot check if minikube VM is running: %w", err)
 		}
@@ -56,11 +64,11 @@ func saveRun(cmd *cobra.Command, args []string) error {
 		}
 	}
 	fmt.Printf("Taking snapshot '%s' of minikube VM...\n", snapshotName)
-	err := virtualbox.DeleteSnapshot(snapshotName)
-	if err != nil && err != virtualbox.ErrSnapshotNotExist {
+	err = hv.DeleteSnapshot(snapshotName)
+	if err != nil && !errors.Is(err, hypervisor.ErrSnapshotNotExist) {
 		return fmt.Errorf("cannot delete minikube VM snapshot %s: %w", snapshotName, err)
 	}
-	err = virtualbox.TakeSnapshot(snapshotName)
+	err = hv.TakeSnapshot(snapshotName)
 	if err != nil {
 		return fmt.Errorf("cannot take minikube VM snapshot %s: %w", snapshotName, err)
 	}

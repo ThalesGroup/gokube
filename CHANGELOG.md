@@ -1,5 +1,14 @@
 # GoKube Release Notes
 
+## Unreleased
+* Added Hyper-V driver support alongside VirtualBox (still the default).
+  * New `--driver` flag (`virtualbox`|`hyperv`) on `init`, also configurable via `MINIKUBE_DRIVER`; persisted to `~/.gokube/config.yaml` and reused by the other commands.
+  * New `--hyperv-virtual-switch` flag (also `MINIKUBE_HYPERV_VIRTUAL_SWITCH`); optional, defaults to minikube's auto-selected switch.
+  * VM lifecycle operations (pause/resume/save/reset/swap) now go through a driver abstraction: VBoxManage for VirtualBox, PowerShell for Hyper-V.
+  * VirtualBox-only host-only network lease reset and the static IP (`--check-ip`) check are skipped for Hyper-V (dynamic IP).
+  * Hyper-V requires running gokube from an elevated shell with Hyper-V enabled. Swap on Hyper-V is experimental.
+  * Swap setup now detects the attached disk's device node and records it in `/etc/fstab` by UUID instead of assuming `/dev/sdb`.
+
 ## Version 1.38.0 - 02/05/2026
 * Bump to minikube v1.38.0, K8S v1.35.0, helm v3.20.0, docker 29.2.1, and stern v1.33.1
 

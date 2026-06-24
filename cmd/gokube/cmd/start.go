@@ -17,12 +17,11 @@ package cmd
 import (
 	"fmt"
 	"github.com/gemalto/gokube/pkg/gokube"
+	"github.com/gemalto/gokube/pkg/hypervisor"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/gemalto/gokube/pkg/utils"
-	"github.com/gemalto/gokube/pkg/virtualbox"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os/exec"
 )
 
 // startCmd represents the start command
@@ -56,7 +55,14 @@ func start() error {
 	}
 	vb7workaround := utils.GetValueFromEnv("VB7_WORKAROUND", "")
 	if len(vb7workaround) > 0 {
-		virtualbox.Update("--nat-localhostreachable1=on")
+		hv, err := hypervisor.New(resolveDriver())
+		if err != nil {
+			return fmt.Errorf("invalid minikube driver: %w", err)
+		}
+		// No-op for drivers other than virtualbox.
+		if err = hv.ApplyVB7Workaround(); err != nil {
+			fmt.Printf("Warning: cannot apply VirtualBox 7 workaround: %s\n", err)
+		}
 	}
 	fmt.Printf("Starting minikube VM with kubernetes %s and container runtime %q...\n", kubernetesVersionForStart, containerRuntimeForStart)
 	err = minikube.Restart(kubernetesVersionForStart, containerRuntimeForStart, force, verbose)
@@ -114,21 +120,10 @@ func startRun(cmd *cobra.Command, args []string) error {
 }
 
 func addSwapToMinikubeDuringStart() error {
-
-	// Add swap file commands
-	swapCmds := []string{
-		"sudo swapon /dev/sdb",
-		"echo '/dev/sdb none swap defaults 0 0' | sudo tee -a /etc/fstab",
+	// The swap disk was formatted and recorded in /etc/fstab (by UUID) during
+	// init, so re-enabling it on start is just "swapon --all".
+	if _, err := runMinikubeSSH("sudo swapon --all"); err != nil {
+		return fmt.Errorf("cannot enable swap in minikube VM: %w", err)
 	}
-
-	// Execute each command
-	for _, cmd := range swapCmds {
-		sshCmd := exec.Command("minikube", "ssh", cmd)
-		err := sshCmd.Run()
-		if err != nil {
-			return fmt.Errorf("error running command '%s': %w", cmd, err)
-		}
-	}
-
 	return nil
 }
