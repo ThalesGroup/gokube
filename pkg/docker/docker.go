@@ -21,12 +21,20 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 )
 
-const (
-	DEFAULT_URL           = "https://download.docker.com/win/static/stable/x86_64/docker-%s.zip"
-	LOCAL_EXECUTABLE_NAME = "docker.exe"
+var (
+	DEFAULT_URL           = defaultURL()
+	LOCAL_EXECUTABLE_NAME = utils.ExecutableName("docker")
 )
+
+func defaultURL() string {
+	if runtime.GOOS == "linux" {
+		return "https://download.docker.com/linux/static/stable/x86_64/docker-%s.tgz"
+	}
+	return "https://download.docker.com/win/static/stable/x86_64/docker-%s.zip"
+}
 
 // Version ...
 func Version() error {
@@ -46,6 +54,7 @@ func DownloadExecutable(dockerURL string, dockerVersion string) error {
 		if err != nil {
 			return err
 		}
+		return utils.MakeExecutable(localFile)
 	}
 	return nil
 }

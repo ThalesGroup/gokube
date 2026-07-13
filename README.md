@@ -5,7 +5,7 @@
 
 ## What is gokube?
 
-gokube is a tool that simplifies day-to-day development with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows.
+gokube is a tool that simplifies day-to-day development with [Kubernetes](https://github.com/kubernetes/kubernetes) on your laptop under Windows or Debian/Ubuntu.
 
 gokube downloads and installs several dependencies such as:
 * [minikube](https://github.com/kubernetes/minikube)
@@ -41,6 +41,68 @@ $ gokube init
 ```
 
 ## How to install gokube?
+
+### Debian / Ubuntu
+
+#### Requirements
+* [VirtualBox](https://www.virtualbox.org/wiki/Linux_Downloads)
+* VT-x/AMD-v virtualization must be enabled in BIOS/UEFI
+* Internet connection for the first run
+* Go 1.23 or later if you build gokube locally
+
+#### Configure VirtualBox host-only networks
+
+gokube uses the minikube VirtualBox host-only CIDR `192.168.99.1/24`. On recent VirtualBox versions for Linux hosts, host-only adapters are restricted to `192.168.56.0/21` unless additional ranges are allowed in `/etc/vbox/networks.conf`.
+
+Allow gokube's host-only network before running `gokube init`:
+
+```shell
+$ sudo mkdir -p /etc/vbox
+$ echo '* 192.168.99.0/24' | sudo tee /etc/vbox/networks.conf
+```
+
+#### Build the Linux executable
+
+From the repository root, build a Linux amd64 executable:
+
+```shell
+$ GOOS=linux GOARCH=amd64 go build -o bin/gokube-linux-amd64 ./cmd/gokube
+```
+
+If you are building directly on the target Debian/Ubuntu machine, you can also use:
+
+```shell
+$ go build -o bin/gokube ./cmd/gokube
+```
+
+#### Install the executable
+
+Copy or move the executable to a directory in your PATH. For example:
+
+```shell
+$ mkdir -p ~/.local/bin
+$ cp bin/gokube-linux-amd64 ~/.local/bin/gokube
+$ chmod +x ~/.local/bin/gokube
+```
+
+Make sure `~/.local/bin` is in your PATH before running gokube.
+
+#### Initialize gokube
+
+gokube uses the minikube VirtualBox driver by default. On Debian/Ubuntu, VirtualBox must be installed and `VBoxManage` must be available in your PATH.
+
+```shell
+$ gokube init -cu --memory=12288Mb --cpus=6 --disk=12Gb
+```
+
+If minikube gets `192.168.99.101` instead of the expected `192.168.99.100`, delete the failed VM and clear VirtualBox DHCP lease files before retrying:
+
+```shell
+$ minikube delete
+$ rm -f ~/.VirtualBox/HostInterfaceNetworking-vboxnet*-Dhcpd.*
+$ rm -f ~/.config/VirtualBox/HostInterfaceNetworking-vboxnet*-Dhcpd.*
+$ gokube init -cu --memory=12288Mb --cpus=6 --disk=12Gb
+```
 
 ### Windows
 
@@ -271,4 +333,3 @@ Starting minikube VM with kubernetes v1.31.0 and container runtime "docker"...
 
 * [**Contributing**](./CONTRIBUTING.md)
 * [**Development Guide**](./docs/developer-guide.md)
-

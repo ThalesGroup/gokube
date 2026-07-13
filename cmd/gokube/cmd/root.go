@@ -25,12 +25,13 @@ import (
 	"github.com/gemalto/gokube/pkg/helmimage"
 	"github.com/gemalto/gokube/pkg/helmpush"
 	"github.com/gemalto/gokube/pkg/helmspray"
+	"github.com/gemalto/gokube/pkg/k9s"
 	"github.com/gemalto/gokube/pkg/kubectl"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/gemalto/gokube/pkg/stern"
-	"github.com/gemalto/gokube/pkg/k9s"
 	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"os"
 )
 
@@ -44,6 +45,7 @@ const (
 	DEFAULT_MINIKUBE_DISK              = "20g"
 	DEFAULT_MINIKUBE_DNS_DOMAIN        = "cluster.local"
 	DEFAULT_MINIKUBE_CONTAINER_RUNTIME = "docker"
+	DEFAULT_MINIKUBE_DRIVER            = "virtualbox"
 	DEFAULT_DOCKER_VERSION             = "29.2.1"
 	DEFAULT_HELM_VERSION               = "v3.20.0"
 	DEFAULT_HELM_SPRAY_VERSION         = "v4.0.13"
@@ -58,6 +60,7 @@ const (
 
 var kubernetesVersion string
 var containerRuntime string
+var minikubeDriver string
 var kubectlURL string
 var kubectlVersion string
 var minikubeURL string
@@ -136,6 +139,22 @@ func loadURLVersionsFromEnv() {
 	sternVersion = utils.GetValueFromEnv("STERN_VERSION", DEFAULT_STERN_VERSION)
 	k9sURL = utils.GetValueFromEnv("K9S_URL", k9s.DEFAULT_URL)
 	k9sVersion = utils.GetValueFromEnv("K9S_VERSION", DEFAULT_K9S_VERSION)
+}
+
+func defaultMinikubeDriver() string {
+	return DEFAULT_MINIKUBE_DRIVER
+}
+
+func defaultGokubeCheckIP() string {
+	return DEFAULT_GOKUBE_CHECK_IP
+}
+
+func configuredMinikubeDriver() string {
+	driver := viper.GetString("minikube-driver")
+	if len(driver) == 0 {
+		driver = utils.GetValueFromEnv("MINIKUBE_DRIVER", defaultMinikubeDriver())
+	}
+	return driver
 }
 
 func upgradeDependencies() error {

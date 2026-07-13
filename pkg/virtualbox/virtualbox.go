@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gemalto/gokube/pkg/utils"
-	"golang.org/x/sys/windows/registry"
 	"net"
 	"os"
 	"os/exec"
@@ -143,11 +142,7 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, verbose bool) error {
 	if verbose {
 		fmt.Printf("\nResetHostOnlyNetworkLeases: getHostOnlyAdapter: %s", hostOnlyNet.NetworkName)
 	}
-	filesPattern := utils.GetUserHome() + "/.VirtualBox/" + hostOnlyNet.NetworkName + "*"
-	files, err := filepath.Glob(filesPattern)
-	if err != nil {
-		return fmt.Errorf("not able to get host-only network interface DHCP leases files: %w", err)
-	}
+	files, err := dhcpLeaseFiles(hostOnlyNet)
 	for _, f := range files {
 		if verbose {
 			fmt.Printf("\nResetHostOnlyNetworkLeases: deleting lease file %s...", f)
@@ -160,6 +155,28 @@ func ResetHostOnlyNetworkLeases(hostOnlyCIDR string, verbose bool) error {
 		}
 	}
 	return nil
+}
+
+func dhcpLeaseFiles(hostOnlyNet *hostOnlyNetwork) ([]string, error) {
+	var files []string
+	configDirs := []string{
+		filepath.Join(utils.GetUserHome(), ".VirtualBox"),
+		filepath.Join(utils.GetConfigHome(), "VirtualBox"),
+	}
+	patterns := []string{
+		hostOnlyNet.NetworkName + "*",
+		"HostInterfaceNetworking-" + hostOnlyNet.Name + "-Dhcpd.*",
+	}
+	for _, configDir := range configDirs {
+		for _, pattern := range patterns {
+			matches, err := filepath.Glob(filepath.Join(configDir, pattern))
+			if err != nil {
+				return nil, fmt.Errorf("not able to get host-only network interface DHCP leases files: %w", err)
+			}
+			files = append(files, matches...)
+		}
+	}
+	return files, nil
 }
 
 func listHostOnlyAdapters(vbox VBoxManager) (map[string]*hostOnlyNetwork, error) {
@@ -284,24 +301,6 @@ func detectVBoxManageCmdInPath() string {
 		return path
 	}
 	return cmd
-}
-
-func findVBoxInstallDirInRegistry() (string, error) {
-	registryKey, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Oracle\VirtualBox`, registry.QUERY_VALUE)
-	if err != nil {
-		errorMessage := fmt.Sprintf("Can't find VirtualBox registry entries, is VirtualBox really installed properly? %s", err)
-		return "", fmt.Errorf(errorMessage)
-	}
-
-	defer registryKey.Close()
-
-	installDir, _, err := registryKey.GetStringValue("InstallDir")
-	if err != nil {
-		errorMessage := fmt.Sprintf("Can't find InstallDir registry key within VirtualBox registries entries, is VirtualBox really installed properly? %s", err)
-		return "", fmt.Errorf(errorMessage)
-	}
-
-	return installDir, nil
 }
 
 func parseIPv4Mask(s string) net.IPMask {

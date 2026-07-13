@@ -20,14 +20,22 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/gemalto/gokube/pkg/download"
 )
 
-const (
-	DEFAULT_URL           = "https://github.com/stern/stern/releases/download/v%s/stern_%s_windows_amd64.tar.gz"
-	LOCAL_EXECUTABLE_NAME = "stern.exe"
+var (
+	DEFAULT_URL           = defaultURL()
+	LOCAL_EXECUTABLE_NAME = utils.ExecutableName("stern")
 )
+
+func defaultURL() string {
+	if runtime.GOOS == "linux" {
+		return "https://github.com/stern/stern/releases/download/v%s/stern_%s_linux_amd64.tar.gz"
+	}
+	return "https://github.com/stern/stern/releases/download/v%s/stern_%s_windows_amd64.tar.gz"
+}
 
 // Version ...
 func Version() error {
@@ -47,6 +55,7 @@ func DownloadExecutable(sternURL string, sternVersion string) error {
 		if err != nil {
 			return err
 		}
+		return utils.MakeExecutable(localFile)
 	}
 	return nil
 }

@@ -20,14 +20,22 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/gemalto/gokube/pkg/download"
 )
 
-const (
-	DEFAULT_URL           = "https://github.com/derailed/k9s/releases/download/v%s/k9s_Windows_amd64.zip"
-	LOCAL_EXECUTABLE_NAME = "k9s.exe"
+var (
+	DEFAULT_URL           = defaultURL()
+	LOCAL_EXECUTABLE_NAME = utils.ExecutableName("k9s")
 )
+
+func defaultURL() string {
+	if runtime.GOOS == "linux" {
+		return "https://github.com/derailed/k9s/releases/download/v%s/k9s_Linux_amd64.tar.gz"
+	}
+	return "https://github.com/derailed/k9s/releases/download/v%s/k9s_Windows_amd64.zip"
+}
 
 // Version ...
 func Version() error {
@@ -47,6 +55,7 @@ func DownloadExecutable(k9sURL string, k9sVersion string) error {
 		if err != nil {
 			return err
 		}
+		return utils.MakeExecutable(localFile)
 	}
 	return nil
 }

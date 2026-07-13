@@ -15,12 +15,14 @@ limitations under the License.
 package download
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gemalto/gokube/pkg/utils"
@@ -116,11 +118,48 @@ func FromUrl(urlTpl string, version string, name string, fileMaps []*FileMap, ds
 			}
 		}
 		fileSrc := tempDir + string(os.PathSeparator) + fileMap.Src
-		err = os.Rename(fileSrc, fileDst)
+		err = moveFile(fileSrc, fileDst)
 		if err != nil {
 			return -1, err
 		}
 	}
 
 	return n, nil
+}
+
+func moveFile(src string, dst string) error {
+	err := os.Rename(src, dst)
+	if err == nil {
+		return nil
+	}
+	if !errors.Is(err, syscall.EXDEV) {
+		return err
+	}
+	if err := copyFile(src, dst); err != nil {
+		_ = os.Remove(dst)
+		return err
+	}
+	return os.Remove(src)
+}
+
+func copyFile(src string, dst string) error {
+	source, err := os.Open(src)
+	defer utils.CloseFile(source)
+	if err != nil {
+		return err
+	}
+
+	sourceInfo, err := source.Stat()
+	if err != nil {
+		return err
+	}
+
+	destination, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, sourceInfo.Mode())
+	defer utils.CloseFile(destination)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(destination, source)
+	return err
 }

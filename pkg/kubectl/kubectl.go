@@ -19,15 +19,23 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/utils"
 )
 
-const (
-	DEFAULT_URL           = "https://dl.k8s.io/%s/bin/windows/amd64/kubectl.exe"
-	LOCAL_EXECUTABLE_NAME = "kubectl.exe"
+var (
+	DEFAULT_URL           = defaultURL()
+	LOCAL_EXECUTABLE_NAME = utils.ExecutableName("kubectl")
 )
+
+func defaultURL() string {
+	if runtime.GOOS == "linux" {
+		return "https://dl.k8s.io/%s/bin/linux/amd64/kubectl"
+	}
+	return "https://dl.k8s.io/%s/bin/windows/amd64/kubectl.exe"
+}
 
 // Get ...
 func Get(namespace string, resourceType string, resourceName string, jsonPath string) (string, error) {
@@ -76,6 +84,7 @@ func DownloadExecutable(kubectlURL string, kubectlVersion string) error {
 		if err != nil {
 			return err
 		}
+		return utils.MakeExecutable(localFile)
 	}
 	return nil
 }

@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -25,14 +26,24 @@ import (
 	"github.com/gemalto/gokube/pkg/utils"
 )
 
-const (
-	DEFAULT_URL           = "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
-	LOCAL_EXECUTABLE_NAME = "minikube.exe"
+var (
+	DEFAULT_URL           = defaultURL()
+	LOCAL_EXECUTABLE_NAME = utils.ExecutableName("minikube")
 )
 
+func defaultURL() string {
+	if runtime.GOOS == "linux" {
+		return "https://storage.googleapis.com/minikube/releases/%s/minikube-linux-amd64"
+	}
+	return "https://storage.googleapis.com/minikube/releases/%s/minikube-windows-amd64.exe"
+}
+
 // Start ...
-func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool, dnsDomain string, containerRuntime string, force bool, verbose bool) error {
-	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", strconv.FormatInt(int64(memory), 10), "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--driver=virtualbox", "--host-only-cidr=192.168.99.1/24"}
+func Start(memory string, cpus int16, diskSize string, driver string, httpProxy string, httpsProxy string, noProxy string, insecureRegistry string, kubernetesVersion string, cache bool, dnsProxy bool, hostDNSResolver bool, dnsDomain string, containerRuntime string, force bool, verbose bool) error {
+	var args = []string{"start", "--kubernetes-version", kubernetesVersion, "--insecure-registry", insecureRegistry, "--memory", memory, "--cpus", strconv.FormatInt(int64(cpus), 10), "--disk-size", diskSize, "--driver=" + driver}
+	if driver == "virtualbox" {
+		args = append(args, "--host-only-cidr=192.168.99.1/24")
+	}
 	if len(httpProxy) > 0 {
 		args = append(args, "--docker-env=http_proxy="+httpProxy)
 	}
@@ -45,10 +56,10 @@ func Start(memory int16, cpus int16, diskSize string, httpProxy string, httpsPro
 	if !cache {
 		args = append(args, "--cache-images=false")
 	}
-	if dnsProxy {
+	if driver == "virtualbox" && dnsProxy {
 		args = append(args, "--dns-proxy")
 	}
-	if !hostDNSResolver {
+	if driver == "virtualbox" && !hostDNSResolver {
 		args = append(args, "--host-dns-resolver=false")
 	}
 	if len(dnsDomain) > 0 {
@@ -90,6 +101,22 @@ func Restart(kubernetesVersion string, containerRuntime string, force bool, verb
 // Stop ...
 func Stop() error {
 	cmd := exec.Command("minikube", "stop")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+// Pause ...
+func Pause() error {
+	cmd := exec.Command("minikube", "pause")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+// Unpause ...
+func Unpause() error {
+	cmd := exec.Command("minikube", "unpause")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -140,11 +167,16 @@ func Ip() (string, error) {
 func DownloadExecutable(minikubeURL string, minikubeVersion string) error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
 	if _, err := os.Stat(localFile); os.IsNotExist(err) {
-		fileMap := &download.FileMap{Src: "minikube-windows-amd64.exe", Dst: LOCAL_EXECUTABLE_NAME}
+		src := "minikube-windows-amd64.exe"
+		if runtime.GOOS == "linux" {
+			src = "minikube-linux-amd64"
+		}
+		fileMap := &download.FileMap{Src: src, Dst: LOCAL_EXECUTABLE_NAME}
 		_, err = download.FromUrl(minikubeURL, minikubeVersion, "minikube", []*download.FileMap{fileMap}, filepath.Dir(localFile))
 		if err != nil {
 			return err
 		}
+		return utils.MakeExecutable(localFile)
 	}
 	return nil
 }

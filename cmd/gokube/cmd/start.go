@@ -54,8 +54,9 @@ func start() error {
 	if len(containerRuntimeForStart) == 0 {
 		containerRuntimeForStart = utils.GetValueFromEnv("MINIKUBE_CONTAINER_RUNTIME", DEFAULT_MINIKUBE_CONTAINER_RUNTIME)
 	}
+	driverForStart := configuredMinikubeDriver()
 	vb7workaround := utils.GetValueFromEnv("VB7_WORKAROUND", "")
-	if len(vb7workaround) > 0 {
+	if driverForStart == "virtualbox" && len(vb7workaround) > 0 {
 		virtualbox.Update("--nat-localhostreachable1=on")
 	}
 	fmt.Printf("Starting minikube VM with kubernetes %s and container runtime %q...\n", kubernetesVersionForStart, containerRuntimeForStart)
@@ -65,13 +66,15 @@ func start() error {
 	}
 
 	// Add swap to Minikube VM
-	if enableSwap {
-        fmt.Println("Enabling swap drive in minikube VM...")
-        err = addSwapToMinikubeDuringStart()
-        if err != nil {
-    	    fmt.Printf("Warning: cannot enable swap drive in minikube VM - start: %s\n", err)
-        }
-    }
+	if enableSwap && driverForStart == "virtualbox" {
+		fmt.Println("Enabling swap drive in minikube VM...")
+		err = addSwapToMinikubeDuringStart()
+		if err != nil {
+			fmt.Printf("Warning: cannot enable swap drive in minikube VM - start: %s\n", err)
+		}
+	} else if enableSwap {
+		fmt.Printf("Warning: swap disk setup is only supported with the virtualbox driver, skipping for %s\n", driverForStart)
+	}
 
 	return nil
 }
@@ -100,15 +103,6 @@ func startRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	// Add swap to Minikube VM
-	if enableSwap {
-        fmt.Println("Enabling swap drive in minikube VM...")
-        err = addSwapToMinikubeDuringStart()
-        if err != nil {
-    	    fmt.Printf("Warning: cannot enable swap drive in minikube VM - start: %s\n", err)
-        }
-    }
 
 	return nil
 }

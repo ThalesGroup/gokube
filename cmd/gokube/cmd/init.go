@@ -23,11 +23,11 @@ import (
 	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/gemalto/gokube/pkg/virtualbox"
 	"github.com/spf13/viper"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-	"net/http"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/gemalto/gokube/pkg/gokube"
@@ -38,7 +38,7 @@ import (
 	"os/exec"
 )
 
-var memory int16
+var memory string
 var cpus int16
 var swap int16
 var enableSwap bool
@@ -66,7 +66,7 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
-	defaultVMMemory, _ := strconv.Atoi(utils.GetValueFromEnv("MINIKUBE_MEMORY", strconv.Itoa(DEFAULT_MINIKUBE_MEMORY)))
+	defaultVMMemory := utils.GetValueFromEnv("MINIKUBE_MEMORY", fmt.Sprintf("%dMb", DEFAULT_MINIKUBE_MEMORY))
 	defaultVMCPUs, _ := strconv.Atoi(utils.GetValueFromEnv("MINIKUBE_CPUS", strconv.Itoa(DEFAULT_MINIKUBE_CPUS)))
 	defaultVMSwap, _ := strconv.Atoi(utils.GetValueFromEnv("MINIKUBE_SWAP", strconv.Itoa(DEFAULT_MINIKUBE_SWAP)))
 	enableSwap = false
@@ -80,13 +80,14 @@ func init() {
 	loadURLVersionsFromEnv()
 	initCmd.Flags().StringVarP(&kubernetesVersion, "kubernetes-version", "", utils.GetValueFromEnv("KUBERNETES_VERSION", DEFAULT_KUBERNETES_VERSION), "The kubernetes version")
 	initCmd.Flags().StringVarP(&containerRuntime, "container-runtime", "", utils.GetValueFromEnv("MINIKUBE_CONTAINER_RUNTIME", DEFAULT_MINIKUBE_CONTAINER_RUNTIME), "Minikube container runtime (docker, cri-o, containerd)")
+	initCmd.Flags().StringVarP(&minikubeDriver, "driver", "", utils.GetValueFromEnv("MINIKUBE_DRIVER", defaultMinikubeDriver()), "Minikube driver")
 	initCmd.Flags().BoolVarP(&askForUpgrade, "upgrade", "u", false, "Upgrade gokube (download and setup docker, minikube, kubectl and helm)")
 	initCmd.Flags().BoolVarP(&askForClean, "clean", "c", false, "Clean gokube (remove docker, minikube, kubectl and helm working directories)")
-	initCmd.Flags().Int16VarP(&memory, "memory", "", int16(defaultVMMemory), "Amount of RAM allocated to the minikube VM in MB")
+	initCmd.Flags().StringVarP(&memory, "memory", "", defaultVMMemory, "Amount of RAM allocated to the minikube VM")
 	initCmd.Flags().Int16VarP(&cpus, "cpus", "", int16(defaultVMCPUs), "Number of CPUs allocated to the minikube VM")
 	initCmd.Flags().Int16VarP(&swap, "swap", "", int16(defaultVMSwap), "Amount of SWAP allocated to the minikube VM in MB")
 	initCmd.Flags().StringVarP(&disk, "disk", "", utils.GetValueFromEnv("MINIKUBE_DISK", DEFAULT_MINIKUBE_DISK), "Disk size allocated to the minikube VM. Format: <number>[<unit>], where unit = b, k, m or g")
-	initCmd.Flags().StringVarP(&checkIP, "check-ip", "", utils.GetValueFromEnv("GOKUBE_CHECK_IP", DEFAULT_GOKUBE_CHECK_IP), "Checks if minikube VM allocated IP matches the provided one (0.0.0.0 means no check)")
+	initCmd.Flags().StringVarP(&checkIP, "check-ip", "", utils.GetValueFromEnv("GOKUBE_CHECK_IP", defaultGokubeCheckIP()), "Checks if minikube VM allocated IP matches the provided one (0.0.0.0 means no check)")
 	initCmd.Flags().StringVarP(&insecureRegistry, "insecure-registry", "", os.Getenv("INSECURE_REGISTRY"), "Insecure Docker registries to pass to the Docker daemon. The default service CIDR range will automatically be added.")
 	initCmd.Flags().StringVarP(&httpProxy, "http-proxy", "", os.Getenv("HTTP_PROXY"), "HTTP proxy variable for docker engine in minikube VM")
 	initCmd.Flags().StringVarP(&httpsProxy, "https-proxy", "", os.Getenv("HTTPS_PROXY"), "HTTPS proxy variable for docker engine in minikube VM")
@@ -270,7 +271,7 @@ func initRun(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			fmt.Printf("Warning: cannot delete previous minikube VM: %s\n", err)
 		}
-		if ipCheckNeeded {
+		if ipCheckNeeded && minikubeDriver == "virtualbox" {
 			err = resetVBLease(DEFAULT_GOKUBE_CIDR)
 			if err != nil {
 				return fmt.Errorf("cannot delete previous minikube VM: %w", err)
@@ -303,20 +304,22 @@ func initRun(cmd *cobra.Command, args []string) error {
 
 		// Create virtual machine (minikube)
 		fmt.Printf("Creating minikube VM with kubernetes %s...\n", kubernetesVersion)
-		err := minikube.Start(memory, cpus, disk, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain, containerRuntime, force, verbose)
+		err := minikube.Start(memory, cpus, disk, minikubeDriver, httpProxy, httpsProxy, noProxy, insecureRegistry, kubernetesVersion, true, dnsProxy, hostDNSResolver, dnsDomain, containerRuntime, force, verbose)
 		if err != nil {
 			return fmt.Errorf("cannot start minikube VM: %w", err)
 		}
 
-        // Create & attach swap drive to minikube
-        if enableSwap {
-            fmt.Println("Creating & attaching swap drive to minikube VM...")
-            vboxManager := virtualbox.NewVBoxManager()
-            err = vboxManager.AddSwapDisk(swap)
-            if err != nil {
-                fmt.Printf("Warning: cannot create & attach swap drive to minikube VM: %s\n", err)
-            }
-        }
+		// Create & attach swap drive to minikube
+		if enableSwap && minikubeDriver == "virtualbox" {
+			fmt.Println("Creating & attaching swap drive to minikube VM...")
+			vboxManager := virtualbox.NewVBoxManager()
+			err = vboxManager.AddSwapDisk(swap)
+			if err != nil {
+				fmt.Printf("Warning: cannot create & attach swap drive to minikube VM: %s\n", err)
+			}
+		} else if enableSwap {
+			fmt.Printf("Warning: swap disk setup is only supported with the virtualbox driver, skipping for %s\n", minikubeDriver)
+		}
 
 		// Enable dashboard
 		err = minikube.AddonsEnable("dashboard")
@@ -372,19 +375,19 @@ func initRun(cmd *cobra.Command, args []string) error {
 	}
 
 	// Keep kubernetes version in a persistent file to remember the right kubernetes version to set for (re)start command
-	err = gokube.WriteConfig(gokubeVersion, kubernetesVersion, containerRuntime)
+	err = gokube.WriteConfig(gokubeVersion, kubernetesVersion, containerRuntime, minikubeDriver)
 	if err != nil {
 		return fmt.Errorf("cannot write gokube configuration: %w", err)
 	}
 
-    // Format & enable swap drive in minikube VM
-    if enableSwap {
-        fmt.Println("Formatting & enabling swap drive in minikube VM...")
-	    err = addSwapToMinikube()
-	    if err != nil {
-		    fmt.Printf("Warning: cannot format/enable swap drive in minikube VM: %s\n", err)
-	    }
-    }
+	// Format & enable swap drive in minikube VM
+	if enableSwap && minikubeDriver == "virtualbox" {
+		fmt.Println("Formatting & enabling swap drive in minikube VM...")
+		err = addSwapToMinikube()
+		if err != nil {
+			fmt.Printf("Warning: cannot format/enable swap drive in minikube VM: %s\n", err)
+		}
+	}
 
 	fmt.Printf("\ngokube init completed in %s\n", util.Duration(time.Since(startTime)))
 	return nil

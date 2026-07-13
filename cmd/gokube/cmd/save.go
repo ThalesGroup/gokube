@@ -38,11 +38,18 @@ func saveRun(cmd *cobra.Command, args []string) error {
 
 	checkLatestVersion()
 
+	err := gokube.ReadConfig(verbose)
+	if err != nil {
+		return fmt.Errorf("cannot read gokube configuration file: %w", err)
+	}
+	if configuredMinikubeDriver() != "virtualbox" {
+		return fmt.Errorf("save/reset snapshots are only supported with the virtualbox driver")
+	}
+
 	running := false
 	if live && !quiet {
 		gokube.ConfirmSnapshotCommandExecution()
 	} else if !live {
-		var err error
 		running, err = virtualbox.IsRunning()
 		if err != nil {
 			return fmt.Errorf("cannot check if minikube VM is running: %w", err)
@@ -56,7 +63,7 @@ func saveRun(cmd *cobra.Command, args []string) error {
 		}
 	}
 	fmt.Printf("Taking snapshot '%s' of minikube VM...\n", snapshotName)
-	err := virtualbox.DeleteSnapshot(snapshotName)
+	err = virtualbox.DeleteSnapshot(snapshotName)
 	if err != nil && err != virtualbox.ErrSnapshotNotExist {
 		return fmt.Errorf("cannot delete minikube VM snapshot %s: %w", snapshotName, err)
 	}

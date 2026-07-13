@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/gemalto/gokube/pkg/gokube"
 	"github.com/gemalto/gokube/pkg/minikube"
 	"github.com/gemalto/gokube/pkg/utils"
 	"github.com/gemalto/gokube/pkg/virtualbox"
@@ -36,6 +37,14 @@ func resetRun(cmd *cobra.Command, args []string) error {
 	}
 
 	checkLatestVersion()
+
+	err := gokube.ReadConfig(verbose)
+	if err != nil {
+		return fmt.Errorf("cannot read gokube configuration file: %w", err)
+	}
+	if configuredMinikubeDriver() != "virtualbox" {
+		return fmt.Errorf("save/reset snapshots are only supported with the virtualbox driver")
+	}
 
 	running, err := virtualbox.IsRunning()
 	if err != nil {

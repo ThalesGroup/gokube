@@ -20,14 +20,22 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/gemalto/gokube/pkg/utils"
 )
 
-const (
-	DEFAULT_URL           = "https://get.helm.sh/helm-%s-windows-amd64.zip"
-	LOCAL_EXECUTABLE_NAME = "helm.exe"
+var (
+	DEFAULT_URL           = defaultURL()
+	LOCAL_EXECUTABLE_NAME = utils.ExecutableName("helm")
 )
+
+func defaultURL() string {
+	if runtime.GOOS == "linux" {
+		return "https://get.helm.sh/helm-%s-linux-amd64.tar.gz"
+	}
+	return "https://get.helm.sh/helm-%s-windows-amd64.zip"
+}
 
 // Upgrade ...
 func Upgrade(chart string, version string, release string, namespace string, configuration string, valuesFile string) error {
@@ -88,11 +96,16 @@ func PluginsVersion() error {
 func DownloadExecutable(helmURL string, helmVersion string) error {
 	localFile := utils.GetBinDir("gokube") + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
 	if _, err := os.Stat(localFile); os.IsNotExist(err) {
-		fileMap := &download.FileMap{Src: "windows-amd64" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
+		platformDir := "windows-amd64"
+		if runtime.GOOS == "linux" {
+			platformDir = "linux-amd64"
+		}
+		fileMap := &download.FileMap{Src: platformDir + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: LOCAL_EXECUTABLE_NAME}
 		_, err = download.FromUrl(helmURL, helmVersion, "helm", []*download.FileMap{fileMap}, filepath.Dir(localFile))
 		if err != nil {
-			return nil
+			return err
 		}
+		return utils.MakeExecutable(localFile)
 	}
 	return nil
 }

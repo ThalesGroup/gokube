@@ -28,12 +28,29 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
-	"strings"
+	"runtime"
 )
 
 // GetAppDataHome ...
 func GetAppDataHome() string {
-	return os.Getenv("APPDATA")
+	if runtime.GOOS == "windows" {
+		return os.Getenv("APPDATA")
+	}
+	if xdgDataHome := os.Getenv("XDG_DATA_HOME"); len(xdgDataHome) > 0 {
+		return xdgDataHome
+	}
+	return filepath.Join(GetUserHome(), ".local", "share")
+}
+
+// GetConfigHome ...
+func GetConfigHome() string {
+	if runtime.GOOS == "windows" {
+		return os.Getenv("APPDATA")
+	}
+	if xdgConfigHome := os.Getenv("XDG_CONFIG_HOME"); len(xdgConfigHome) > 0 {
+		return xdgConfigHome
+	}
+	return filepath.Join(GetUserHome(), ".config")
 }
 
 // GetUserHome ...
@@ -48,21 +65,37 @@ func GetUserHome() string {
 
 // GetBinDir ...
 func GetBinDir(executable string) string {
-	path, err := exec.LookPath(executable)
+	executablePath, err := exec.LookPath(executable)
 	if err != nil {
 		fmt.Printf("Error: cannot determine %s directory\n", executable)
 		os.Exit(1)
 	}
 	if errors.Is(err, exec.ErrDot) {
-		path, err = os.Getwd()
+		executablePath, err = os.Getwd()
 		if err != nil {
 			fmt.Printf("Error: cannot determine %s directory\n", executable)
 			os.Exit(1)
 		}
 	} else {
-		path = strings.TrimSuffix(path, string(os.PathSeparator)+"gokube.exe")
+		executablePath = filepath.Dir(executablePath)
 	}
-	return path
+	return executablePath
+}
+
+// ExecutableName returns the platform-specific executable filename.
+func ExecutableName(name string) string {
+	if runtime.GOOS == "windows" {
+		return name + ".exe"
+	}
+	return name
+}
+
+// MakeExecutable sets executable bits on downloaded binaries on Unix-like systems.
+func MakeExecutable(filePath string) error {
+	if runtime.GOOS == "windows" {
+		return nil
+	}
+	return os.Chmod(filePath, 0755)
 }
 
 // CreateDirs ...

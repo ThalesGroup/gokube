@@ -15,31 +15,41 @@ limitations under the License.
 package helmspray
 
 import (
+	"os"
+	"runtime"
+
 	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/utils"
-	"os"
-	"path/filepath"
 )
 
-const (
-	DEFAULT_URL           = "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
-	LOCAL_EXECUTABLE_NAME = "helm-spray.exe"
+var (
+	DEFAULT_URL           = defaultURL()
+	LOCAL_EXECUTABLE_NAME = utils.ExecutableName("helm-spray")
 )
+
+func defaultURL() string {
+	if runtime.GOOS == "linux" {
+		return "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-linux-amd64.tar.gz"
+	}
+	return "https://github.com/ThalesGroup/helm-spray/releases/download/%s/helm-spray-windows-amd64.tar.gz"
+}
 
 // InstallPlugin ...
 func InstallPlugin(helmSprayURI string, helmSprayVersion string) error {
-	localFile := utils.GetAppDataHome() + string(os.PathSeparator) +
+	pluginDir := utils.GetAppDataHome() + string(os.PathSeparator) +
 		"helm" + string(os.PathSeparator) +
 		"plugins" + string(os.PathSeparator) +
-		"helm-spray" + string(os.PathSeparator) +
-		LOCAL_EXECUTABLE_NAME
+		"helm-spray"
+	localFile := pluginDir + string(os.PathSeparator) +
+		"bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
 	if _, err := os.Stat(localFile); os.IsNotExist(err) {
 		fileMap1 := &download.FileMap{Src: "bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: "bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME}
 		fileMap2 := &download.FileMap{Src: "plugin.yaml", Dst: "plugin.yaml"}
-		_, err = download.FromUrl(helmSprayURI, helmSprayVersion, "helm-spray", []*download.FileMap{fileMap1, fileMap2}, filepath.Dir(localFile))
+		_, err = download.FromUrl(helmSprayURI, helmSprayVersion, "helm-spray", []*download.FileMap{fileMap1, fileMap2}, pluginDir)
 		if err != nil {
 			return err
 		}
+		return utils.MakeExecutable(localFile)
 	}
 	return nil
 }

@@ -19,28 +19,42 @@ import (
 	"github.com/gemalto/gokube/pkg/utils"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
-const (
-	DEFAULT_URL           = "https://github.com/ThalesGroup/helm-image/releases/download/%s/helm-image-windows-amd64.tar.gz"
-	LOCAL_EXECUTABLE_NAME = "helm-image.exe"
+var (
+	DEFAULT_URL           = defaultURL()
+	LOCAL_EXECUTABLE_NAME = utils.ExecutableName("helm-image")
 )
+
+func defaultURL() string {
+	if runtime.GOOS == "linux" {
+		return "https://github.com/ThalesGroup/helm-image/releases/download/%s/helm-image-linux-amd64.tar.gz"
+	}
+	return "https://github.com/ThalesGroup/helm-image/releases/download/%s/helm-image-windows-amd64.tar.gz"
+}
 
 // InstallPlugin ...
 func InstallPlugin(helmImageURI string, helmImageVersion string) error {
-	localFile := utils.GetAppDataHome() + string(os.PathSeparator) +
+	pluginDir := utils.GetAppDataHome() + string(os.PathSeparator) +
 		"helm" + string(os.PathSeparator) +
 		"plugins" + string(os.PathSeparator) +
-		"helm-image" + string(os.PathSeparator) +
-		LOCAL_EXECUTABLE_NAME
+		"helm-image"
+	localFile := pluginDir + string(os.PathSeparator) +
+		"bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
 	if _, err := os.Stat(localFile); os.IsNotExist(err) {
 		fileMap1 := &download.FileMap{Src: "bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: "bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME}
-		fileMap2 := &download.FileMap{Src: "bin" + string(os.PathSeparator) + "containerd.exe", Dst: "bin" + string(os.PathSeparator) + "containerd.exe"}
+		containerdName := utils.ExecutableName("containerd")
+		fileMap2 := &download.FileMap{Src: "bin" + string(os.PathSeparator) + containerdName, Dst: "bin" + string(os.PathSeparator) + containerdName}
 		fileMap3 := &download.FileMap{Src: "plugin.yaml", Dst: "plugin.yaml"}
-		_, err = download.FromUrl(helmImageURI, helmImageVersion, "helm-image", []*download.FileMap{fileMap1, fileMap2, fileMap3}, filepath.Dir(localFile))
+		_, err = download.FromUrl(helmImageURI, helmImageVersion, "helm-image", []*download.FileMap{fileMap1, fileMap2, fileMap3}, pluginDir)
 		if err != nil {
 			return err
 		}
+		if err := utils.MakeExecutable(localFile); err != nil {
+			return err
+		}
+		return utils.MakeExecutable(filepath.Join(filepath.Dir(localFile), containerdName))
 	}
 	return nil
 }

@@ -18,28 +18,37 @@ import (
 	"github.com/gemalto/gokube/pkg/download"
 	"github.com/gemalto/gokube/pkg/utils"
 	"os"
-	"path/filepath"
+	"runtime"
 )
 
-const (
-	DEFAULT_URL           = "https://github.com/chartmuseum/helm-push/releases/download/v%s/helm-push_%s_windows_amd64.tar.gz"
-	LOCAL_EXECUTABLE_NAME = "helm-cm-push.exe"
+var (
+	DEFAULT_URL           = defaultURL()
+	LOCAL_EXECUTABLE_NAME = utils.ExecutableName("helm-cm-push")
 )
+
+func defaultURL() string {
+	if runtime.GOOS == "linux" {
+		return "https://github.com/chartmuseum/helm-push/releases/download/v%s/helm-push_%s_linux_amd64.tar.gz"
+	}
+	return "https://github.com/chartmuseum/helm-push/releases/download/v%s/helm-push_%s_windows_amd64.tar.gz"
+}
 
 // InstallPlugin ...
 func InstallPlugin(helmPushURI string, helmPushVersion string) error {
-	localFile := utils.GetAppDataHome() + string(os.PathSeparator) +
+	pluginDir := utils.GetAppDataHome() + string(os.PathSeparator) +
 		"helm" + string(os.PathSeparator) +
 		"plugins" + string(os.PathSeparator) +
-		"helm-push" + string(os.PathSeparator) +
-		LOCAL_EXECUTABLE_NAME
+		"helm-push"
+	localFile := pluginDir + string(os.PathSeparator) +
+		"bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME
 	if _, err := os.Stat(localFile); os.IsNotExist(err) {
 		fileMap1 := &download.FileMap{Src: "bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME, Dst: "bin" + string(os.PathSeparator) + LOCAL_EXECUTABLE_NAME}
 		fileMap2 := &download.FileMap{Src: "plugin.yaml", Dst: "plugin.yaml"}
-		_, err = download.FromUrl(helmPushURI, helmPushVersion, "helm-push", []*download.FileMap{fileMap1, fileMap2}, filepath.Dir(localFile))
+		_, err = download.FromUrl(helmPushURI, helmPushVersion, "helm-push", []*download.FileMap{fileMap1, fileMap2}, pluginDir)
 		if err != nil {
 			return err
 		}
+		return utils.MakeExecutable(localFile)
 	}
 	return nil
 }
