@@ -1,5 +1,8 @@
 # GoKube Release Notes
 
+## Version 1.39.0 - 09/16/2026
+* Bump to minikube v1.39.0, K8S v1.36.0, helm v3.22.0, docker 29.8.1, and stern v1.34.0
+
 ## Version 1.38.0 - 02/05/2026
 * Bump to minikube v1.38.0, K8S v1.35.0, helm v3.20.0, docker 29.2.1, and stern v1.33.1
 
